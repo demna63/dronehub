@@ -1,0 +1,8 @@
+{
+  "name": "DronehubGeorgia",
+  "description": "საქართველოს წამყვანი პლატფორმა დრონების მოყვარულთათვის. FPV და სტანდარტული დრონების კატეგორიები AI მხარდაჭერით.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

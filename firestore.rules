@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Check if the update only changes specific allowed interaction fields
+    // This allows users to vote/comment without being able to change the post title/content
+    function onlyUpdatingInteractionFields() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['comments', 'commentsCount', 'votes', 'sharesCount', 'views', 'telemetry']);
+    }
+
+    // --- Rules ---
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+      
+      // Allow users to manage their subcollections
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow write: if isAuthenticated(); // Allow system/other users to trigger notifications
+      }
+      match /savedPosts/{postId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      // Allow Owner/Admin full control.
+      // Allow Auth users to ONLY update interactions (comments/votes) on others' posts.
+      allow update: if isOwner(resource.data.authorId) || isAdmin() || (isAuthenticated() && onlyUpdatingInteractionFields());
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+      }
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /vlogs/{vlogId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    match /global_messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.recipientId;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.recipientId;
+      allow delete: if false;
+    }
+
+    match /droneBuilds/{buildId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /spots/{spotId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    match /chatRooms/{roomId}/messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    match /channels/{vlogId}/messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    match /stlFiles/{fileId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /presets/{presetId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+    }
+
+    match /meetRooms/{roomId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /system_diagnostics/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
