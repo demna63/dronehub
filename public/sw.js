@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dronehub-shell-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/logo.webp', '/logo.avif'];
+const CACHE_NAME = 'dronehub-shell-v4';
+const APP_SHELL = ['/', '/index.html', '/manifest.json', '/brand/dhg-logo.webp', '/brand/dhg-logo.avif', '/brand/dhg-logo.png', '/brand/favicon.ico', '/brand/icon.svg', '/brand/icon-192.png', '/brand/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

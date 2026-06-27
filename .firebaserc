@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "dronehubgeorgia-a7bd5",
+    "staging": "dronehubgeorgia-a7bd5"
+  },
+  "targets": {},
+  "etags": {}
+}
