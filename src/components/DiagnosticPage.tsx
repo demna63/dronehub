@@ -16,12 +16,15 @@ const DiagnosticPage: React.FC = () => {
   // Safe Env Checker
   const checkEnv = (key: string) => {
     try {
-      // @ts-ignore
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) return true;
-    } catch(e) {}
+    } catch(e) {
+      // ignored
+    }
     try {
       if (typeof process !== 'undefined' && process.env && process.env[key]) return true;
-    } catch(e) {}
+    } catch(e) {
+      // ignored
+    }
     return false;
   };
 

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../types';
 import { apiService } from '../services/apiService';
+import { pickAllowedProfileFields } from '../utils/userProfileAllowlist';
 
 interface OnboardingModalProps {
   user: User;
@@ -29,9 +30,9 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ user, onComplete }) =
       const updatedUser = {
         ...user,
         experienceLevel: experienceLevel!,
-        droneInterests: interests
+        droneInterests: interests,
       };
-      await apiService.updateUserProfile(updatedUser.id, updatedUser);
+      await apiService.updateUserProfile(updatedUser.id, pickAllowedProfileFields(updatedUser));
       onComplete(updatedUser);
     } catch (error) {
       console.error("Failed to save profile", error);

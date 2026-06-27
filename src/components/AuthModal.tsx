@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signInWithGoogle, signInWithDemo, registerWithEmail, loginWithEmail } from '../lib/firebase';
+import { isDemoAuthEnabled } from '../utils/authUtils';
 import { X, Mail, Lock, User as UserIcon, LogIn, Chrome } from 'lucide-react';
 
 interface AuthModalProps {
@@ -56,6 +57,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
   };
 
   const handleDemoLogin = async () => {
+    if (!isDemoAuthEnabled()) {
+      setError('Demo mode is disabled in production.');
+      return;
+    }
     try {
       const user = await signInWithDemo();
       if (onLogin) onLogin(user);
@@ -107,6 +112,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
                   )}
                   Google-ით შესვლა
                 </button>
+                {isDemoAuthEnabled() && (
                 <button
                   onClick={handleDemoLogin}
                   disabled={loading}
@@ -115,6 +121,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
                   <UserIcon className="w-5 h-5" />
                   დემო режимი
                 </button>
+                )}
               </div>
 
               {googleError && (

@@ -245,7 +245,7 @@ try {
   },
 
   async ratePostTelemetry(postId: string, userId: string, category: string,voteValue: number, authorId: string, postTitle: string, currentUser: User) {
-    await ratePostTelemetryInFirestore(postId, category, voteValue);
+    await ratePostTelemetryInFirestore(postId, userId, category, voteValue);
 
     if (authorId !== userId) {
       await this.createNotification(authorId, currentUser, 'vote', postId, postTitle);

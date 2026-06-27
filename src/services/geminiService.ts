@@ -1,205 +1,137 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../lib/firebase';
 
-const getGeminiApiKey = (): string => {
-  const runtimeConfig = typeof window !== 'undefined' ? (window as Window & { __APP_CONFIG__?: { GEMINI_API_KEY?: string } }).__APP_CONFIG__ : undefined;
-  const envConfig = import.meta.env as ImportMetaEnv & Record<string, string | undefined>;
-  const candidates = [
-    runtimeConfig?.GEMINI_API_KEY,
-    envConfig.VITE_GEMINI_API_KEY,
-    envConfig.GEMINI_API_KEY,
-  ];
+type GeminiAction = 'analyzePost' | 'checkZoneWithAI' | 'translateText' | 'checkRestrictedZone';
 
-  const key = candidates.find((candidate): candidate is string => Boolean(candidate && candidate.trim() && candidate !== 'your_gemini_api_key_here'));
+type GeminiRequest = {
+  action: GeminiAction;
+  payload: Record<string, unknown>;
+};
 
-  if (!key) {
-    console.error('[Gemini] API key not found in environment variables');
-    throw new Error('Gemini API not configured. Add a real VITE_GEMINI_API_KEY value to your environment or runtime config.');
+type GeminiResponse = {
+  result: unknown;
+};
+
+let functionsInstance: ReturnType<typeof getFunctions> | null = null;
+
+const getCallable = () => {
+  if (!functionsInstance) {
+    functionsInstance = getFunctions(app, import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || 'us-central1');
   }
+  return httpsCallable<GeminiRequest, GeminiResponse>(functionsInstance, 'geminiProxy');
+};
 
+const callGeminiProxy = async (action: GeminiAction, payload: Record<string, unknown>) => {
+  const callable = getCallable();
+  const response = await callable({ action, payload });
+  return response.data.result;
+};
+
+const getDevGeminiApiKey = (): string | null => {
+  if (!import.meta.env.DEV) return null;
+
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key || key === 'your_gemini_api_key_here') return null;
   return key;
 };
 
-// Initialize once
-let geminiClient: GoogleGenAI | null = null;
-
-const getGeminiClient = (): GoogleGenAI => {
-  if (!geminiClient) {
-    const apiKey = getGeminiApiKey();
-    geminiClient = new GoogleGenAI({ apiKey });
+const callGeminiDirect = async (prompt: string, json = false) => {
+  const apiKey = getDevGeminiApiKey();
+  if (!apiKey) {
+    throw new Error('Gemini API is only available through the server proxy in production.');
   }
-  return geminiClient;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        ...(json ? { generationConfig: { responseMimeType: 'application/json' } } : {}),
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gemini request failed (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 };
 
-/**
- * Check if Gemini service is available
- */
 const isGeminiAvailable = (): boolean => {
-  try {
-    getGeminiApiKey();
-    return true;
-  } catch {
-    return false;
-  }
+  if (import.meta.env.DEV && getDevGeminiApiKey()) return true;
+  return Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
 };
 
 export const geminiService = {
-  /**
-   * Check if service is configured
-   */
-  isAvailable: isGeminiAvailable,
+  isAvailable(): boolean {
+    return isGeminiAvailable();
+  },
 
-  /**
-   * Analyze post content and suggest categorization
-   */
   async analyzePost(title: string, content: string) {
-    if (!isGeminiAvailable()) {
-      console.warn('[Gemini] Service not available, skipping analysis');
-      return { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' };
-    }
-
-    const client = getGeminiClient();
-    
-    const prompt = `
-      Analyze this drone community post.
-      Title: "${title}"
-      Content: "${content}"
-      
-      Return JSON with:
-      - suggestedCategory: one of ['general', 'fpv', 'cinematic', 'marketplace', 'help', 'racing']
-      - suggestedSubCategory: string (based on content)
-      - tags: array of strings (max 5)
-      - summary: short summary in Georgian (max 100 chars)
-    `;
+    const fallback = { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' };
 
     try {
-      const response = await client.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
+      if (import.meta.env.DEV && getDevGeminiApiKey()) {
+        const prompt = `Analyze this drone community post.\nTitle: "${title}"\nContent: "${content}"\nReturn JSON with suggestedCategory, suggestedSubCategory, tags (max 5), summary in Georgian (max 100 chars).`;
+        const jsonStr = await callGeminiDirect(prompt, true);
+        return JSON.parse(jsonStr || '{}');
+      }
 
-      const jsonStr = response.text || '{}';
-      return JSON.parse(jsonStr);
+      return await callGeminiProxy('analyzePost', { title, content });
     } catch (error) {
       console.error('[Gemini] Analysis error:', error);
-      return { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' };
+      return fallback;
     }
   },
 
-  /**
-   * Check Zone with AI (Coordinates based)
-   */
   async checkZoneWithAI(lat: number, lng: number) {
-    // Fix: guard against missing API key, consistent with other methods
-    if (!isGeminiAvailable()) {
-      return { status: 'CAUTION', message: 'სერვისი კონფიგურირებული არ არის. იფრინეთ სიფრთხილით.' };
-    }
-    const client = getGeminiClient();
-    
-    const prompt = `
-      I am a drone pilot in Georgia (Country).
-      Coordinates: ${lat}, ${lng}.
-      
-      Analyze this location. Is it a restricted No-Fly Zone?
-      Check for: Airports (CTR), Military bases, Government buildings, National Parks, Borders.
-      
-      Return JSON:
-      {
-        "status": "RESTRICTED" | "CAUTION" | "CLEAR",
-        "message": "Short explanation in Georgian language (max 20 words)."
-      }
-    `;
+    const fallback = { status: 'CAUTION', message: 'სერვისი კონფიგურირებული არ არის. იფრინეთ სიფრთხილით.' };
 
     try {
-      const response = await client.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              status: { type: Type.STRING, enum: ["RESTRICTED", "CLEAR", "CAUTION"] },
-              message: { type: Type.STRING }
-            },
-            required: ['status', 'message']
-          }
-        }
-      });
-      
-      const jsonStr = response.text || '{}';
-      return JSON.parse(jsonStr);
+      if (import.meta.env.DEV && getDevGeminiApiKey()) {
+        const prompt = `I am a drone pilot in Georgia. Coordinates: ${lat}, ${lng}. Return JSON: {"status":"RESTRICTED"|"CAUTION"|"CLEAR","message":"Georgian max 20 words"}`;
+        const jsonStr = await callGeminiDirect(prompt, true);
+        return JSON.parse(jsonStr || '{}');
+      }
+
+      return await callGeminiProxy('checkZoneWithAI', { lat, lng });
     } catch (error) {
       console.error('[Gemini] Zone check error:', error);
-      return { 
-        status: "CAUTION", 
-        message: "სერვისი დროებით მიუწვდომელია. იფრინეთ სიფრთხილით." 
-      };
+      return fallback;
     }
   },
 
-  /**
-   * ✅ NEW: Translate text (For ChatRoom)
-   */
   async translateText(text: string) {
-    if (!isGeminiAvailable()) return text; // Fallback to original
-    
-    const client = getGeminiClient();
-    const prompt = `Translate the following text to English (if it is Georgian) or to Georgian (if it is English). Keep it natural and slang-aware for drone pilots: "${text}"`;
-
     try {
-      const response = await client.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
-      });
-      return response.text || text;
+      if (import.meta.env.DEV && getDevGeminiApiKey()) {
+        const prompt = `Translate to English (if Georgian) or Georgian (if English), drone pilot slang ok: "${text}"`;
+        return await callGeminiDirect(prompt);
+      }
+
+      return await callGeminiProxy('translateText', { text });
     } catch (error) {
-      console.error("Translation failed", error);
+      console.error('Translation failed', error);
       return text;
     }
   },
 
-  /**
-   * ✅ NEW: Check Restricted Zone by Name (For RegulationsWiki)
-   */
   async checkRestrictedZone(query: string) {
-    if (!isGeminiAvailable()) return { status: 'UNKNOWN', message: 'API Unavailable' };
-
-    const client = getGeminiClient();
-    const prompt = `
-      I am a drone pilot in Georgia. User asks about: "${query}".
-      Is this location restricted for drones?
-      
-      Return JSON:
-      {
-        "status": "RESTRICTED" | "CAUTION" | "CLEAR",
-        "message": "Explanation in Georgian (max 20 words)"
-      }
-    `;
+    const fallback = { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' };
 
     try {
-      const response = await client.models.generateContent({
-        model: 'gemini-2.0-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              status: { type: Type.STRING, enum: ["RESTRICTED", "CLEAR", "CAUTION"] },
-              message: { type: Type.STRING }
-            },
-            required: ['status', 'message']
-          }
-        }
-      });
+      if (import.meta.env.DEV && getDevGeminiApiKey()) {
+        const prompt = `Drone pilot in Georgia asks about: "${query}". Return JSON status RESTRICTED|CAUTION|CLEAR and Georgian message max 20 words.`;
+        const jsonStr = await callGeminiDirect(prompt, true);
+        return JSON.parse(jsonStr || '{}');
+      }
 
-      const jsonStr = response.text || '{}';
-      return JSON.parse(jsonStr);
+      return await callGeminiProxy('checkRestrictedZone', { query });
     } catch (error) {
-      return { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' };
+      return fallback;
     }
-  }
+  },
 };

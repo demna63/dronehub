@@ -1,0 +1,56 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isStl() {
+      return request.resource.contentType == 'application/octet-stream'
+        || request.resource.contentType == 'model/stl'
+        || request.resource.name.matches('.*\\.stl$');
+    }
+
+    function underSize(maxMb) {
+      return request.resource.size < maxMb * 1024 * 1024;
+    }
+
+    match /posts/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && underSize(10);
+    }
+
+    match /market/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && underSize(10);
+    }
+
+    match /avatars/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && underSize(5);
+    }
+
+    match /builds/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && underSize(10);
+    }
+
+    match /stl_images/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && underSize(10);
+    }
+
+    match /stl_files/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isStl() && underSize(50);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

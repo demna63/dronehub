@@ -8,6 +8,7 @@ import {
   Loader2, Users, ShoppingBag
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isUserAdmin } from '../utils/authUtils';
 import { STL_TYPES, STL_FRAMES } from '../constants/toolsData';
 
 interface AdminDashboardProps {
@@ -116,7 +117,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
 
   if (!currentUser) return null;
 
-  if (currentUser.role !== 'admin') {
+  if (!isUserAdmin(currentUser)) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-rose-500">
         <Shield size={48} className="mb-4" />

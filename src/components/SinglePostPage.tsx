@@ -32,7 +32,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
     if (window.history.state && window.history.state.idx > 0) {
       navigate(-1);
     } else {
-      navigate(post.category === 'marketplace' ? '/marketplace' : '/');
+      navigate(post.category === 'marketplace' ? '/market' : '/');
     }
   };
 

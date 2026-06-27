@@ -5,6 +5,9 @@ import { apiService } from '../services/apiService';
 import type { MeetRoomData, Notification as NotificationType, Post, User, VlogEntry } from '../types';
 import { readCachedData, writeCachedData } from '../utils/offlineCache';
 
+const readStaleCache = <T,>(key: 'posts' | 'vlogs' | 'meetRooms') =>
+  readCachedData<T>(key, { allowStale: true });
+
 export const useAppData = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -28,9 +31,9 @@ export const useAppData = () => {
   }, []);
 
   useEffect(() => {
-    const cachedPosts = readCachedData<Post[]>('posts');
-    const cachedVlogs = readCachedData<VlogEntry[]>('vlogs');
-    const cachedMeetRooms = readCachedData<MeetRoomData[]>('meetRooms');
+    const cachedPosts = readStaleCache<Post[]>('posts');
+    const cachedVlogs = readStaleCache<VlogEntry[]>('vlogs');
+    const cachedMeetRooms = readStaleCache<MeetRoomData[]>('meetRooms');
 
     if (cachedPosts) setPosts(cachedPosts);
     if (cachedVlogs) setVlogs(cachedVlogs);
@@ -44,7 +47,7 @@ export const useAppData = () => {
         setPosts(nextPosts);
         writeCachedData('posts', nextPosts);
       } else {
-        const cachedPosts = readCachedData<Post[]>('posts');
+        const cachedPosts = readCachedData<Post[]>('posts') || readStaleCache<Post[]>('posts');
         if (cachedPosts && cachedPosts.length > 0) {
           setPosts(cachedPosts);
         } else {
@@ -53,7 +56,7 @@ export const useAppData = () => {
       }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
-      const cachedPosts = readCachedData<Post[]>('posts');
+      const cachedPosts = readStaleCache<Post[]>('posts');
       if (cachedPosts) setPosts(cachedPosts);
     }
   }, []);
@@ -65,7 +68,7 @@ export const useAppData = () => {
         setVlogs(nextVlogs);
         writeCachedData('vlogs', nextVlogs);
       } else {
-        const cachedVlogs = readCachedData<VlogEntry[]>('vlogs');
+        const cachedVlogs = readCachedData<VlogEntry[]>('vlogs') || readStaleCache<VlogEntry[]>('vlogs');
         if (cachedVlogs && cachedVlogs.length > 0) {
           setVlogs(cachedVlogs);
         } else {
@@ -74,7 +77,7 @@ export const useAppData = () => {
       }
     } catch (error) {
       console.error('Failed to fetch vlogs:', error);
-      const cachedVlogs = readCachedData<VlogEntry[]>('vlogs');
+      const cachedVlogs = readStaleCache<VlogEntry[]>('vlogs');
       if (cachedVlogs) setVlogs(cachedVlogs);
     }
   }, []);
@@ -86,7 +89,7 @@ export const useAppData = () => {
         setMeetRooms(nextMeetRooms);
         writeCachedData('meetRooms', nextMeetRooms);
       } else {
-        const cachedMeetRooms = readCachedData<MeetRoomData[]>('meetRooms');
+        const cachedMeetRooms = readCachedData<MeetRoomData[]>('meetRooms') || readStaleCache<MeetRoomData[]>('meetRooms');
         if (cachedMeetRooms && cachedMeetRooms.length > 0) {
           setMeetRooms(cachedMeetRooms);
         } else {
@@ -95,7 +98,7 @@ export const useAppData = () => {
       }
     } catch (error) {
       console.error('Failed to fetch meet rooms:', error);
-      const cachedMeetRooms = readCachedData<MeetRoomData[]>('meetRooms');
+      const cachedMeetRooms = readStaleCache<MeetRoomData[]>('meetRooms');
       if (cachedMeetRooms) setMeetRooms(cachedMeetRooms);
     }
   }, []);

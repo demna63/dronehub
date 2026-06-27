@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Post, User } from '../types';
 import { useNavigate, useParams } from 'react-router-dom';
+import { isUserAdmin } from '../utils/authUtils';
 import { usePostEdit } from '../hooks/usePostEdit';
 import PostCardSkeleton from './PostCardSkeleton';
 import PostCardHeader from './PostCardHeader';
@@ -139,7 +140,7 @@ const Feed: React.FC<FeedProps> = ({
         const telemetry = post.telemetry || { utility: 0, skill: 0, vision: 0, count: 0 };
         const { charge, color } = getBatteryStatus(telemetry);
         const totalCount = telemetry.count || (telemetry.utility + telemetry.skill + telemetry.vision) || 1;
-        const canManage = user && (user.id === post.authorId || user.isAdmin || user.role === 'admin');
+        const canManage = user && (user.id === post.authorId || isUserAdmin(user));
 
         return (
           <article

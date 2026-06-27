@@ -303,7 +303,7 @@ const generateStepResponseData = (axis: AxisName, session: number): ChartPoint[]
   const damping = session === 1 ? 0.15 : 0.08;
   const data: ChartPoint[] = [];
   for (let t = 0; t <= 100; t++) {
-    let setpoint = t > 10 && t < 60 ? 500 : 0;
+    const setpoint = t > 10 && t < 60 ? 500 : 0;
     let gyro = 0;
     if (t > 10 + delay && t < 60 + delay) {
       const dt = t - (10 + delay);

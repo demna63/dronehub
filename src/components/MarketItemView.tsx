@@ -124,13 +124,19 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
             {/* Buttons */}
             <div className="space-y-3">
                <button 
-                 onClick={() => setShowPhone(!showPhone)}
+                 onClick={() => {
+                   if (!currentUser) {
+                     onLoginClick();
+                     return;
+                   }
+                   setShowPhone(!showPhone);
+                 }}
                  className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                    showPhone ? 'bg-slate-800 text-white' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                  }`}
                >
                  <Phone size={18} />
-                 {showPhone ? ((item as any).phone || 'ნომერი უცნობია') : 'ნომრის ჩვენება'}
+                 {showPhone ? (item.phone || 'ნომერი უცნობია') : 'ნომრის ჩვენება'}
                </button>
 
                <button 

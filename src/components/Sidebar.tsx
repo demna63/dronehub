@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { User } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { isUserAdmin } from '../utils/authUtils';
 import Logo from './Logo';
 import SidebarNavSection, { SidebarNavItem } from './SidebarNavSection';
 
@@ -116,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* =========================== */}
         {/* 5. ADMIN ZONE */}
         {/* =========================== */}
-        {(currentUser?.isAdmin || currentUser?.role === 'admin') && (
+        {isUserAdmin(currentUser) && (
             <div className="space-y-1 pt-4 border-t border-white/5">
               <SidebarNavSection title="ADMIN ZONE" titleClassName="text-rose-500 opacity-60 flex items-center gap-2">
                 <SidebarNavItem to="/admin" icon={Shield} label="Dashboard" />

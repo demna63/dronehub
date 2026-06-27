@@ -224,6 +224,9 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser }
             <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></div>
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] typography-mtavruli">{t('restricted_zone_check')}</h3>
           </div>
+          <p className="text-[11px] text-amber-300/80">
+            AI-შედეგები მხოლოდ საინფორმაციო მიზნებისთვისაა. ფრენამდე ყოველთვის შეამოწმეთ ოფიციალური წყაროები და NOTAM-ები.
+          </p>
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <div className="w-full md:flex-1 relative flex items-center gap-4">
                <span className="text-sky-500 font-bold">&gt;</span>

@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -11,11 +12,13 @@ import {
   updateDoc,
   where,
   increment,
-  arrayUnion,
+  writeBatch,
+  setDoc,
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { MeetRoomData, Post, User, VlogEntry } from '../types';
+import type { Comment, MeetRoomData, Post, User, VlogEntry } from '../types';
+import { pickAllowedProfileFields } from '../utils/userProfileAllowlist';
 
 const sanitizeFirestoreData = <T extends DocumentData>(data: T): T => {
   if (data === null || data === undefined) return data;
@@ -50,6 +53,28 @@ export const getPostsFromFirestore = async (limitCount = 50): Promise<Post[]> =>
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) as Post[];
 };
 
+export const getPostByIdFromFirestore = async (postId: string): Promise<Post | null> => {
+  if (!isValidId(postId)) return null;
+  const snapshot = await getDoc(doc(db, 'posts', postId));
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() } as Post;
+};
+
+export const getCommentsFromFirestore = async (postId: string): Promise<Comment[]> => {
+  if (!isValidId(postId)) return [];
+  const q = query(
+    collection(db, 'posts', postId, 'comments'),
+    orderBy('createdAt', 'desc'),
+    limit(100)
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((document) => ({
+    id: document.id,
+    postId,
+    ...document.data(),
+  })) as Comment[];
+};
+
 export const getPostsBySearchFromFirestore = async (searchQuery: string): Promise<Post[]> => {
   if (!searchQuery) return [];
   const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(200));
@@ -76,7 +101,9 @@ export const deletePostFromFirestore = async (postId: string): Promise<void> => 
 
 export const updateUserProfileInFirestore = async (userId: string, data: Partial<User>): Promise<void> => {
   if (!isValidId(userId)) return;
-  const sanitizedData = sanitizeFirestoreData(data);
+  const sanitizedData = sanitizeFirestoreData(pickAllowedProfileFields(data));
+  if (Object.keys(sanitizedData).length === 0) return;
+
   const userRef = doc(db, 'users', userId);
   await updateDoc(userRef, {
     ...sanitizedData,
@@ -108,25 +135,43 @@ export const createNotificationInFirestore = async (notificationData: DocumentDa
 
 export const ratePostTelemetryInFirestore = async (
   postId: string,
+  userId: string,
   category: string,
   voteValue: number
 ): Promise<void> => {
-  if (!isValidId(postId) || !['utility', 'skill', 'vision'].includes(category)) return;
+  if (!isValidId(postId) || !isValidId(userId) || !['utility', 'skill', 'vision'].includes(category)) return;
+
+  const voteRef = doc(db, 'posts', postId, 'votes', userId);
+  const existingVote = await getDoc(voteRef);
+  if (existingVote.exists()) return;
+
   const postRef = doc(db, 'posts', postId);
-  await updateDoc(postRef, {
+  const batch = writeBatch(db);
+
+  batch.set(voteRef, sanitizeFirestoreData({
+    userId,
+    category,
+    value: voteValue,
+    createdAt: serverTimestamp(),
+  }));
+
+  batch.update(postRef, {
     [`telemetry.${category}`]: increment(voteValue),
     'telemetry.count': increment(1),
     votes: increment(voteValue),
   });
+
+  await batch.commit();
 };
 
 export const addCommentToFirestore = async (postId: string, commentData: DocumentData): Promise<void> => {
   if (!isValidId(postId)) return;
-  const postRef = doc(db, 'posts', postId);
-  await updateDoc(postRef, {
-    comments: arrayUnion(sanitizeFirestoreData(commentData)),
-    commentsCount: increment(1),
-  });
+
+  const commentRef = doc(collection(db, 'posts', postId, 'comments'));
+  await setDoc(commentRef, sanitizeFirestoreData({
+    ...commentData,
+    createdAt: serverTimestamp(),
+  }));
 };
 
 export const addDocumentToFirestore = async (collectionName: string, data: DocumentData): Promise<{ id: string }> => {

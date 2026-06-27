@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageSquare, Heart, Reply, Send, Plus } from 'lucide-react';
 import type { Comment, Post, User } from '../types';
+import { usePostComments } from '../hooks/usePostComments';
 
 interface PostCommentsSectionProps {
   post: Post;
@@ -25,11 +26,16 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
   onReplyToComment,
   onCancelReply,
 }) => {
+  const { comments: loadedComments, loading } = usePostComments(post.id, true);
+  const comments = loadedComments.length > 0 ? loadedComments : (post.comments || []);
+
   return (
     <div className="bg-black/30 border-t border-white/5 p-4 animate-in slide-in-from-top-2">
       <div className="space-y-4 mb-4 max-h-80 overflow-y-auto custom-scrollbar pr-2">
-        {post.comments && post.comments.length > 0 ? (
-          post.comments.map((comment: Comment) => (
+        {loading && comments.length === 0 ? (
+          <div className="text-center py-6 text-slate-500 text-xs uppercase tracking-widest">იტვირთება...</div>
+        ) : comments.length > 0 ? (
+          comments.map((comment: Comment) => (
             <div key={comment.id} className="flex gap-3 animate-in fade-in slide-in-from-left-2">
               <img
                 src={comment.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.authorId}`}

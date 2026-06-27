@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import type { MeetRoomData, Notification as NotificationType, Post, User, VlogEntry } from '../types';
 import ErrorBoundary from '../components/ErrorBoundary';
+import PageMeta from '../components/PageMeta';
 import type { FeedProps } from '../components/Feed';
 
 const lazyWithRetry = <T extends React.ComponentType<any>>(importer: () => Promise<{ default: T }>) => {
@@ -22,6 +23,7 @@ const lazyWithRetry = <T extends React.ComponentType<any>>(importer: () => Promi
 };
 
 const Feed = lazyWithRetry(() => import('../components/Feed'));
+const PostPage = lazyWithRetry(() => import('../components/PostPage'));
 const ProfilePage = lazyWithRetry(() => import('../components/ProfilePage'));
 const RegulationsWiki = lazyWithRetry(() => import('../components/RegulationsWiki'));
 const MarketplaceList = lazyWithRetry(() => import('../components/MarketplaceList'));
@@ -83,6 +85,11 @@ const MeetRoomPage: React.FC<{ rooms: MeetRoomData[]; user: User | null; onLogin
   return <MeetRoom room={room} user={user} onLeave={() => navigate('/meet')} onLoginRequest={onLoginRequest} />;
 };
 
+const CategoryRedirect: React.FC = () => {
+  const { categoryId } = useParams<{ categoryId: string }>();
+  return <Navigate to={`/category/${categoryId}`} replace />;
+};
+
 const AppRoutes: React.FC<AppRoutesProps> = ({
   currentUser,
   posts,
@@ -109,10 +116,14 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
 
   return (
     <ErrorBoundary>
+      <PageMeta />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Feed {...feedProps} />} />
           <Route path="/category/:categoryId" element={<Feed {...feedProps} />} />
+          <Route path="/c/:categoryId" element={<CategoryRedirect />} />
+          <Route path="/post/:postId" element={<PostPage posts={posts} currentUser={currentUser} feedProps={feedProps} />} />
+          <Route path="/marketplace" element={<Navigate to="/market" replace />} />
           <Route path="/saved" element={<SavedPosts currentUser={currentUser} onToggleSave={feedProps.onToggleSave ?? (() => {})} onLoginClick={onLoginRequest} />} />
           <Route path="/u/:userId" element={<ProfilePage currentUser={currentUser} onToggleSave={feedProps.onToggleSave} />} />
           <Route path="/regulations" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />

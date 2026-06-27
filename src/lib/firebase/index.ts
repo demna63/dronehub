@@ -33,7 +33,7 @@ import { getStorage } from 'firebase/storage';
 import { getPerformance } from 'firebase/performance';
 import { getFirebaseConfig } from './config';
 
-const app = initializeApp(getFirebaseConfig());
+export const app = initializeApp(getFirebaseConfig());
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
@@ -54,7 +54,8 @@ export const initializeUserProfile = async (user: any) => {
       email: email || '',
       avatar: photoURL || '',
       reputation: 0,
-      role: 'user',
+      isAdmin: false,
+      role: 'pilot',
       createdAt: serverTimestamp(),
       bio: '',
       location: '',

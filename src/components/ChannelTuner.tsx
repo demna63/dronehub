@@ -16,7 +16,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
 
   const results = useMemo(() => {
     // 1. გავშალოთ ყველა არხი ერთ მასივში
-    let allChannels: { band: string; name: string; freq: number }[] = [];
+    const allChannels: { band: string; name: string; freq: number }[] = [];
     
     VTX_ALL_BANDS.forEach(bandGroup => {
       // ციფრულის ფილტრაცია (სახელების მიხედვით ვხვდებით)

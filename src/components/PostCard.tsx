@@ -8,6 +8,8 @@ import { Post, User, PostRatings, Comment } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { usePostEdit } from '../hooks/usePostEdit';
+import { usePostComments } from '../hooks/usePostComments';
+import { isUserAdmin } from '../utils/authUtils';
 
 // --- EXPANDABLE TELEMETRY COMPONENT ---
 interface PostTelemetryProps {
@@ -160,6 +162,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const [isCopied, setIsCopied] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showComments, setShowComments] = useState(defaultExpanded);
+  const { comments: loadedComments } = usePostComments(post.id, showComments);
+  const displayComments = loadedComments.length > 0 ? loadedComments : (post.comments || []);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { editingPostId, editContent, setEditContent, isSaving, startEdit, cancelEdit, saveEdit } = usePostEdit(
@@ -218,7 +222,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const handleTelemetryRate = async (u: number, s: number, v: number) => { 
     if (!currentUser) { onLoginClick(); return; }
     
-    let newStats = { ...localTelemetry };
+    const newStats = { ...localTelemetry };
     
     if (localUserVoted && userLastVote) {
         newStats.utility = newStats.utility - userLastVote.u + u;
@@ -276,9 +280,9 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const handlePostClick = () => { navigate(`/post/${post.id}`); };
   const handleAuthorClick = (e: React.MouseEvent) => { e.stopPropagation(); navigate(`/u/${post.authorId}`); };
-  const handleCategoryClick = (e: React.MouseEvent) => { e.stopPropagation(); navigate(`/c/${post.category}`); };
+  const handleCategoryClick = (e: React.MouseEvent) => { e.stopPropagation(); navigate(`/category/${post.category}`); };
 
-  const isOwner = currentUser?.id === post.authorId || currentUser?.isAdmin || currentUser?.role === 'admin';
+  const isOwner = currentUser?.id === post.authorId || isUserAdmin(currentUser);
 
   return (
     <div 
@@ -384,7 +388,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 }`}
               >
                 <MessageCircle size={18} className={showComments ? "fill-current" : "group-hover/btn:text-indigo-400"} />
-                <span className="font-medium">{post.comments?.length || 0}</span>
+                <span className="font-medium">{post.commentsCount || displayComments.length || 0}</span>
               </button>
               <button onClick={handleShare} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
                  {isCopied ? <Check size={18} className="text-emerald-400" /> : <Share2 size={18} />}
@@ -451,7 +455,7 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
           </form>
           <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-1">
-            {post.comments?.map((comment: Comment) => (
+            {displayComments.map((comment: Comment) => (
                <div key={comment.id} className="flex gap-3">
                  <div className="w-7 h-7 rounded-full bg-slate-800 shrink-0 overflow-hidden">
                     <img src={comment.avatar || comment.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.authorId}`} className="w-full h-full object-cover" alt="author" />

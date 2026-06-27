@@ -5,18 +5,32 @@ const OFFLINE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
 
 const getStorageKey = (key: OfflineCacheKey) => `${OFFLINE_CACHE_PREFIX}:${key}`;
 
-export const readCachedData = <T,>(key: OfflineCacheKey): T | null => {
+type CachedPayload<T> = { cachedAt: number; data: T };
+
+const parseCachedPayload = <T,>(rawValue: string): CachedPayload<T> | null => {
+  try {
+    return JSON.parse(rawValue) as CachedPayload<T>;
+  } catch {
+    return null;
+  }
+};
+
+export const readCachedData = <T,>(key: OfflineCacheKey, options?: { allowStale?: boolean }): T | null => {
   if (typeof window === 'undefined') return null;
 
   try {
-    const storageKey = getStorageKey(key);
-    const rawValue = window.localStorage.getItem(storageKey);
+    const rawValue = window.localStorage.getItem(getStorageKey(key));
     if (!rawValue) return null;
 
-    const parsed = JSON.parse(rawValue) as { cachedAt: number; data: T };
-    const isFresh = Date.now() - parsed.cachedAt < OFFLINE_CACHE_TTL_MS;
+    const parsed = parseCachedPayload<T>(rawValue);
+    if (!parsed) return null;
 
-    return isFresh ? parsed.data : null;
+    const isFresh = Date.now() - parsed.cachedAt < OFFLINE_CACHE_TTL_MS;
+    if (isFresh || options?.allowStale) {
+      return parsed.data;
+    }
+
+    return null;
   } catch (error) {
     console.warn(`Failed to read offline cache for ${key}:`, error);
     return null;
@@ -27,7 +41,7 @@ export const writeCachedData = <T,>(key: OfflineCacheKey, data: T) => {
   if (typeof window === 'undefined') return;
 
   try {
-    const payload = {
+    const payload: CachedPayload<T> = {
       cachedAt: Date.now(),
       data,
     };

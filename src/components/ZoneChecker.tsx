@@ -45,6 +45,9 @@ const ZoneChecker = () => {
         </div>
         <h2 className="text-2xl font-black text-white uppercase italic">ZONE <span className="text-indigo-500">CHECKER</span></h2>
         <p className="text-slate-400 text-sm">შეამოწმე უსაფრთხოა თუ არა ფრენა AI-ს დახმარებით</p>
+        <p className="text-[11px] text-amber-300/80 max-w-md mx-auto">
+          ეს ინსტრუმენტი მხოლოდ საინფორმაციოა და არ ცვლის ოფიციალურ ავიაციის წესებს ან NOTAM-ებს.
+        </p>
       </div>
 
       <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
