@@ -13,30 +13,20 @@ const DiagnosticPage: React.FC = () => {
     setLogs(prev => [`[${time}] ${message}`, ...prev]);
   };
 
-  // Safe Env Checker
-  const checkEnv = (key: string) => {
-    try {
-      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) return true;
-    } catch(e) {
-      // ignored
-    }
-    try {
-      if (typeof process !== 'undefined' && process.env && process.env[key]) return true;
-    } catch(e) {
-      // ignored
-    }
-    return false;
-  };
-
-  // Define env status 
+  // Define env status.
+  // SECURITY: only STATIC `import.meta.env.VITE_X` accesses, coerced to booleans.
+  // The previous dynamic `import.meta.env[key]` lookup forced Vite to inline the
+  // ENTIRE env object — including the secret Gemini API key — into the public
+  // bundle, where it was harvested and got the GCP project suspended (Jul 2026).
+  // Never reintroduce dynamic env access, and never reference secret keys here:
+  // the Gemini key is dev-only; production goes through the Functions proxy.
   const envStatus = [
-    { key: 'VITE_FIREBASE_API_KEY', exists: checkEnv('VITE_FIREBASE_API_KEY') },
-    { key: 'VITE_FIREBASE_AUTH_DOMAIN', exists: checkEnv('VITE_FIREBASE_AUTH_DOMAIN') },
-    { key: 'VITE_FIREBASE_PROJECT_ID', exists: checkEnv('VITE_FIREBASE_PROJECT_ID') },
-    { key: 'VITE_FIREBASE_STORAGE_BUCKET', exists: checkEnv('VITE_FIREBASE_STORAGE_BUCKET') },
-    { key: 'VITE_FIREBASE_MESSAGING_SENDER_ID', exists: checkEnv('VITE_FIREBASE_MESSAGING_SENDER_ID') },
-    { key: 'VITE_FIREBASE_APP_ID', exists: checkEnv('VITE_FIREBASE_APP_ID') },
-    { key: 'VITE_GEMINI_API_KEY', exists: checkEnv('VITE_GEMINI_API_KEY') },
+    { key: 'VITE_FIREBASE_API_KEY', exists: !!import.meta.env.VITE_FIREBASE_API_KEY },
+    { key: 'VITE_FIREBASE_AUTH_DOMAIN', exists: !!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN },
+    { key: 'VITE_FIREBASE_PROJECT_ID', exists: !!import.meta.env.VITE_FIREBASE_PROJECT_ID },
+    { key: 'VITE_FIREBASE_STORAGE_BUCKET', exists: !!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET },
+    { key: 'VITE_FIREBASE_MESSAGING_SENDER_ID', exists: !!import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID },
+    { key: 'VITE_FIREBASE_APP_ID', exists: !!import.meta.env.VITE_FIREBASE_APP_ID },
   ];
 
   // 1. Monitor Auth State
