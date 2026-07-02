@@ -9,6 +9,7 @@ import { User, Notification } from '../types';
 import Logo from './Logo';
 import NotificationsDropdown from './NotificationsDropdown';
 import { NavLink, MobileNavLink, ProfileMenuItem } from './NavbarLinks';
+import EcosystemLinksNav from './EcosystemLinksNav';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 
@@ -267,6 +268,14 @@ const Navbar: React.FC<NavbarProps> = ({
             <MobileNavLink to="/vlogs" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/vlogs')} label="ვლოგები" />
             <MobileNavLink to="/tools" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/tools')} label="ხელსაწყოები" />
             <MobileNavLink to="/map" active={location.pathname.startsWith('/map')} label="რუკა" onClick={() => setIsMobileMenuOpen(false)} />
+
+            <div className="pt-6 border-t border-white/5">
+              <EcosystemLinksNav
+                currentSiteId="main"
+                variant="mobile"
+                onNavigate={() => setIsMobileMenuOpen(false)}
+              />
+            </div>
 
             <div className="pt-8 border-t border-white/5 space-y-4">
               <button 

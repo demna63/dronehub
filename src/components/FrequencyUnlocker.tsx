@@ -1,5 +1,5 @@
 import React from 'react';
-import { Unlock, Info, CheckCircle2, PlayCircle, Move, MousePointerClick } from 'lucide-react';
+import { Unlock, Info, CheckCircle2, Move, MousePointerClick } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const FrequencyUnlocker: React.FC = () => {
@@ -127,19 +127,6 @@ const FrequencyUnlocker: React.FC = () => {
               {/* Connector Lines */}
               <div className="absolute top-10 left-[39px] bottom-12 w-[1px] bg-white/5 -z-10"></div>
             </div>
-          </div>
-
-          {/* Video Placeholder (Optional) */}
-          <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-colors">
-             <div className="flex items-center gap-3">
-               <div className="p-2 bg-red-600 rounded-lg text-white group-hover:scale-110 transition-transform">
-                 <PlayCircle size={20} fill="currentColor" className="opacity-90" />
-               </div>
-               <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">
-                 {t('unlock_video_guide') || 'Watch Video Guide'}
-               </span>
-             </div>
-             <span className="text-[10px] text-slate-400 bg-white/5 px-2 py-1 rounded">Coming Soon</span>
           </div>
 
         </div>

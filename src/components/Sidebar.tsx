@@ -4,13 +4,14 @@ import {
   MessageSquare, Users, LogIn, LogOut, 
   Gamepad2, Camera, ChevronDown, ChevronRight,
   Zap, Flag, Mountain, Scale, Shield,
-  Bookmark, LayoutGrid
+  Bookmark, LayoutGrid, MapPin, ShoppingBag, Wifi, Video
 } from 'lucide-react';
 import { User } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { isUserAdmin } from '../utils/authUtils';
 import Logo from './Logo';
 import SidebarNavSection, { SidebarNavItem } from './SidebarNavSection';
+import EcosystemLinksNav from './EcosystemLinksNav';
 
 interface SidebarProps {
   currentUser: User | null;
@@ -55,7 +56,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         </SidebarNavSection>
 
         {/* =========================== */}
-        {/* 2. DRONE ZONES */}
+        {/* 2. EXPLORE */}
+        {/* =========================== */}
+        <SidebarNavSection title={t('nav_explore') || 'EXPLORE'}>
+          <SidebarNavItem to="/tools" icon={Wifi} label={t('nav_tools') || 'FPV Tools'} />
+          <SidebarNavItem to="/market" icon={ShoppingBag} label={t('nav_market') || 'Marketplace'} />
+          <SidebarNavItem to="/map" icon={MapPin} label={t('nav_map') || 'Map'} />
+          <SidebarNavItem to="/vlogs" icon={Video} label={t('nav_vlogs') || 'Vlogs'} />
+        </SidebarNavSection>
+
+        {/* =========================== */}
+        {/* 3. DRONE ZONES */}
         {/* =========================== */}
         <SidebarNavSection title="DRONE ZONES" titleClassName="text-slate-300 opacity-60">
           <div className="space-y-1">
@@ -100,14 +111,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </SidebarNavSection>
 
         {/* =========================== */}
-        {/* 3. INFO & RULES */}
+        {/* 4. INFO & RULES */}
         {/* =========================== */}
         <SidebarNavSection title="ინფორმაცია" titleClassName="text-slate-400">
           <SidebarNavItem to="/regulations" icon={Scale} label="რეგულაციები (Wiki)" />
         </SidebarNavSection>
 
         {/* =========================== */}
-        {/* 4. SOCIAL & LIVE */}
+        {/* 5. SOCIAL & LIVE */}
         {/* =========================== */}
         <SidebarNavSection title="SOCIAL & LIVE">
           <SidebarNavItem to="/chat" icon={MessageSquare} label={t('nav_chat') || 'Global Chat'} />
@@ -115,7 +126,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         </SidebarNavSection>
 
         {/* =========================== */}
-        {/* 5. ADMIN ZONE */}
+        {/* 6. DRONEHUB TOOLS (ecosystem) */}
+        {/* =========================== */}
+        <div className="pt-2 border-t border-white/5">
+          <EcosystemLinksNav currentSiteId="main" />
+        </div>
+
+        {/* =========================== */}
+        {/* 7. ADMIN ZONE */}
         {/* =========================== */}
         {isUserAdmin(currentUser) && (
             <div className="space-y-1 pt-4 border-t border-white/5">

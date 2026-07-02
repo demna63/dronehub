@@ -105,6 +105,23 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       </RightSidebarSection>
 
+      <RightSidebarSection title="ტრენდული ზონები" icon={<Activity size={12} className="text-violet-400" />}>
+        <div className="space-y-2">
+          {trendingCommunities.map((community) => (
+            <button
+              key={community.id}
+              type="button"
+              onClick={() => onCommunityClick(community.id)}
+              className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-white/5 border border-white/5 rounded-xl transition-colors group text-left"
+            >
+              <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">
+                {community.icon} {community.name}
+              </span>
+            </button>
+          ))}
+        </div>
+      </RightSidebarSection>
+
       <RightSidebarSection title="რესურსები" icon={<ExternalLink size={12} className="text-indigo-400" />}>
         <div className="space-y-2">
           <a href="/map" className="flex items-center justify-between p-2.5 bg-slate-950 hover:bg-white/5 border border-white/5 rounded-xl transition-colors group">
@@ -118,7 +135,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           <div className="flex items-start gap-2 p-3 mt-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
             <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
             <p className="text-[9px] text-rose-300/80 leading-relaxed font-bold uppercase tracking-widest">
-              alltaf შეამოწმეთ გარემო აფრენამდე!
+              ყოველთვის შეამოწმეთ გარემო აფრენამდე!
             </p>
           </div>
         </div>

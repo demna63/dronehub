@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // --- CONTEXTS ---
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -19,6 +20,7 @@ import AppRoutes from './routes/AppRoutes';
 import { useAppData } from './hooks/useAppData';
 
 const App: React.FC = () => {
+  const navigate = useNavigate();
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -212,7 +214,7 @@ const App: React.FC = () => {
                 currentUser={currentUser}
                 onOpenAuth={handleLoginRequest}
                 trendingCommunities={categories.slice(0, 5)}
-                onCommunityClick={(id) => console.log(id)}
+                onCommunityClick={(id) => navigate(`/category/${id}`)}
               />
             </div>
 

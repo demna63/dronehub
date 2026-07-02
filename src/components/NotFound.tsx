@@ -21,10 +21,10 @@ const NotFound: React.FC = () => {
 
       <div className="space-y-4 max-w-md z-10">
         <h1 className="text-3xl font-black text-white uppercase tracking-tight typography-mtavruli">
-          Signal Lost
+          {t('not_found_title') || 'Signal Lost'}
         </h1>
         <p className="text-slate-400 font-medium leading-relaxed">
-          The requested telemetry data could not be found. The drone might be out of range or the frequency is jammed.
+          {t('not_found_desc') || 'The requested page could not be found.'}
         </p>
       </div>
 
@@ -32,7 +32,7 @@ const NotFound: React.FC = () => {
         to="/" 
         className="px-10 py-4 bg-sky-500 hover:bg-sky-400 text-white font-black rounded-[24px] text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-sky-500/20 transition-all active:scale-95 z-10 hover:-translate-y-1"
       >
-        Return to Home Point
+        {t('not_found_btn') || 'Return to Home'}
       </Link>
     </div>
   );

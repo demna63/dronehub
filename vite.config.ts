@@ -34,15 +34,12 @@ export default defineConfig(({ mode }) => {
             if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
             // Animation library — large, isolate for better caching
             if (id.includes('framer-motion')) return 'framer-motion';
-            // Charting — recharts pulls in several d3 sub-packages
-            if (id.includes('recharts') || id.includes('d3-')) return 'charts';
             // Maps — leaflet + react-leaflet
             if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps';
             // Router — separate for better caching
             if (id.includes('react-router-dom')) return 'router';
             // Search and realtime utilities
             if (id.includes('fuse.js')) return 'search';
-            if (id.includes('socket.io-client')) return 'socket';
             // Everything else (react, lucide, date-fns, etc.)
             return 'vendor';
           },

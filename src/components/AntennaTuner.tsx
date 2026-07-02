@@ -40,6 +40,18 @@ const AntennaTuner: React.FC = () => {
     return val;
   };
 
+  const toMeters = (val: number, unit: string) => {
+    if (unit === "mm") return val / 1000;
+    if (unit === "cm") return val / 100;
+    return val;
+  };
+
+  const estimateKFactor = (wireDiameterM: number, wavelengthM: number) => {
+    if (wireDiameterM <= 0 || wavelengthM <= 0) return 0.9515;
+    const slenderness = wireDiameterM / wavelengthM;
+    return Math.max(0.90, Math.min(0.98, 0.978 - slenderness * 12));
+  };
+
   const calculateDipole = useCallback(() => {
     const f = parseFloat(frequency);
     if (isNaN(f) || f <= 0) return;
@@ -48,7 +60,10 @@ const AntennaTuner: React.FC = () => {
     const lambdaVacuum = SPEED_OF_LIGHT / freqHz;
 
     let k = parseFloat(kFactor);
-    if (autoK) k = 0.9515; // Placeholder for future logic
+    if (autoK) {
+      const wireM = toMeters(parseFloat(diameter) || 0, diameterUnit);
+      k = estimateKFactor(wireM, lambdaVacuum);
+    }
 
     const totalLengthM = (lambdaVacuum / 2) * k;
     const legLengthM = totalLengthM / 2;

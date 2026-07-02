@@ -1,20 +1,61 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# DroneHub Georgia — Community Portal
 
-# Run and deploy your AI Studio app
+**dronehub.ge** — ქართული FPV/დრონების community პორტალი.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1V_BYEiISmsUlKrI3PP12hP8ywS6u_54X
+- Community feed, posts, comments, categories
+- Pilot map (Leaflet), marketplace, global chat
+- FPV tools hub (battery, channels, antenna, STL catalog, zone checker, …)
+- Ecosystem links to [PID Calculator](https://pid-dronehub.ge) and [VTX Generator](https://vtx-dronehub.web.app)
+- Regulations wiki with AI zone check (via Firebase Functions)
+- PWA + offline support
 
-## Run Locally
+## Stack
 
-**Prerequisites:**  Node.js
+- React 18 + TypeScript + Vite 5
+- Tailwind CSS, Framer Motion
+- Firebase (Auth, Firestore, Storage, Hosting, Functions)
+- React Router v6
 
+## Local development
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+cp env.example .env.local   # fill Firebase + optional dev Gemini key
+npm run dev                 # http://localhost:4173
+```
+
+## Build & deploy
+
+```bash
+npm run build
+npm run deploy:hosting      # build + firebase deploy --only hosting
+```
+
+Firebase project: `dronehubgeorgia-a7bd5`  
+Production URL: https://dronehub.ge
+
+## Project structure
+
+```
+src/
+  components/     # UI (Feed, ToolsHub, map, chat, admin, …)
+  routes/         # AppRoutes.tsx
+  config/         # ecosystemLinks.ts
+  constants/      # toolsData, categories
+  services/       # apiService, geminiService, firestore
+  lib/firebase/   # Firebase init
+functions/        # geminiProxy Cloud Function
+public/           # brand assets, PWA manifest, service worker
+```
+
+## Ecosystem
+
+| App | URL |
+|-----|-----|
+| Main portal | https://dronehub.ge |
+| PID Calculator | https://pid-dronehub.ge |
+| VTX Generator | https://vtx-dronehub.web.app |
+
+Heavy tools (PID analyzer, VTX table generator) live on dedicated sites; the main portal links to them via the ecosystem nav.

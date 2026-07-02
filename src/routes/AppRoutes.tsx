@@ -35,18 +35,10 @@ const SpotMap = lazyWithRetry(() => import('../components/SpotMap'));
 const VlogSection = lazyWithRetry(() => import('../components/VlogSection'));
 const MeetSection = lazyWithRetry(() => import('../components/MeetSection'));
 const MeetRoom = lazyWithRetry(() => import('../components/MeetRoom'));
+const NotFound = lazyWithRetry(() => import('../components/NotFound'));
 
 const CreatePostModal = lazyWithRetry(() => import('../components/CreatePostModal'));
 const CreateMarketItemModal = lazyWithRetry(() => import('../components/CreateMarketItemModal'));
-const PIDAnalyzer = lazyWithRetry(() => import('../components/PIDAnalyzer'));
-const BetaflightPresetTool = lazyWithRetry(() => import('../components/BetaflightPresetTool'));
-const AntennaTuner = lazyWithRetry(() => import('../components/AntennaTuner'));
-const BatteryCalculator = lazyWithRetry(() => import('../components/BatteryCalculator'));
-const ChannelTuner = lazyWithRetry(() => import('../components/ChannelTuner'));
-const FrequencyUnlocker = lazyWithRetry(() => import('../components/FrequencyUnlocker'));
-const FresnelCalculator = lazyWithRetry(() => import('../components/FresnelCalculator'));
-const HarmonicsCalculator = lazyWithRetry(() => import('../components/HarmonicsCalculator'));
-const UnitConverter = lazyWithRetry(() => import('../components/RFTools').then((module) => ({ default: module.UnitConverter })));
 
 interface AppRoutesProps {
   currentUser: User | null;
@@ -90,6 +82,13 @@ const CategoryRedirect: React.FC = () => {
   return <Navigate to={`/category/${categoryId}`} replace />;
 };
 
+const ExternalRedirect: React.FC<{ to: string }> = ({ to }) => {
+  React.useEffect(() => {
+    window.location.replace(to);
+  }, [to]);
+  return <RouteFallback />;
+};
+
 const AppRoutes: React.FC<AppRoutesProps> = ({
   currentUser,
   posts,
@@ -129,17 +128,17 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/regulations" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />
           <Route path="/wiki" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />
           <Route path="/wiki/:articleId" element={<RegulationsWiki onBack={() => navigate('/regulations')} currentUser={currentUser} />} />
+          {/* Legacy tool URLs → canonical slugs or external ecosystem apps */}
+          <Route path="/tools/battery" element={<Navigate to="/tools/battery-calc" replace />} />
+          <Route path="/tools/channels" element={<Navigate to="/tools/channel-tuner" replace />} />
+          <Route path="/tools/antenna" element={<Navigate to="/tools/antenna-tuner" replace />} />
+          <Route path="/tools/pid" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
+          <Route path="/tools/pid-analyzer" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
+          <Route path="/tools/vtx-table" element={<ExternalRedirect to="https://vtx-dronehub.web.app" />} />
+          <Route path="/tools/betaflight" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
+          <Route path="/tools/betaflight-presets" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
+          <Route path="/tools/rates" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
           <Route path="/tools/*" element={<ToolsHub />} />
-          <Route path="/tools/betaflight" element={<Suspense fallback={<RouteFallback />}><BetaflightPresetTool /></Suspense>} />
-          <Route path="/tools/pid" element={<Suspense fallback={<RouteFallback />}><PIDAnalyzer /></Suspense>} />
-          <Route path="/tools/antenna" element={<Suspense fallback={<RouteFallback />}><AntennaTuner /></Suspense>} />
-          <Route path="/tools/battery" element={<Suspense fallback={<RouteFallback />}><BatteryCalculator /></Suspense>} />
-          <Route path="/tools/channels" element={<Suspense fallback={<RouteFallback />}><ChannelTuner /></Suspense>} />
-          <Route path="/tools/unlocker" element={<Suspense fallback={<RouteFallback />}><FrequencyUnlocker /></Suspense>} />
-          <Route path="/tools/fresnel" element={<Suspense fallback={<RouteFallback />}><FresnelCalculator /></Suspense>} />
-          <Route path="/tools/harmonics" element={<Suspense fallback={<RouteFallback />}><HarmonicsCalculator /></Suspense>} />
-          <Route path="/tools/converter" element={<Suspense fallback={<RouteFallback />}><UnitConverter /></Suspense>} />
-          <Route path="/tools/rates" element={<div className="p-10 text-center text-slate-500">Rates Calculator Coming Soon</div>} />
           <Route path="/vlogs/*" element={<VlogSection vlogs={vlogs} currentUser={currentUser} onLoginClick={onLoginRequest} onOpenRoom={(id) => navigate(`/vlogs/${id}`)} onAddVlog={onAddVlog} onUpdateVlog={onUpdateVlog} onDeleteVlog={onDeleteVlog} />} />
           <Route path="/market" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
           <Route path="/market/category/:categoryId" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
@@ -148,7 +147,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/meet" element={<MeetSection rooms={meetRooms} user={currentUser} onOpenRoom={(id) => navigate(`/meet/${id}`)} onLoginClick={onLoginRequest} />} />
           <Route path="/meet/:roomId" element={<MeetRoomPage rooms={meetRooms} user={currentUser} onLoginRequest={onLoginRequest} />} />
           <Route path="/admin" element={<AdminDashboard currentUser={currentUser} posts={posts} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
 

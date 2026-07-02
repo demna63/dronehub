@@ -1,22 +1,20 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  Map, Signal, Database, Unlock, Wifi, Activity, Box, Table, 
-  ArrowRight, ArrowLeft, Ruler, BatteryCharging, Radio, Loader2
+  Map, Signal, Unlock, Wifi, Activity, Box, 
+  ArrowRight, ArrowLeft, Ruler, BatteryCharging, Radio, Loader2, ArrowRightLeft
 } from 'lucide-react';
 
 // ✅ Lazy იმპორტები
 const ZoneChecker = lazy(() => import('./ZoneChecker'));
-const BetaflightPresetTool = lazy(() => import('./BetaflightPresetTool'));
 const FrequencyUnlocker = lazy(() => import('./FrequencyUnlocker'));
 const FresnelCalculator = lazy(() => import('./FresnelCalculator'));
 const HarmonicsCalculator = lazy(() => import('./HarmonicsCalculator'));
 const STLCatalog = lazy(() => import('./STLCatalog'));
-const VTXGenerator = lazy(() => import('./VTXGenerator'));
 const BatteryCalculator = lazy(() => import('./BatteryCalculator'));
 const ChannelTuner = lazy(() => import('./ChannelTuner'));
 const AntennaTuner = lazy(() => import('./AntennaTuner'));
-const PIDAnalyzer = lazy(() => import('./PIDAnalyzer'));
+const UnitConverter = lazy(() => import('./RFTools').then((module) => ({ default: module.UnitConverter })));
 
 // დატვირთვის ინდიკატორი კომპონენტი
 const ToolLoader = () => (
@@ -27,22 +25,6 @@ const ToolLoader = () => (
 );
 
 const tools = [
-  {
-    id: 'vtx-table',
-    title: 'VTX Table Gen',
-    desc: 'VTX Table გენერატორი Betaflight-ისთვის.',
-    icon: Table,
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/10'
-  },
-  {
-    id: 'betaflight-presets',
-    title: 'BF Presets',
-    desc: 'PID და Rate პრესეტები სხვადასხვა დრონებისთვის.',
-    icon: Database,
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10'
-  },
   {
     id: 'battery-calc',
     title: 'Battery Calc',
@@ -108,12 +90,12 @@ const tools = [
     bg: 'bg-red-500/10'
   },
   {
-    id: 'pid',
-    title: 'PID Analyzer',
-    desc: 'ბლექბოქს ლოგების ანალიზის ინსტრუმენტი.',
-    icon: Activity,
-    color: 'text-lime-400',
-    bg: 'bg-lime-500/10'
+    id: 'converter',
+    title: 'RF Converter',
+    desc: 'mW/dBm, LiPo voltage და RF ერთეულების კონვერტერი.',
+    icon: ArrowRightLeft,
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10'
   }
 ] as const;
 
@@ -191,16 +173,14 @@ const ToolsHub = () => {
           <Suspense fallback={<ToolLoader />}>
             <Routes>
               <Route path="battery-calc" element={<BatteryCalculator />} />
-              <Route path="vtx-table" element={<VTXGenerator />} />
               <Route path="antenna-tuner" element={<AntennaTuner />} />
               <Route path="channel-tuner" element={<ChannelTuner />} />
               <Route path="zone-check" element={<ZoneChecker />} />
-              <Route path="betaflight-presets" element={<BetaflightPresetTool />} />
               <Route path="unlocker" element={<FrequencyUnlocker />} />
               <Route path="fresnel" element={<FresnelCalculator />} />
               <Route path="harmonics" element={<HarmonicsCalculator />} />
               <Route path="stl" element={<STLCatalog />} />
-              <Route path="pid" element={<PIDAnalyzer />} />
+              <Route path="converter" element={<UnitConverter />} />
             </Routes>
           </Suspense>
         </>

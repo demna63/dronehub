@@ -19,6 +19,19 @@ export const translations = {
     'nav_presets': 'პრესეტები',
     'nav_harmonics': 'ჰარმონიები',
     'nav_fresnel': 'ფრენელის ზონა', // <--- New
+    'eco_section': 'ხელსაწყოები',
+    'eco_current': 'მიმდინარე',
+    'eco_main': 'DroneHub.ge',
+    'eco_pid': 'PID კალკულატორი',
+    'eco_vtx': 'VTX გენერატორი',
+    'nav_explore': 'აღმოჩენა',
+    'nav_tools': 'FPV Tools',
+    'nav_market': 'მარკეტი',
+    'nav_map': 'რუკა',
+    'nav_vlogs': 'ვლოგები',
+    'not_found_title': 'სიგნალი დაკარგულია',
+    'not_found_desc': 'მოთხოვნილი გვერდი ვერ მოიძებნა. შეიძლება ბმული არასწორია ან გვერდი წაშლილია.',
+    'not_found_btn': 'მთავარზე დაბრუნება',
 
     // --- UI Elements ---
     'search_placeholder': 'ძიება...',
@@ -280,6 +293,19 @@ export const translations = {
     'nav_presets': 'Presets',
     'nav_harmonics': 'Harmonics Calc',
     'nav_fresnel': 'Fresnel Zone', // <--- New
+    'eco_section': 'Tools',
+    'eco_current': 'Current',
+    'eco_main': 'DroneHub.ge',
+    'eco_pid': 'PID Calculator',
+    'eco_vtx': 'VTX Generator',
+    'nav_explore': 'Explore',
+    'nav_tools': 'FPV Tools',
+    'nav_market': 'Marketplace',
+    'nav_map': 'Map',
+    'nav_vlogs': 'Vlogs',
+    'not_found_title': 'Signal Lost',
+    'not_found_desc': 'The requested page could not be found. The link may be broken or the page was removed.',
+    'not_found_btn': 'Return to Home',
 
     // --- UI Elements ---
     'search_placeholder': 'Search...',
