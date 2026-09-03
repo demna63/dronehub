@@ -2,7 +2,6 @@ import type { FirebaseOptions } from 'firebase/app';
 
 type RuntimeConfig = {
   FIREBASE_AUTH_DOMAIN?: string;
-  GEMINI_API_KEY?: string;
 };
 
 declare global {
@@ -11,18 +10,16 @@ declare global {
   }
 }
 
-const getEnv = (key: keyof ImportMetaEnv): string => {
-  const value = import.meta.env[key];
-  return value || '';
-};
-
+// SECURITY: only STATIC `import.meta.env.VITE_*` reads — never `import.meta.env[key]`.
+// Dynamic lookups force Vite to inline the entire env object (including secrets).
 const getRuntimeConfig = (): RuntimeConfig => {
   if (typeof window === 'undefined') return {};
   return window.__APP_CONFIG__ || {};
 };
 
 const getAuthDomain = (): string => {
-  const configured = getEnv('VITE_FIREBASE_AUTH_DOMAIN') || getRuntimeConfig().FIREBASE_AUTH_DOMAIN || '';
+  const configured =
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || getRuntimeConfig().FIREBASE_AUTH_DOMAIN || '';
   if (configured) return configured;
 
   if (typeof window !== 'undefined') {
@@ -35,10 +32,10 @@ const getAuthDomain = (): string => {
 };
 
 export const getFirebaseConfig = (): FirebaseOptions => ({
-  apiKey: getEnv('VITE_FIREBASE_API_KEY'),
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: getAuthDomain(),
-  projectId: getEnv('VITE_FIREBASE_PROJECT_ID'),
-  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID'),
-  appId: getEnv('VITE_FIREBASE_APP_ID'),
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 });

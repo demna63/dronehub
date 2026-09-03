@@ -1,3 +1,4 @@
+// runtime: Node.js 22
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -6,7 +7,7 @@ const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 const getModel = (apiKey) => {
   const client = new GoogleGenerativeAI(apiKey);
-  return client.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  return client.getGenerativeModel({ model: 'gemini-3.6-flash' });
 };
 
 const parseJson = (text, fallback) => {

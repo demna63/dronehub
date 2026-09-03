@@ -37,3 +37,8 @@ yarn-error.log*
 # Firebase
 .firebase/
 firebase-debug.log
+firebase-service-account.json
+
+# stray local backups
+.env.*.bak
+.claude/settings.local.json
