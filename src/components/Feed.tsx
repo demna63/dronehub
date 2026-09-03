@@ -121,7 +121,7 @@ const Feed: React.FC<FeedProps> = ({
 
   if (!isFetching && displayedPosts.length === 0) {
     return (
-      <div className="text-center py-20 text-slate-500 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-white/5 shadow-xl">
+      <div className="text-center py-20 text-slate-400 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-white/5 shadow-xl">
         <Gamepad2 size={40} className="mx-auto mb-4 opacity-50" />
         <p className="text-lg font-bold">ამ კატეგორიაში პოსტები ჯერ არ არის.</p>
         <p className="text-sm mt-2">იყავი პირველი, ვინც დაამატებს პოსტს!</p>

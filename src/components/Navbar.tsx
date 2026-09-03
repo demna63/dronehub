@@ -135,7 +135,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
           <div className="flex items-center gap-2 md:gap-4">
             <button 
-              aria-label="ენის შეცვლა"
+              aria-label={language === 'ka' ? 'ენა: GE' : 'ენა: EN'}
               onClick={toggleLanguage}
               className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"
             >
