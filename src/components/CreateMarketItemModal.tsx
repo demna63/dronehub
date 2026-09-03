@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { compressImageFile } from '../services/storageService';
+import type { ProcessedImage } from '../services/storageService';
 
 interface CreateMarketItemModalProps {
   onClose: () => void;
@@ -40,7 +41,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState('');
   const [description, setDescription] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<ProcessedImage | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,15 +49,9 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      try {
-        const optimizedFile = await compressImageFile(file);
-        setImageFile(optimizedFile);
-        setImagePreview(URL.createObjectURL(optimizedFile));
-      } catch (error) {
-        console.error('Image compression failed, using original file', error);
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
-      }
+      const processed = await compressImageFile(file);
+      setImageFile(processed);
+      setImagePreview(URL.createObjectURL(processed.file));
     }
   };
 

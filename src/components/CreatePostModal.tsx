@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { compressImageFile } from '../services/storageService';
+import type { ProcessedImage } from '../services/storageService';
 
 interface CreatePostModalProps {
   onClose: () => void;
@@ -35,21 +36,15 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [image, setImage] = useState<File | null>(null);
+  const [image, setImage] = useState<ProcessedImage | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      try {
-        const optimizedFile = await compressImageFile(file);
-        setImage(optimizedFile);
-        setImagePreview(URL.createObjectURL(optimizedFile));
-      } catch (error) {
-        console.error('Image compression failed, using original file', error);
-        setImage(file);
-        setImagePreview(URL.createObjectURL(file));
-      }
+      const processed = await compressImageFile(file);
+      setImage(processed);
+      setImagePreview(URL.createObjectURL(processed.file));
     }
   };
 

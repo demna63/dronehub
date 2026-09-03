@@ -17,6 +17,8 @@ const Logo: React.FC<LogoProps> = ({ className = "" }) => {
           webpSrc="/brand/dhg-logo.webp"
           fallbackSrc="/brand/dhg-logo.png"
           alt="DroneHub Georgia DHG"
+          width={144}
+          height={40}
           loading="eager"
           decoding="async"
           fetchPriority="high"

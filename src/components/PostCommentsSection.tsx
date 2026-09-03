@@ -39,6 +39,10 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
             <div key={comment.id} className="flex gap-3 animate-in fade-in slide-in-from-left-2">
               <img
                 src={comment.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.authorId}`}
+                width={32}
+                height={32}
+                loading="lazy"
+                decoding="async"
                 className="w-8 h-8 rounded-full border border-white/5 shrink-0 bg-slate-800"
                 alt=""
               />

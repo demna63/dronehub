@@ -111,6 +111,10 @@ export interface Post {
   title: string;
   content: string;
   image?: string;
+  /** Intrinsic size of `image`, persisted at upload time so the layout can be
+   *  reserved before the bytes arrive (prevents cumulative layout shift). */
+  imageWidth?: number;
+  imageHeight?: number;
   category: string;
   tags: string[];
   votes: number; 

@@ -33,18 +33,24 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
       <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={onAuthorClick}>
         <img
           src={avatarUrl}
+          width={32}
+          height={32}
+          loading="lazy"
+          decoding="async"
           className="w-8 h-8 rounded-full border border-white/10 bg-slate-800 object-cover"
           alt={post.author}
         />
         <div className="min-w-0">
-          <h3 className="font-bold text-white text-sm truncate flex items-center gap-2">
+          {/* Author is card metadata, not a section heading: keeping it out of the
+              heading outline preserves h1 -> h2 order for assistive tech. */}
+          <div className="font-bold text-white text-sm truncate flex items-center gap-2">
             {post.author}
             {post.category && (
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 uppercase font-black">
                 {post.category}
               </span>
             )}
-          </h3>
+          </div>
           <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
             <Clock size={12} />
             <span>{relativeTime}</span>

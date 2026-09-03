@@ -1,20 +1,80 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
 
-export const compressImageFile = (file: File): Promise<File> => {
-  return new Promise((resolve, reject) => {
+/** Intrinsic pixel dimensions of a raster image. */
+export interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
+/** A client-optimized image together with its intrinsic dimensions. */
+export interface ProcessedImage extends ImageDimensions {
+  file: File;
+}
+
+/** A stored image: public download URL plus the dimensions persisted alongside it. */
+export interface UploadedImage extends ImageDimensions {
+  url: string;
+}
+
+const MAX_WIDTH = 1200;
+const MAX_HEIGHT = 1200;
+const WEBP_QUALITY = 0.8;
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+const MAX_SIZE_MB = 10;
+
+/**
+ * Reads a file's intrinsic size without decoding it into the DOM.
+ * Falls back to an <img> probe on browsers without `createImageBitmap`
+ * (or for formats it refuses), and to 0×0 when the file is undecodable —
+ * callers must treat 0 as "unknown" and skip persisting it.
+ */
+export const readImageDimensions = async (file: File): Promise<ImageDimensions> => {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const dimensions = { width: bitmap.width, height: bitmap.height };
+      bitmap.close();
+      return dimensions;
+    } catch {
+      /* fall through to the <img> probe */
+    }
+  }
+
+  return new Promise<ImageDimensions>((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const probe = new Image();
+    probe.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve({ width: probe.naturalWidth, height: probe.naturalHeight });
+    };
+    probe.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve({ width: 0, height: 0 });
+    };
+    probe.src = objectUrl;
+  });
+};
+
+/**
+ * Downscales an image to fit within MAX_WIDTH×MAX_HEIGHT and re-encodes it as WebP.
+ * Always resolves: on any decode/encode failure the original file is returned with
+ * its probed dimensions, so the upload path never depends on canvas succeeding.
+ */
+export const compressImageFile = (file: File): Promise<ProcessedImage> => {
+  return new Promise<ProcessedImage>((resolve) => {
+    const fallback = () => readImageDimensions(file).then(({ width, height }) => resolve({ file, width, height }));
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
+
+    reader.onerror = fallback;
     reader.onload = (event) => {
       const img = new Image();
-      img.src = event.target?.result as string;
+      img.onerror = fallback;
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        let { width, height } = img;
 
         if (width > height) {
           if (width > MAX_WIDTH) {
@@ -26,55 +86,61 @@ export const compressImageFile = (file: File): Promise<File> => {
           height = MAX_HEIGHT;
         }
 
+        const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
+
         const ctx = canvas.getContext('2d');
         if (!ctx) {
-          resolve(file);
+          fallback();
           return;
         }
 
         ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            resolve(file);
-            return;
-          }
-          const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
-          const newFile = new File([blob], newFileName, {
-            type: 'image/webp',
-          });
-          resolve(newFile);
-        }, 'image/webp', 0.8);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              fallback();
+              return;
+            }
+            const name = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+            resolve({ file: new File([blob], name, { type: 'image/webp' }), width, height });
+          },
+          'image/webp',
+          WEBP_QUALITY,
+        );
       };
-      img.onerror = (error) => reject(error);
+      img.src = event.target?.result as string;
     };
-    reader.onerror = (error) => reject(error);
   });
 };
 
-export const uploadImageToStorage = async (file: File, path: string = 'posts'): Promise<string> => {
-  if (!file) return '';
-
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  const MAX_SIZE_MB = 10;
-  if (!ALLOWED_TYPES.includes(file.type)) {
+const assertUploadable = (file: File): void => {
+  if (!(ALLOWED_TYPES as readonly string[]).includes(file.type)) {
     throw new Error(`Invalid file type: ${file.type}. Only JPEG, PNG, WebP, and GIF are allowed.`);
   }
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
     throw new Error(`File too large. Maximum size is ${MAX_SIZE_MB}MB.`);
   }
+};
 
-  try {
-    const optimizedFile = await compressImageFile(file);
-    const storageRef = ref(storage, `${path}/${Date.now()}_${optimizedFile.name}`);
-    await uploadBytes(storageRef, optimizedFile);
-    return await getDownloadURL(storageRef);
-  } catch (error) {
-    console.error('Error optimizing/uploading image:', error);
-    const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
-  }
+/**
+ * Uploads an already-optimized image. Use this from callers that ran
+ * `compressImageFile` at selection time — it avoids a second lossy re-encode.
+ */
+export const uploadProcessedImage = async (
+  image: ProcessedImage,
+  path: string = 'posts',
+): Promise<UploadedImage> => {
+  assertUploadable(image.file);
+  const storageRef = ref(storage, `${path}/${Date.now()}_${image.file.name}`);
+  await uploadBytes(storageRef, image.file);
+  return { url: await getDownloadURL(storageRef), width: image.width, height: image.height };
+};
+
+/** Compresses and uploads a raw file picked from disk. */
+export const uploadImageToStorage = async (file: File, path: string = 'posts'): Promise<UploadedImage> => {
+  if (!file) return { url: '', width: 0, height: 0 };
+  assertUploadable(file);
+  return uploadProcessedImage(await compressImageFile(file), path);
 };

@@ -25,7 +25,8 @@ import {
   updatePostInFirestore,
   updateUserProfileInFirestore,
 } from './firestoreRepository';
-import { uploadImageToStorage } from './storageService';
+import { uploadImageToStorage, uploadProcessedImage } from './storageService';
+import type { ProcessedImage, UploadedImage } from './storageService';
 import type { User, Post, VlogEntry, MeetRoomData } from '../types';
 
 export const apiService = {
@@ -58,14 +59,11 @@ export const apiService = {
     category: string;
     subCategory?: string;
     tags: string[];
-    image: File | null;
+    image: File | ProcessedImage | null;
     author: User; 
   }) {
     try {
-      let imageUrl = '';
-      if (data.image) {
-        imageUrl = await apiService.uploadImage(data.image, 'posts');
-      }
+      const uploaded = data.image ? await apiService.uploadImageWithMeta(data.image, 'posts') : null;
 
       const newPost = {
         title: data.title,
@@ -73,7 +71,10 @@ export const apiService = {
         category: data.category,
         subCategory: data.subCategory || '',
         tags: data.tags,
-        image: imageUrl,
+        image: uploaded?.url ?? '',
+        ...(uploaded && uploaded.width > 0 && uploaded.height > 0
+          ? { imageWidth: uploaded.width, imageHeight: uploaded.height }
+          : {}),
         
         authorId: data.author.id,
         author: data.author.name,
@@ -193,14 +194,12 @@ try {
     location: string;
     phone: string;
     content: string;
-    image: File | null;
+    image: File | ProcessedImage | null;
     author: User;
   }) {
     try {
-      let imageUrl = '';
-      if (data.image) {
-        imageUrl = await apiService.uploadImage(data.image, 'market');
-      }
+      const uploaded = data.image ? await apiService.uploadImageWithMeta(data.image, 'market') : null;
+      const imageUrl = uploaded?.url ?? '';
 
       const newItem = {
         title: data.title,
@@ -213,6 +212,9 @@ try {
         location: data.location,
         phone: data.phone,
         image: imageUrl,
+        ...(uploaded && uploaded.width > 0 && uploaded.height > 0
+          ? { imageWidth: uploaded.width, imageHeight: uploaded.height }
+          : {}),
         
         authorId: data.author.id,
         author: data.author.name,
@@ -234,14 +236,26 @@ try {
     }
   },
 
-  async uploadImage(file: File, path: string = 'posts'): Promise<string> {
-    if (!file) return '';
+  /**
+   * Uploads an image and returns its URL together with intrinsic dimensions.
+   * Accepts a `ProcessedImage` (already compressed at selection time) to avoid
+   * a second lossy WebP re-encode on submit.
+   */
+  async uploadImageWithMeta(image: File | ProcessedImage, path: string = 'posts'): Promise<UploadedImage> {
     try {
-      return await uploadImageToStorage(file, path);
+      return image instanceof File
+        ? await uploadImageToStorage(image, path)
+        : await uploadProcessedImage(image, path);
     } catch (error) {
       console.error("Error optimizing/uploading image:", error);
       throw error;
     }
+  },
+
+  async uploadImage(file: File, path: string = 'posts'): Promise<string> {
+    if (!file) return '';
+    const { url } = await apiService.uploadImageWithMeta(file, path);
+    return url;
   },
 
   async ratePostTelemetry(postId: string, userId: string, category: string,voteValue: number, authorId: string, postTitle: string, currentUser: User) {

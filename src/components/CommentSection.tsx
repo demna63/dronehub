@@ -157,7 +157,7 @@ const CommentItem = ({ comment, allComments, user, onVote, onEdit, onDelete, onR
       <div className="flex gap-3">
         {/* ავატარი */}
         <div className="flex-shrink-0">
-          <img src={comment.avatar} className="w-8 h-8 rounded-full border border-white/5 object-cover" alt="" />
+          <img src={comment.avatar} width={32} height={32} loading="lazy" decoding="async" className="w-8 h-8 rounded-full border border-white/5 object-cover" alt="" />
         </div>
         
         <div className="flex-1 min-w-0">

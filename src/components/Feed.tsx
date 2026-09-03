@@ -131,12 +131,23 @@ const Feed: React.FC<FeedProps> = ({
 
   return (
     <div className="space-y-6 pb-20">
+      <h1 className="sr-only">DroneHub Georgia — ქართული FPV და დრონების საზოგადოების ფიდი</h1>
       {displayedPosts.map((post, index) => {
         const content = post.content || "";
         const isExpanded = expandedPosts.has(post.id);
         const isCommentsOpen = showComments === post.id;
         const displayContent = isExpanded || content.length <= 180 ? content : `${content.slice(0, 180)}...`;
         
+        // Layout reservation: without an intrinsic ratio the <img> collapses to 0px
+        // until the bytes land, shifting everything below it (CLS). Posts created
+        // before dimensions were persisted fall back to 16:10 while collapsed, and
+        // release to the natural ratio once the user expands them (a click-driven
+        // shift is excluded from CLS).
+        const hasImageSize = Boolean(post.imageWidth && post.imageHeight);
+        const imageAspectW = hasImageSize ? post.imageWidth : 16;
+        const imageAspectH = hasImageSize ? post.imageHeight : 10;
+        const reserveAspectRatio = hasImageSize || !isExpanded;
+
         const telemetry = post.telemetry || { utility: 0, skill: 0, vision: 0, count: 0 };
         const { charge, color } = getBatteryStatus(telemetry);
         const totalCount = telemetry.count || (telemetry.utility + telemetry.skill + telemetry.vision) || 1;
@@ -190,10 +201,12 @@ const Feed: React.FC<FeedProps> = ({
               <div className="mt-2 cursor-pointer bg-black/40 overflow-hidden border-y border-white/5" onClick={() => toggleExpand(post.id)}>
                 <OptimizedImage
                   src={post.image}
+                  {...(hasImageSize ? { width: post.imageWidth, height: post.imageHeight } : {})}
+                  style={reserveAspectRatio ? { aspectRatio: `${imageAspectW} / ${imageAspectH}` } : undefined}
                   loading={index === 0 ? 'eager' : 'lazy'}
                   decoding="async"
                   fetchPriority={index === 0 ? 'high' : 'auto'}
-                  className={`w-full transition-all duration-700 ${isExpanded ? 'max-h-none' : 'max-h-[500px] object-cover'}`}
+                  className={`w-full h-auto transition-[max-height,opacity] duration-700 ${isExpanded ? 'max-h-none object-contain' : 'max-h-[500px] object-cover'}`}
                   alt={post.title}
                 />
               </div>
