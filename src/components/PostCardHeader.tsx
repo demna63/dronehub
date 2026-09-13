@@ -3,15 +3,17 @@ import { Clock, Edit2, MoreHorizontal, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ka } from 'date-fns/locale';
 import type { Post } from '../types';
+import Avatar from './Avatar';
+import { toDate } from '../utils/dates';
 
 interface PostCardHeaderProps {
   post: Post;
   canManage: boolean;
   activeMenu: string | null;
-  onAuthorClick: (event: React.MouseEvent) => void;
+  onAuthorClick: (authorId: string) => void;
   onMenuToggle: (postId: string) => void;
-  onEdit: (event: React.MouseEvent) => void;
-  onDelete: (event: React.MouseEvent) => void;
+  onEdit: (post: Post) => void;
+  onDelete: (postId: string) => void;
 }
 
 const PostCardHeader: React.FC<PostCardHeaderProps> = ({
@@ -23,22 +25,20 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const relativeTime = post.createdAt?.seconds
-    ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true, locale: ka })
+  const createdAt = toDate(post.createdAt);
+  const relativeTime = createdAt
+    ? formatDistanceToNow(createdAt, { addSuffix: true, locale: ka })
     : 'ახლახანს';
-  const avatarUrl = (post as Post & { authorAvatar?: string }).authorAvatar || post.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.authorId}`;
+  const avatarUrl = (post as Post & { authorAvatar?: string }).authorAvatar || post.avatar || '';
 
   return (
     <div className="p-4 flex items-center justify-between relative z-20">
-      <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={onAuthorClick}>
-        <img
+      <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => onAuthorClick(post.authorId)}>
+        <Avatar
           src={avatarUrl}
-          width={32}
-          height={32}
-          loading="lazy"
-          decoding="async"
-          className="w-8 h-8 rounded-full border border-white/10 bg-slate-800 object-cover"
-          alt={post.author}
+          name={post.author}
+          size={32}
+          ringClassName="border border-white/10"
         />
         <div className="min-w-0">
           {/* Author is card metadata, not a section heading: keeping it out of the
@@ -75,7 +75,7 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
               <button
                 onClick={(event) => {
                   event.stopPropagation();
-                  onEdit(event);
+                  onEdit(post);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/10 transition-colors"
               >
@@ -85,7 +85,7 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
               <button
                 onClick={(event) => {
                   event.stopPropagation();
-                  onDelete(event);
+                  onDelete(post.id);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors border-t border-white/5"
               >
@@ -99,4 +99,6 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
   );
 };
 
-export default PostCardHeader;
+/** Memoised: these render once per feed card, so an unrelated Feed state
+    change used to re-render all of them. */
+export default React.memo(PostCardHeader);

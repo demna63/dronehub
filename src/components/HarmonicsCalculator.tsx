@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Activity, AlertTriangle, CheckCircle2, Waves, Settings, Radio, ArrowRight, Gauge } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Waves, Radio, ArrowRight, Gauge } from 'lucide-react';
 import { VTX_ALL_BANDS } from '../constants/toolsData';
 
 const HarmonicsCalculator: React.FC = () => {
@@ -77,11 +77,12 @@ const HarmonicsCalculator: React.FC = () => {
           
           {/* Input: Center Freq */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label htmlFor="harmonics-center-freq" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Radio size={14} /> Central Freq (MHz)
             </label>
             <div className="relative group">
               <input 
+                id="harmonics-center-freq"
                 type="number" 
                 value={centerFreq}
                 onChange={(e) => setCenterFreq(Number(e.target.value))}
@@ -92,11 +93,12 @@ const HarmonicsCalculator: React.FC = () => {
 
           {/* Input: Bandwidth */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label htmlFor="harmonics-bandwidth" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Waves size={14} /> Channel Width (MHz)
             </label>
             <div className="relative group">
               <input 
+                id="harmonics-bandwidth"
                 type="number" 
                 value={bandwidth}
                 onChange={(e) => setBandwidth(Number(e.target.value))}

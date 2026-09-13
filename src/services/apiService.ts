@@ -13,21 +13,25 @@ import {
   deletePostFromFirestore,
   getMeetRoomsFromFirestore,
   getPostsBySearchFromFirestore,
+  getPostsByIdsFromFirestore,
   getPostsFromFirestore,
+  type PostSort,
+  getUserTelemetryVote,
   getPresetsFromFirestore,
   getSpotsFromFirestore,
   getSTLFilesFromFirestore,
   getUserDroneBuildsFromFirestore,
   getVlogsFromFirestore,
   markNotificationAsReadInFirestore,
-  ratePostTelemetryInFirestore,
   updateDroneBuildInFirestore,
   updatePostInFirestore,
   updateUserProfileInFirestore,
 } from './firestoreRepository';
 import { uploadImageToStorage, uploadProcessedImage } from './storageService';
 import type { ProcessedImage, UploadedImage } from './storageService';
-import type { User, Post, VlogEntry, MeetRoomData } from '../types';
+import type { User, Post, PostTelemetryVote, VlogEntry, MeetRoomData } from '../types';
+import { ratePost } from './telemetryService';
+import { MARKET_CATEGORY } from '../constants/market';
 
 export const apiService = {
   
@@ -35,22 +39,17 @@ export const apiService = {
   // 1. POSTS & FEED
   // ---------------------------------------------------------
   
-  async getPosts(): Promise<Post[]> {
-    try {
-      return await getPostsFromFirestore(50);
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      return [];
-    }
+  async getPosts(sort: PostSort = 'rated'): Promise<Post[]> {
+    return getPostsFromFirestore(50, sort);
+  },
+
+  /** Fetch specific posts by id — one query per 30 ids, not a feed scan. */
+  async getPostsByIds(postIds?: string[] | null): Promise<Post[]> {
+    return getPostsByIdsFromFirestore(postIds ?? []);
   },
 
   async searchPosts(searchQuery: string): Promise<Post[]> {
-    try {
-      return await getPostsBySearchFromFirestore(searchQuery);
-    } catch (error) {
-      console.error("Search error:", error);
-      return [];
-    }
+    return await getPostsBySearchFromFirestore(searchQuery);
   },
 
   async addPost(data: {
@@ -205,7 +204,7 @@ try {
         title: data.title,
         price: Number(data.price),
         content: data.content,
-        category: 'marketplace',
+        category: MARKET_CATEGORY,
         subCategory: data.subCategory,
         condition: data.condition,
         brand: data.brand,
@@ -258,18 +257,25 @@ try {
     return url;
   },
 
-  async ratePostTelemetry(postId: string, userId: string, category: string,voteValue: number, authorId: string, postTitle: string, currentUser: User) {
-    await ratePostTelemetryInFirestore(postId, userId, category, voteValue);
+  /**
+   * Record the caller's UTILITY/SKILL/VISION rating of a post.
+   *
+   * Goes through the ratePostV2 callable, never a direct client write: the
+   * aggregate on the post is denormalised, so a client that could write it
+   * could forge it. firestore.rules blocks `telemetry`, `telemetryScore` and
+   * the votes subcollection for exactly that reason.
+   */
+  async ratePostTelemetry(postId: string, ratings: PostTelemetryVote) {
+    return ratePost(postId, ratings);
+  },
 
-    if (authorId !== userId) {
-      await this.createNotification(authorId, currentUser, 'vote', postId, postTitle);
-    }
+  async getUserTelemetryVote(postId: string, userId: string) {
+    return getUserTelemetryVote(postId, userId);
   },
 
   // კომენტარის დამატება
-  async addComment(postId: string, text: string, user: User, postAuthorId: string, postTitle: string) {
+  async addComment(postId: string, text: string, user: User, postAuthorId: string, postTitle: string): Promise<string | null> {
     const newComment = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
       author: user.name,
       authorId: user.id,
       avatar: user.avatar || '',
@@ -279,11 +285,15 @@ try {
       createdAt: new Date().toISOString()
     };
 
-    await addCommentToFirestore(postId, newComment);
+    const commentId = await addCommentToFirestore(postId, newComment);
 
     if (postAuthorId !== user.id) {
       await this.createNotification(postAuthorId, user, 'comment', postId, postTitle);
     }
+
+    // The document id is what edit and delete address, so it goes back to the
+    // caller rather than being invented client-side.
+    return commentId;
   },
 
   // ---------------------------------------------------------
@@ -378,18 +388,17 @@ try {
   },
   
   async getSpots() {
-    try {
-      return await getSpotsFromFirestore();
-    } catch (error) {
-      console.error("Error fetching spots:", error);
-      return [];
-    }
+    return await getSpotsFromFirestore();
   },
 
-  async addSpot(spotData: any) {
+  async addSpot(spotData: Record<string, unknown>, user: User) {
     try {
       const newSpot = {
         ...spotData,
+        // The rule pins ownership to the caller. Without this the write was
+        // rejected outright, and the UI only said "შეცდომა".
+        authorId: user.id,
+        author: (spotData.author as string)?.trim() || user.name,
         createdAt: serverTimestamp()
       };
       const createdSpot = await addSpotToFirestore(newSpot);
@@ -404,50 +413,35 @@ try {
   // ---------------------------------------------------------
   
   async getUserDroneBuilds(userId: string) {
-    try {
-      return await getUserDroneBuildsFromFirestore(userId);
-    } catch (error) {
-      console.error("Error fetching builds:", error);
-      return [];
-    }
+    return await getUserDroneBuildsFromFirestore(userId);
   },
 
   async getVlogs(): Promise<VlogEntry[]> {
-    try {
-      return await getVlogsFromFirestore();
-    } catch (error) {
-      console.error("Error fetching vlogs:", error);
-      return [];
-    }
+    return await getVlogsFromFirestore();
   },
   async getMeetRooms(): Promise<MeetRoomData[]> {
-    try {
-      return await getMeetRoomsFromFirestore();
-    } catch (error) {
-      console.error("Error fetching rooms:", error);
-      return [];
-    }
+    return await getMeetRoomsFromFirestore();
   },
   async deleteDroneBuild(buildId: string): Promise<void> {
     await deleteDroneBuildFromFirestore(buildId);
   },
 
   async updateDroneBuild(buildId: string, buildData: any, imageFile?: File): Promise<void> {
-    let imageUrl: string = buildData.image || '';
+    // Only touch `image` when a new file was actually picked. ProfilePage's
+    // edit payload carries no `image` key, so defaulting to '' silently
+    // discarded the existing photo on every save.
+    let imageUrl: string | undefined = typeof buildData.image === 'string' ? buildData.image : undefined;
     if (imageFile) {
       imageUrl = await this.uploadImage(imageFile, 'builds');
     }
 
+    // `sanitizeFirestoreData` strips undefined, so omitting `image` leaves the
+    // stored value untouched rather than overwriting it with an empty string.
     await updateDroneBuildInFirestore(buildId, { ...buildData, image: imageUrl });
   },
   // STL ფაილების წამოღება
   async getSTLFiles(): Promise<any[]> {
-    try {
-      return await getSTLFilesFromFirestore();
-    } catch (error) {
-      console.error("Error fetching STL files:", error);
-      return [];
-    }
+    return await getSTLFilesFromFirestore();
   },
   // STL ფაილის და სურათის ატვირთვა
   async uploadSTLItem(data: any, imageFile: File, stlFile: File): Promise<void> {

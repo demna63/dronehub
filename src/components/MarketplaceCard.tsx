@@ -1,6 +1,7 @@
 import React from 'react';
 import { Post } from '../types';
-import { MapPin, Clock, Eye, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Clock, Image as ImageIcon } from 'lucide-react';
+import { formatShortDate } from '../utils/dates';
 
 interface MarketplaceCardProps {
   item: Post;
@@ -87,7 +88,7 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item, onClick }) => {
            <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
                 <Clock size={12} className="text-slate-400" />
-                {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString('ka-GE') : 'ახლახანს'}
+                {formatShortDate(item.createdAt) || 'ახლახანს'}
               </span>
            </div>
         </div>

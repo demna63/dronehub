@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { geminiService } from '../services/geminiService';
 import { MapPin, Navigation, AlertTriangle, CheckCircle, Ban, Loader2 } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 
 const ZoneChecker = () => {
+  const { showToast } = useToast();
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ status: string; message: string } | null>(null);
 
   const handleCurrentLocation = () => {
-    if (!navigator.geolocation) return alert('Geolocation not supported');
+    if (!navigator.geolocation) {
+      showToast('ბრაუზერი ლოკაციას არ უჭერს მხარს.', 'error');
+      return;
+    }
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -17,8 +22,9 @@ const ZoneChecker = () => {
         setLng(pos.coords.longitude.toString());
         setLoading(false);
       },
-      (err) => {
-        alert('ვერ მოხერხდა ლოკაციის გაგება');
+      (geoError) => {
+        console.error('Geolocation failed:', geoError);
+        showToast('ვერ მოხერხდა ლოკაციის გაგება.', 'error');
         setLoading(false);
       }
     );

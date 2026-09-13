@@ -146,7 +146,7 @@ const ToolsHub = () => {
                   <ArrowRight size={20} className="text-slate-400" />
                 </div>
 
-                <h3 className="text-lg font-bold text-white mb-1">{tool.title}</h3>
+                <h2 className="text-lg font-bold text-white mb-1">{tool.title}</h2>
                 <p className="text-xs text-slate-400 leading-relaxed">{tool.desc}</p>
               </Link>
             ))}

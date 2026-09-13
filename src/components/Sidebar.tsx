@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentUser, 
   onLoginClick, 
   onLogout,
-  onOpenAuth // 👈 დამატეთ ეს ხაზი
+  onOpenAuth: _onOpenAuth // 👈 დამატეთ ეს ხაზი
 }) => {
   const { t } = useLanguage();
   const location = useLocation();
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* =========================== */}
         {isUserAdmin(currentUser) && (
             <div className="space-y-1 pt-4 border-t border-white/5">
-              <SidebarNavSection title="ADMIN ZONE" titleClassName="text-rose-500 opacity-60 flex items-center gap-2">
+              <SidebarNavSection title="ADMIN ZONE" titleClassName="text-rose-500 flex items-center gap-2">
                 <SidebarNavItem to="/admin" icon={Shield} label="Dashboard" />
               </SidebarNavSection>
             </div>

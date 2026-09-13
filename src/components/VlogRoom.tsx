@@ -2,8 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { VlogEntry, User, VlogChatMessage } from '../types';
 import { Send, User as UserIcon, ArrowLeft, Loader2 } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { formatClockTime } from '../utils/dates';
+import { MESSAGE_MAX_LENGTH } from '../constants/limits';
+
+/** Newest chat messages streamed for a vlog channel. */
+const VLOG_CHAT_LIMIT = 100;
+
+
 
 interface VlogRoomProps {
   vlogs: VlogEntry[];
@@ -19,12 +26,14 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
   const [activeVlog, setActiveVlog] = useState<VlogEntry | undefined>(
     vlogs.find(v => v.id === vlogId)
   );
+  const [listenerError, setListenerError] = useState<string | null>(null);
   
   // თუ პროპებში არ იყო, ვთვლით რომ იტვირთება
   const [loadingVlog, setLoadingVlog] = useState(!activeVlog);
   
   const [messages, setMessages] = useState<VlogChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 1. თუ Vlog არ არის პროპებში (მაგ: პირდაპირი ლინკით გახსნისას), წამოვიღოთ ბაზიდან
@@ -34,22 +43,29 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       return;
     }
     
+    let cancelled = false;
+
     const fetchVlog = async () => {
       if (!vlogId) return;
       try {
-        const docRef = doc(db, 'posts', vlogId);
+        // Vlogs live in the `vlogs` collection (see firestoreRepository), not in
+        // `posts` — so opening /vlogs/<id> from a shared link or refreshing the
+        // page always missed and rendered "ვლოგი ვერ მოიძებნა".
+        const docRef = doc(db, 'vlogs', vlogId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           // აქ ვუთითებთ ტიპს as VlogEntry, რომ TS არ გაბრაზდეს
-          setActiveVlog({ id: docSnap.id, ...docSnap.data() } as VlogEntry);
+          if (!cancelled) setActiveVlog({ id: docSnap.id, ...docSnap.data() } as VlogEntry);
         }
       } catch (error) {
         console.error("Vlog fetch error", error);
       } finally {
-        setLoadingVlog(false);
+        if (!cancelled) setLoadingVlog(false);
       }
     };
     fetchVlog();
+
+    return () => { cancelled = true; };
   }, [vlogId, activeVlog]);
 
   // 2. ჩატის მოსმენა
@@ -57,7 +73,9 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
     if (!vlogId || !db) return;
 
     const messagesRef = collection(db, 'channels', vlogId, 'messages');
-    const q = query(messagesRef, orderBy('createdAt', 'asc'));
+    // Bounded like ChatRoom (100) and MeetRoom (50); this one streamed a
+    // channel's entire history.
+    const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(VLOG_CHAT_LIMIT));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(doc => {
@@ -65,19 +83,23 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
         return {
           id: doc.id,
           vlogId: vlogId,
-          authorId: data.uid,
+          authorId: data.authorId || data.uid,
           authorName: data.authorName,
           avatar: data.avatar,
           text: data.text,
-          timestamp: data.createdAt?.toDate 
-            ? data.createdAt.toDate().toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' })
-            : '...',
+          timestamp: formatClockTime(data.createdAt),
           createdAt: data.createdAt
         } as VlogChatMessage;
       });
       
-      setMessages(msgs);
+      // Queried newest-first for the limit, rendered oldest-first.
+      setMessages(msgs.reverse());
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }, (snapshotError) => {
+      // Without this a rules rejection or a dropped connection was silent: the
+      // list simply stopped updating with no indication that anything failed.
+      console.error('Message listener error:', snapshotError);
+      setListenerError('შეტყობინებები ვერ ჩაიტვირთა.');
     });
 
     return () => unsubscribe();
@@ -88,9 +110,14 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
     if (!newMessage.trim() || !currentUser || !vlogId) return;
 
     try {
+      setSendError(null);
       const messagesRef = collection(db, 'channels', vlogId, 'messages');
       await addDoc(messagesRef, {
-        text: newMessage,
+        text: newMessage.slice(0, MESSAGE_MAX_LENGTH),
+        // `authorId` is what the rule on channels/{id}/messages checks. This
+        // wrote `uid`, so every message in a vlog channel was rejected — and
+        // the catch below only logged it, so nothing said so.
+        authorId: currentUser.id,
         uid: currentUser.id,
         authorName: currentUser.name,
         avatar: currentUser.avatar || '',
@@ -99,6 +126,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       setNewMessage('');
     } catch (error) {
       console.error("Error sending message:", error);
+      setSendError('შეტყობინება ვერ გაიგზავნა.');
     }
   };
 
@@ -129,7 +157,9 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
 
   // ✅ Fix: აქ ვიყენებთ 'url'-ს (რაც VlogEntry-შია) და არა 'videoUrl'-ს
   // ასევე დავამატეთ || '' რომ undefined არ გადაეცეს
-  const videoSource = activeVlog.url || ''; 
+  // `addVlog` persists `videoUrl` (and `content`); `url` only ever existed on
+  // the in-memory object it returned, so a reloaded vlog rendered <iframe src="">.
+  const videoSource = activeVlog.url || activeVlog.videoUrl || activeVlog.content || '';
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] max-w-7xl mx-auto gap-4 p-4">
@@ -163,7 +193,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       {/* CHAT SECTION */}
       <div className="w-full lg:w-96 bg-slate-900 border border-white/5 rounded-3xl flex flex-col overflow-hidden">
         <div className="p-4 border-b border-white/5 bg-slate-950/30">
-          <h3 className="font-bold text-white text-sm">Live Chat</h3>
+          <h2 className="font-bold text-white text-sm">Live Chat</h2>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -187,11 +217,19 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
               </div>
             ))
           )}
+          {listenerError && (
+            <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] font-bold text-rose-300">
+              {listenerError}
+            </p>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
         <div className="p-3 border-t border-white/5 bg-slate-900">
+          {sendError && (
+            <p role="alert" className="mb-2 text-[10px] font-bold text-rose-400">{sendError}</p>
+          )}
           {currentUser ? (
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <input
@@ -199,6 +237,8 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="დაწერე..."
+                aria-label="შეტყობინება"
+                maxLength={MESSAGE_MAX_LENGTH}
                 className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none"
               />
               <button 

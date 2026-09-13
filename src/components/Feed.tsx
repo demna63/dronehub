@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  MessageSquare, Share2, BatteryCharging, Zap, Eye, Wrench, LucideIcon, Tag, Plus,
+  MessageSquare, Share2, Tag,
   Gamepad2
 } from 'lucide-react';
 import { Post, User } from '../types';
+import type { PostSort } from '../services/firestoreRepository';
 import { useNavigate, useParams } from 'react-router-dom';
 import { isUserAdmin } from '../utils/authUtils';
 import { usePostEdit } from '../hooks/usePostEdit';
@@ -12,91 +13,104 @@ import PostCardHeader from './PostCardHeader';
 import PostContentBlock from './PostContentBlock';
 import PostCommentsSection from './PostCommentsSection';
 import OptimizedImage from './OptimizedImage';
+import PostTelemetryBar from './PostTelemetryBar';
+import { useToast } from '../contexts/ToastContext';
 
-// 1. ბატარეის ფუნქცია
-const getBatteryStatus = (telemetry?: Partial<Post['telemetry']>) => {
-  const totalPoints = (telemetry?.utility || 0) + (telemetry?.skill || 0) + (telemetry?.vision || 0);
-  const charge = Math.min(100, totalPoints); 
-  let color = 'text-slate-400';
-  if (charge >= 80) color = 'text-emerald-400';
-  else if (charge >= 50) color = 'text-amber-400';
-  else if (charge >= 10) color = 'text-rose-400';
-  return { charge, color };
-};
-
-// 2. ტელემეტრიის ფანჯარა
-const RatingWindow = ({ icon: Icon, label, value, total, colorText, colorBg, onClick }: { 
-  icon: LucideIcon, label: string, value: number, total: number, colorText: string, colorBg: string, onClick: (e: React.MouseEvent) => void 
-}) => {
-  const percent = total > 0 ? Math.min(100, (value / total) * 100) : 0;
-  return (
-    <button aria-label={`შეაფასე ${label}`} onClick={onClick} className="group/window flex-1 flex flex-col gap-1 min-w-[55px] cursor-pointer relative hover:bg-white/5 rounded-lg p-1 transition-all">
-      <div className="flex items-center justify-between px-0.5 text-[9px] w-full">
-        <div className={`flex items-center gap-1 font-black uppercase ${colorText}`}>
-          <Icon size={10} />
-          <span className="hidden sm:inline">{label}</span>
-        </div>
-        <span className="font-mono text-slate-400 group-hover/window:hidden">{value || 0}</span>
-        <span className={`hidden group-hover/window:flex items-center font-bold ${colorText} animate-bounce`}>
-          <Plus size={8} />1
-        </span>
-      </div>
-      <div className="h-1 w-full bg-slate-950/50 rounded-full overflow-hidden border border-white/5 relative">
-        <div className={`h-full transition-all duration-500 ${colorBg}`} style={{ width: `${percent}%` }} />
-      </div>
-    </button>
-  );
-};
 
 export interface FeedProps {
   user?: User | null;
   isFetching?: boolean;
   onLoginClick?: () => void;
   onToggleSave?: (id: string) => void;
-  onVote?: (id: string, type: 'up' | 'down' | 'utility' | 'skill' | 'vision') => void;
   posts: Post[];
   savedPostIds?: string[];
   onAddComment?: (postId: string, text: string) => Promise<void>;
   onDeletePost?: (postId: string) => Promise<void>;
   onEditPost?: (post: Post) => void;
+  postSort?: PostSort;
+  onChangeSort?: (sort: PostSort) => void;
+  /** Set when the last fetch failed; distinct from an empty feed. */
+  error?: string | null;
+  onRetry?: () => void;
 }
 
+const SORT_OPTIONS: { value: PostSort; label: string; hint: string }[] = [
+  { value: 'rated', label: 'რეიტინგით', hint: 'მაღალშეფასებული პოსტები წინ' },
+  { value: 'new', label: 'ახალი', hint: 'უახლესი პოსტები წინ' },
+];
+
 const Feed: React.FC<FeedProps> = ({
-  user, isFetching, onLoginClick, onToggleSave, onVote, posts, savedPostIds = [], onDeletePost, onEditPost, onAddComment
+  user, isFetching, onLoginClick, onToggleSave, posts, savedPostIds = [], onDeletePost, onEditPost, onAddComment, error, onRetry,
+  postSort = 'rated', onChangeSort
 }) => {
+  const { showToast } = useToast();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [commentText, setCommentText] = useState("");
-  const [replyTo, setReplyTo] = useState<{id: string, name: string} | null>(null);
   
-  const { editingPostId, editContent, setEditContent, isSaving: isSavingEdit, startEdit, cancelEdit, saveEdit } = usePostEdit(
+  const { editingPostId, editContent, setEditContent, isSaving: isSavingEdit, saveError, startEdit, cancelEdit, saveEdit } = usePostEdit(
     onEditPost ? (post, newContent) => onEditPost({ ...post, content: newContent }) : undefined
   );
 
   const navigate = useNavigate();
   const { categoryId } = useParams();
 
-  const toggleExpand = (postId: string) => {
+  // Stable identities for everything handed to the React.memo'd row
+  // components. Inline arrows here made the shallow compare fail on every
+  // render, so the memo cost a comparison and skipped nothing.
+  const toggleExpand = useCallback((postId: string) => {
     setExpandedPosts(prev => {
       const newSet = new Set(prev);
       if (newSet.has(postId)) newSet.delete(postId); else newSet.add(postId);
       return newSet;
     });
-  };
+  }, []);
+
+  const handleAuthorClick = useCallback((authorId: string) => navigate(`/u/${authorId}`), [navigate]);
+
+  const handleMenuToggle = useCallback((postId: string) => {
+    // Functional update so this does not have to close over `activeMenu`.
+    setActiveMenu(prev => (prev === postId ? null : postId));
+  }, []);
+
+  const handleStartEdit = useCallback((post: Post) => {
+    startEdit(post);
+    setActiveMenu(null);
+  }, [startEdit]);
+
+  const handleRequestDelete = useCallback((postId: string) => {
+    // window.confirm blocks the whole page; the strip on the card asks the same
+    // question without freezing the tab.
+    setPendingDeleteId(postId);
+    setActiveMenu(null);
+  }, []);
+
+  const handleToggleExpand = useCallback((postId: string) => {
+    toggleExpand(postId);
+    setActiveMenu(null);
+  }, [toggleExpand]);
 
   const handleShare = (postId: string) => {
     const url = `${window.location.origin}/post/${postId}`;
-    navigator.clipboard.writeText(url);
-    alert('ბმული დაკოპირებულია!');
+    // writeText REJECTS on a denied permission or a non-secure context; the
+    // old code announced success unconditionally and left the rejection
+    // unhandled, so the user pasted whatever was on the clipboard before.
+    navigator.clipboard.writeText(url)
+      .then(() => showToast('ბმული დაკოპირებულია', 'success'))
+      .catch(() => showToast('ბმული ვერ დაკოპირდა', 'error'));
   };
 
-  const handleCommentSubmit = async (postId: string) => {
-    if (!user || !commentText.trim() || !onAddComment) return;
-    const final_text = replyTo ? `@${replyTo.name} ${commentText}` : commentText;
-    await onAddComment(postId, final_text);
-    setCommentText("");
-    setReplyTo(null);
+  const handleCommentSubmit = async (postId: string, text: string) => {
+    if (!user || !text.trim() || !onAddComment) return;
+    try {
+      await onAddComment(postId, text);
+    } catch (error) {
+      console.error('Comment failed', error);
+      showToast('კომენტარი ვერ გაიგზავნა. სცადე ხელახლა.', 'error');
+      // Rethrown so the composer keeps the draft instead of clearing it.
+      throw error;
+    }
   };
 
   if (isFetching && (!posts || posts.length === 0)) {
@@ -105,6 +119,25 @@ const Feed: React.FC<FeedProps> = ({
         <PostCardSkeleton />
         <PostCardSkeleton />
         <PostCardSkeleton />
+      </div>
+    );
+  }
+
+  // A failed read used to fall through to the empty state, telling the user
+  // there was nothing here when in fact nothing had loaded.
+  if (error && (!posts || posts.length === 0)) {
+    return (
+      <div className="text-center py-20 border-2 border-dashed border-rose-500/20 rounded-3xl px-6">
+        <p role="alert" className="text-sm font-bold text-rose-400 mb-4">{error}</p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
+          >
+            ხელახლა ცდა
+          </button>
+        )}
       </div>
     );
   }
@@ -132,6 +165,34 @@ const Feed: React.FC<FeedProps> = ({
   return (
     <div className="space-y-6 pb-20">
       <h1 className="sr-only">DroneHub Georgia — ქართული FPV და დრონების საზოგადოების ფიდი</h1>
+
+      {onChangeSort && (
+        <div
+          role="group"
+          aria-label="ფიდის დალაგება"
+          className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/60 border border-white/5 w-fit"
+        >
+          {SORT_OPTIONS.map((option) => {
+            const isActive = postSort === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onChangeSort(option.value)}
+                aria-pressed={isActive}
+                title={option.hint}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  isActive
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {displayedPosts.map((post, index) => {
         const content = post.content || "";
         const isExpanded = expandedPosts.has(post.id);
@@ -148,9 +209,6 @@ const Feed: React.FC<FeedProps> = ({
         const imageAspectH = hasImageSize ? post.imageHeight : 10;
         const reserveAspectRatio = hasImageSize || !isExpanded;
 
-        const telemetry = post.telemetry || { utility: 0, skill: 0, vision: 0, count: 0 };
-        const { charge, color } = getBatteryStatus(telemetry);
-        const totalCount = telemetry.count || (telemetry.utility + telemetry.skill + telemetry.vision) || 1;
         const canManage = user && (user.id === post.authorId || isUserAdmin(user));
 
         return (
@@ -159,24 +217,39 @@ const Feed: React.FC<FeedProps> = ({
             className="group bg-slate-900/80 backdrop-blur-md border border-white/5 rounded-3xl overflow-hidden hover:border-white/10 transition-[border-color,box-shadow] duration-300 relative shadow-xl shadow-black/20 animate-post-enter"
             style={{ animationDelay: `${Math.min(index * 55, 330)}ms` }}
           >
-            
+            {/* Two-step delete, replacing window.confirm — which blocks the
+                whole page and cannot be styled or dismissed with Escape. */}
+            {pendingDeleteId === post.id && (
+              <div role="alert" className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-rose-500/10 border-b border-rose-500/20">
+                <span className="text-xs font-bold text-rose-300">ნამდვილად წავშალო ეს პოსტი?</span>
+                <span className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { onDeletePost?.(post.id); setPendingDeleteId(null); }}
+                    className="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors"
+                  >
+                    დიახ, წაშალე
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDeleteId(null)}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-[11px] font-bold hover:bg-white/10 transition-colors"
+                  >
+                    გაუქმება
+                  </button>
+                </span>
+              </div>
+            )}
+
             {/* HEADER */}
             <PostCardHeader
               post={post}
               canManage={Boolean(canManage)}
               activeMenu={activeMenu}
-              onAuthorClick={() => navigate(`/u/${post.authorId}`)}
-              onMenuToggle={(postId) => setActiveMenu(activeMenu === postId ? null : postId)}
-              onEdit={() => {
-                startEdit(post);
-                setActiveMenu(null);
-              }}
-              onDelete={() => {
-                if (window.confirm('ნამდვილად გსურთ პოსტის წაშლა?')) {
-                  onDeletePost?.(post.id);
-                }
-                setActiveMenu(null);
-              }}
+              onAuthorClick={handleAuthorClick}
+              onMenuToggle={handleMenuToggle}
+              onEdit={handleStartEdit}
+              onDelete={handleRequestDelete}
             />
 
             {/* CONTENT */}
@@ -187,10 +260,8 @@ const Feed: React.FC<FeedProps> = ({
               editingPostId={editingPostId}
               editContent={editContent}
               isSavingEdit={isSavingEdit}
-              onToggleExpand={(postId) => {
-                toggleExpand(postId);
-                setActiveMenu(null);
-              }}
+              saveError={editingPostId === post.id ? saveError : null}
+              onToggleExpand={handleToggleExpand}
               onEditContentChange={setEditContent}
               onCancelEdit={cancelEdit}
               onSaveEdit={saveEdit}
@@ -213,26 +284,15 @@ const Feed: React.FC<FeedProps> = ({
             )}
 
             {/* FOOTER / TELEMETRY */}
-            <div className="p-3 mt-1 border-t border-white/5 flex items-center gap-2 relative z-10" onClick={(e) => editingPostId === post.id && e.stopPropagation()}>
-              <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-black/40 border border-white/5 shrink-0 ${color} shadow-inner shadow-black`}>
-                <BatteryCharging size={16} className={charge > 0 ? "animate-pulse" : ""} />
-                <span className="text-xs font-black font-mono text-slate-300">{charge}%</span>
-              </div>
-
-              <div className="flex-1 flex items-center gap-1 px-1.5 py-1 rounded-xl bg-white/[0.03] border border-white/5 min-w-0">
-                <RatingWindow icon={Wrench} label="Utility" value={telemetry.utility} total={totalCount} colorText="text-emerald-400" colorBg="bg-emerald-500" onClick={(e) => { e.stopPropagation(); onVote?.(post.id, 'utility'); }} />
-                <RatingWindow icon={Zap} label="Skill" value={telemetry.skill} total={totalCount} colorText="text-amber-400" colorBg="bg-amber-500" onClick={(e) => { e.stopPropagation(); onVote?.(post.id, 'skill'); }} />
-                <RatingWindow icon={Eye} label="Vision" value={telemetry.vision} total={totalCount} colorText="text-purple-400" colorBg="bg-purple-500" onClick={(e) => { e.stopPropagation(); onVote?.(post.id, 'vision'); }} />
-              </div>
+            <div className="p-3 mt-1 border-t border-white/5 flex items-start gap-2 relative z-10" onClick={(e) => editingPostId === post.id && e.stopPropagation()}>
+              <PostTelemetryBar post={post} currentUser={user ?? null} onLoginClick={onLoginClick} />
 
               <div className="flex items-center shrink-0">
                 <button
                   aria-label="კომენტარები"
                   onClick={() => {
+                    // Each panel owns its own draft now, so nothing to clear.
                     setShowComments(isCommentsOpen ? null : post.id);
-                    // FIX: clear shared input state so it doesn't carry over between posts
-                    setCommentText("");
-                    setReplyTo(null);
                   }}
                   className={`p-2 transition-all relative ${isCommentsOpen ? 'text-sky-400 bg-sky-500/10 rounded-xl' : 'text-slate-400 hover:text-sky-400'}`}
                 >
@@ -253,16 +313,8 @@ const Feed: React.FC<FeedProps> = ({
               <PostCommentsSection
                 post={post}
                 user={user}
-                commentText={commentText}
-                replyTo={replyTo}
                 onLoginClick={onLoginClick}
-                onCommentTextChange={setCommentText}
                 onCommentSubmit={handleCommentSubmit}
-                onReplyToComment={(comment) => {
-                  setReplyTo({ id: comment.id, name: comment.author });
-                  document.getElementById(`input-${post.id}`)?.focus();
-                }}
-                onCancelReply={() => setReplyTo(null)}
               />
             )}
           </article>

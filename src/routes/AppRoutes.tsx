@@ -31,6 +31,7 @@ const GlobalChat = lazyWithRetry(() => import('../components/GlobalChat'));
 const ToolsHub = lazyWithRetry(() => import('../components/ToolsHub'));
 const AdminDashboard = lazyWithRetry(() => import('../components/AdminDashboard'));
 const SavedPosts = lazyWithRetry(() => import('../components/SavedPosts'));
+const SearchPage = lazyWithRetry(() => import('../components/SearchPage'));
 const SpotMap = lazyWithRetry(() => import('../components/SpotMap'));
 const VlogSection = lazyWithRetry(() => import('../components/VlogSection'));
 const MeetSection = lazyWithRetry(() => import('../components/MeetSection'));
@@ -58,6 +59,8 @@ interface AppRoutesProps {
   onMarketItemSuccess: () => void;
   isCreateOpen: boolean;
   isMarketModalOpen: boolean;
+  fetchVlogs: () => void;
+  fetchMeetRooms: () => void;
   onAddVlog: (vlog: VlogEntry) => Promise<void>;
   onUpdateVlog: (id: string, data: Partial<VlogEntry>) => void;
   onDeleteVlog: (id: string) => void;
@@ -75,6 +78,18 @@ const MeetRoomPage: React.FC<{ rooms: MeetRoomData[]; user: User | null; onLogin
   const room = rooms.find((candidate) => candidate.id === roomId);
   if (!room) return <Navigate to="/meet" replace />;
   return <MeetRoom room={room} user={user} onLeave={() => navigate('/meet')} onLoginRequest={onLoginRequest} />;
+};
+
+/**
+ * Runs a fetch when its route mounts.
+ *
+ * The vlog and meet collections used to be read on every app boot, whether or
+ * not the visitor ever opened those routes. Both routes are lazy, so pairing
+ * the fetch with the route is where it belonged.
+ */
+const OnRouteMount: React.FC<{ run: () => void; children: React.ReactNode }> = ({ run, children }) => {
+  React.useEffect(() => { run(); }, [run]);
+  return <>{children}</>;
 };
 
 const CategoryRedirect: React.FC = () => {
@@ -107,6 +122,8 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
   onMarketItemSuccess,
   isCreateOpen,
   isMarketModalOpen,
+  fetchVlogs,
+  fetchMeetRooms,
   onAddVlog,
   onUpdateVlog,
   onDeleteVlog,
@@ -124,7 +141,19 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/post/:postId" element={<PostPage posts={posts} currentUser={currentUser} feedProps={feedProps} />} />
           <Route path="/marketplace" element={<Navigate to="/market" replace />} />
           <Route path="/saved" element={<SavedPosts currentUser={currentUser} onToggleSave={feedProps.onToggleSave ?? (() => {})} onLoginClick={onLoginRequest} />} />
-          <Route path="/u/:userId" element={<ProfilePage currentUser={currentUser} onToggleSave={feedProps.onToggleSave} />} />
+          <Route
+            path="/search"
+            element={(
+              <SearchPage
+                currentUser={currentUser}
+                onLoginClick={onLoginRequest}
+                onToggleSave={feedProps.onToggleSave}
+                savedPostIds={feedProps.savedPostIds}
+                onAddComment={feedProps.onAddComment}
+              />
+            )}
+          />
+          <Route path="/u/:userId" element={<ProfilePage currentUser={currentUser} onToggleSave={feedProps.onToggleSave} onLoginClick={onLoginRequest} />} />
           <Route path="/regulations" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />
           <Route path="/wiki" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />
           <Route path="/wiki/:articleId" element={<RegulationsWiki onBack={() => navigate('/regulations')} currentUser={currentUser} />} />
@@ -139,13 +168,15 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/tools/betaflight-presets" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
           <Route path="/tools/rates" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
           <Route path="/tools/*" element={<ToolsHub />} />
-          <Route path="/vlogs/*" element={<VlogSection vlogs={vlogs} currentUser={currentUser} onLoginClick={onLoginRequest} onOpenRoom={(id) => navigate(`/vlogs/${id}`)} onAddVlog={onAddVlog} onUpdateVlog={onUpdateVlog} onDeleteVlog={onDeleteVlog} />} />
-          <Route path="/market" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
-          <Route path="/market/category/:categoryId" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
-          <Route path="/map" element={<SpotMap />} />
+          <Route path="/vlogs/*" element={<OnRouteMount run={fetchVlogs}><VlogSection vlogs={vlogs} currentUser={currentUser} onLoginClick={onLoginRequest} onOpenRoom={(id) => navigate(`/vlogs/${id}`)} onAddVlog={onAddVlog} onUpdateVlog={onUpdateVlog} onDeleteVlog={onDeleteVlog} /></OnRouteMount>} />
+          {/* `posts` was never passed here, so the marketplace rendered its empty
+              state on every visit no matter how many listings existed. */}
+          <Route path="/market" element={<MarketplaceList posts={posts} currentUser={currentUser} isFetching={_loading} onLoginRequest={onLoginRequest} />} />
+          <Route path="/market/category/:categoryId" element={<MarketplaceList posts={posts} currentUser={currentUser} isFetching={_loading} onLoginRequest={onLoginRequest} />} />
+          <Route path="/map" element={<SpotMap currentUser={currentUser} onLoginClick={onLoginRequest} />} />
           <Route path="/chat" element={currentUser ? <GlobalChat currentUser={currentUser} onUserClick={(id) => navigate(`/u/${id}`)} onLoginClick={onLoginRequest} /> : <Navigate to="/" replace />} />
-          <Route path="/meet" element={<MeetSection rooms={meetRooms} user={currentUser} onOpenRoom={(id) => navigate(`/meet/${id}`)} onLoginClick={onLoginRequest} />} />
-          <Route path="/meet/:roomId" element={<MeetRoomPage rooms={meetRooms} user={currentUser} onLoginRequest={onLoginRequest} />} />
+          <Route path="/meet" element={<OnRouteMount run={fetchMeetRooms}><MeetSection rooms={meetRooms} user={currentUser} onOpenRoom={(id) => navigate(`/meet/${id}`)} onLoginClick={onLoginRequest} /></OnRouteMount>} />
+          <Route path="/meet/:roomId" element={<OnRouteMount run={fetchMeetRooms}><MeetRoomPage rooms={meetRooms} user={currentUser} onLoginRequest={onLoginRequest} /></OnRouteMount>} />
           <Route path="/admin" element={<AdminDashboard currentUser={currentUser} posts={posts} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

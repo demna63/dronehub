@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import { Post, User } from '../types';
-import { 
-  MapPin, Phone, User as UserIcon, Tag, 
-  Calendar, ShieldCheck, AlertTriangle, CheckCircle2,
-  MessageSquare, Share2, Heart, Box, Eye
+import {
+  MapPin,
+  Phone,
+  User as UserIcon,
+  Tag,
+  Calendar,
+  ShieldCheck,
+  CheckCircle2,
+  MessageSquare,
+  Heart,
+  Box,
+  Eye
 } from 'lucide-react';
+import { formatShortDate } from '../utils/dates';
 
 interface MarketItemViewProps {
   item: Post;
@@ -32,6 +41,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
+      <h1 className="sr-only">{`განცხადება: ${item.title}`}</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
@@ -61,14 +71,14 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                  <Eye size={14} className="text-sky-400" /> {item.views || 0} ნახვა
                </span>
                <span className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                 <Calendar size={14} className="text-sky-400" /> {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString('ka-GE') : 'ახლახანს'}
+                 <Calendar size={14} className="text-sky-400" /> {formatShortDate(item.createdAt) || 'ახლახანს'}
                </span>
             </div>
           </div>
 
           {/* 2. DESCRIPTION & SPECS */}
           <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 md:p-8">
-            <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">დეტალური ინფორმაცია</h3>
+            <h2 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">დეტალური ინფორმაცია</h2>
             
             {/* Specs Table */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2 mb-8">
@@ -83,7 +93,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
 
             {/* Description Text */}
             <div className="prose prose-invert prose-sm max-w-none">
-              <h4 className="text-sm font-bold text-slate-400 uppercase mb-3">აღწერა</h4>
+              <h3 className="text-sm font-bold text-slate-400 uppercase mb-3">აღწერა</h3>
               <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
                 {item.content || "აღწერა არ არის მითითებული."}
               </p>
@@ -100,12 +110,14 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
             
             {/* Header: Title & Save */}
             <div className="flex justify-between items-start gap-4 mb-4">
-               <h1 className="text-xl font-bold text-white leading-snug">{item.title}</h1>
+               <h2 className="text-xl font-bold text-white leading-snug">{item.title}</h2>
                <button 
+                 type="button"
                  onClick={() => onToggleSave(item.id)}
+                 aria-label={isSaved ? 'შენახულებიდან წაშლა' : 'შენახვა'}
                  className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-rose-500 bg-rose-500/10' : 'text-slate-400 hover:bg-white/5'}`}
                >
-                 <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
+                 <Heart size={20} fill={isSaved ? "currentColor" : "none"} aria-hidden="true" />
                </button>
             </div>
 
@@ -159,10 +171,10 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                )}
              </div>
              <div className="flex-1 min-w-0">
-               <h4 className="font-bold text-white truncate flex items-center gap-1">
+               <h2 className="font-bold text-white truncate flex items-center gap-1">
                  {item.author}
                  <CheckCircle2 size={14} className="text-sky-500" />
-               </h4>
+               </h2>
                <p className="text-xs text-slate-400">რეგისტრირებული პილოტი</p>
              </div>
           </div>

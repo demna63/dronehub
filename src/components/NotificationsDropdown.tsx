@@ -2,6 +2,7 @@ import React from 'react';
 import { Notification } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ka } from 'date-fns/locale';
+import { toDate } from '../utils/dates';
 
 interface NotificationsDropdownProps {
   notifications: Notification[];
@@ -16,11 +17,16 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   onMarkAllAsRead,
   onClose 
 }) => {
-  // დამხმარე ფუნქცია თარიღის ფორმატირებისთვის
-  const formatTime = (date: any) => {
+  /**
+   * date-fns throws a RangeError on an Invalid Date, and this dropdown renders
+   * outside the route ErrorBoundary — so one notification whose `createdAt` was
+   * neither a Timestamp nor a parseable string white-screened the whole app.
+   * `toDate` returns null instead of an Invalid Date.
+   */
+  const formatTime = (value: unknown): string => {
+    const date = toDate(value as Parameters<typeof toDate>[0]);
     if (!date) return '';
-    const jsDate = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
-    return formatDistanceToNow(jsDate, { addSuffix: true, locale: ka });
+    return formatDistanceToNow(date, { addSuffix: true, locale: ka });
   };
 
   return (

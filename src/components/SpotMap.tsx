@@ -1,49 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useCallback, useEffect, useState } from 'react';
+import { APIProvider, AdvancedMarker, InfoWindow, Map, type MapMouseEvent } from '@vis.gl/react-google-maps';
 import { 
   MapPin, Navigation, AlertTriangle, Info, Image as ImageIcon, 
   Filter, Plus, Wind, Camera, X, Save, MousePointerClick, Loader2
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
+import { useToast } from '../contexts/ToastContext';
+import type { User } from '../types';
 
-// --- მორგებული მანათობელი მარკერები ---
-const createCustomIcon = (type: string) => {
-  let bgColor = 'bg-sky-500';
-  let shadow = 'shadow-[0_0_15px_rgba(14,165,233,0.8)]';
-  if (type === 'bando') { bgColor = 'bg-rose-500'; shadow = 'shadow-[0_0_15px_rgba(244,63,94,0.8)]'; }
-  else if (type === 'cinematic') { bgColor = 'bg-emerald-500'; shadow = 'shadow-[0_0_15px_rgba(16,185,129,0.8)]'; }
+/**
+ * Google Maps configuration.
+ *
+ * The key is a PUBLIC client key by design — it is restricted by HTTP referrer
+ * in the Google Cloud console, not by secrecy, exactly like the Firebase web
+ * config. `mapId` is required for AdvancedMarker; without one the markers
+ * silently never render, which is the kind of blank-screen failure worth
+ * failing loudly about instead.
+ */
+const MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+const MAPS_ID = (import.meta.env.VITE_GOOGLE_MAPS_ID as string | undefined) || 'DEMO_MAP_ID';
+const TBILISI = { lat: 41.7151, lng: 44.8271 };
 
-  return L.divIcon({
-    className: 'custom-leaflet-icon',
-    html: `<div class="w-5 h-5 rounded-full ${bgColor} ${shadow} border-2 border-slate-950 flex items-center justify-center animate-pulse">
-            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-           </div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -12],
-  });
+const MARKER_TONE: Record<string, string> = {
+  bando: 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.8)]',
+  cinematic: 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]',
 };
+const DEFAULT_TONE = 'bg-sky-500 shadow-[0_0_15px_rgba(14,165,233,0.8)]';
 
-// --- რუკაზე კლიკის დამჭერი კომპონენტი ---
-const MapClickHandler = ({ isPicking, onLocationPicked }: { isPicking: boolean, onLocationPicked: (latlng: any) => void }) => {
-  useMapEvents({
-    click(e) {
-      if (isPicking) {
-        onLocationPicked(e.latlng);
-      }
-    },
-  });
-  return null;
-};
+/** The same glowing dot the Leaflet divIcon drew, as real DOM. */
+const SpotPin: React.FC<{ type: string }> = ({ type }) => (
+  <span className={`block w-5 h-5 rounded-full border-2 border-slate-950 flex items-center justify-center animate-pulse ${MARKER_TONE[type] || DEFAULT_TONE}`}>
+    <span className="block w-1.5 h-1.5 bg-white rounded-full" />
+  </span>
+);
 
-const SpotMap = () => {
+interface SpotMapProps {
+  currentUser?: User | null;
+  onLoginClick?: () => void;
+}
+
+const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) => {
+  const { showToast } = useToast();
   const [spots, setSpots] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedSpot, setSelectedSpot] = useState<any>(null);
+  /** The spot whose small InfoWindow bubble is open on the map. */
+  const [activeInfo, setActiveInfo] = useState<any>(null);
   
   // დამატების სთეითები
   const [isPickingLocation, setIsPickingLocation] = useState(false);
@@ -55,22 +59,26 @@ const SpotMap = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. ბაზიდან ლოკაციების წამოღება
-  useEffect(() => {
-    fetchSpots();
-  }, []);
-
-  const fetchSpots = async () => {
+  const fetchSpots = useCallback(async () => {
     setIsLoading(true);
-    const fetchedSpots = await apiService.getSpots();
-    setSpots(fetchedSpots);
-    setIsLoading(false);
-  };
+    try {
+      const fetchedSpots = await apiService.getSpots();
+      setSpots(fetchedSpots);
+    } catch (error) {
+      console.error('Error fetching spots:', error);
+      showToast('ლოკაციები ვერ ჩაიტვირთა.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => { void fetchSpots(); }, [fetchSpots]);
 
   // 2. რუკაზე კლიკის დამუშავება
-  const handleLocationPicked = (latlng: any) => {
+  const handleMapClick = (event: MapMouseEvent) => {
+    if (!isPickingLocation || !event.detail.latLng) return;
     setIsPickingLocation(false);
-    setNewCoords({ lat: latlng.lat, lng: latlng.lng });
+    setNewCoords({ lat: event.detail.latLng.lat, lng: event.detail.latLng.lng });
     setShowAddModal(true);
   };
 
@@ -81,11 +89,22 @@ const SpotMap = () => {
     
     setIsSubmitting(true);
     try {
+      if (!currentUser) {
+        showToast('ლოკაციის დასამატებლად გაიარე ავტორიზაცია.', 'error');
+        onLoginClick?.();
+        return;
+      }
       await apiService.addSpot({
-        ...formData,
+        name: formData.name,
+        type: formData.type,
+        // Stored as `description` to match the field the rules validate and
+        // every reader expects; the form's local key stays `desc`.
+        description: formData.desc,
+        warnings: formData.warnings,
+        author: formData.author,
         lat: newCoords.lat,
-        lng: newCoords.lng
-      });
+        lng: newCoords.lng,
+      }, currentUser);
       
       // გავასუფთაოთ ფორმა და გადმოვწეროთ ახალი ბაზა
       setShowAddModal(false);
@@ -93,7 +112,8 @@ const SpotMap = () => {
       await fetchSpots();
       
     } catch (error) {
-      alert("შეცდომა ლოკაციის დამატებისას!");
+      console.error('Error adding spot:', error);
+      showToast('ლოკაცია ვერ დაემატა. სცადე ხელახლა.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -161,24 +181,66 @@ const SpotMap = () => {
           </div>
         )}
 
-        <MapContainer center={[41.7151, 44.8271]} zoom={11} zoomControl={false} className="w-full h-full">
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-          <ZoomControl position="bottomright" />
-          
-          <MapClickHandler isPicking={isPickingLocation} onLocationPicked={handleLocationPicked} />
+        {!MAPS_API_KEY ? (
+          /* Explicit rather than a blank grey rectangle: a missing key is a
+             deployment mistake, and a map that silently renders nothing is the
+             hardest kind of failure to diagnose. */
+          <div className="w-full h-full flex items-center justify-center p-8">
+            <div className="max-w-sm text-center border-2 border-dashed border-white/10 rounded-3xl p-8">
+              <MapPin size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
+              <p className="text-sm font-bold text-slate-300 mb-2">რუკა არ არის კონფიგურირებული</p>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                დააყენე <code className="text-slate-400">VITE_GOOGLE_MAPS_API_KEY</code> და
+                {' '}<code className="text-slate-400">VITE_GOOGLE_MAPS_ID</code> გარემოს ცვლადებში.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <APIProvider apiKey={MAPS_API_KEY}>
+            <Map
+              mapId={MAPS_ID}
+              defaultCenter={TBILISI}
+              defaultZoom={11}
+              // Dark without a custom cloud style; the map ID only has to exist.
+              colorScheme="DARK"
+              gestureHandling="greedy"
+              disableDefaultUI
+              zoomControl
+              onClick={handleMapClick}
+              className="w-full h-full"
+            >
+              {!isLoading && filteredSpots.map((spot: any) => (
+                <AdvancedMarker
+                  key={spot.id}
+                  position={{ lat: Number(spot.lat), lng: Number(spot.lng) }}
+                  title={spot.name}
+                  onClick={() => setActiveInfo(spot)}
+                >
+                  <SpotPin type={spot.type} />
+                </AdvancedMarker>
+              ))}
 
-          {!isLoading && filteredSpots.map((spot: any) => (
-            <Marker key={spot.id} position={[spot.lat, spot.lng]} icon={createCustomIcon(spot.type)}>
-              <Popup className="custom-popup">
-                <div className="p-1">
-                  <h3 className="font-black text-slate-900 text-sm mb-1">{spot.name}</h3>
-                  <p className="text-xs text-slate-500 font-bold uppercase mb-2">{spot.type}</p>
-                  <button onClick={() => setSelectedSpot(spot)} className="text-[10px] text-sky-600 font-bold uppercase hover:underline">View Details &rarr;</button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+              {activeInfo && (
+                <InfoWindow
+                  position={{ lat: Number(activeInfo.lat), lng: Number(activeInfo.lng) }}
+                  onCloseClick={() => setActiveInfo(null)}
+                >
+                  <div className="p-1">
+                    <h3 className="font-black text-slate-900 text-sm mb-1">{activeInfo.name}</h3>
+                    <p className="text-xs text-slate-500 font-bold uppercase mb-2">{activeInfo.type}</p>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedSpot(activeInfo); setActiveInfo(null); }}
+                      className="text-[10px] text-sky-600 font-bold uppercase hover:underline"
+                    >
+                      დეტალები &rarr;
+                    </button>
+                  </div>
+                </InfoWindow>
+              )}
+            </Map>
+          </APIProvider>
+        )}
 
         {/* --- Spot Details Modal --- */}
         {selectedSpot && !isPickingLocation && (
@@ -193,7 +255,7 @@ const SpotMap = () => {
               <div className="space-y-4">
                 <div>
                   <h4 className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1 mb-1"><Info size={12}/> Description</h4>
-                  <p className="text-sm text-slate-300 leading-relaxed">{selectedSpot.desc}</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">{selectedSpot.description || selectedSpot.desc}</p>
                 </div>
                 {selectedSpot.warnings && (
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
@@ -218,38 +280,38 @@ const SpotMap = () => {
             <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                 <h2 className="text-xl font-black text-white flex items-center gap-2"><MapPin className="text-sky-500"/> Add New Spot</h2>
-                <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white"><X size={20}/></button>
+                <button onClick={() => setShowAddModal(false)} aria-label="დახურვა" className="text-slate-400 hover:text-white"><X size={20}/></button>
               </div>
               
               <form onSubmit={handleAddSpot} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Spot Name</label>
-                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none" placeholder="e.g. Abandoned Factory" />
+                  <label htmlFor="spot-name" className="block text-xs font-bold text-slate-500 uppercase mb-1">Spot Name</label>
+                  <input id="spot-name" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none" placeholder="e.g. Abandoned Factory" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
-                    <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none appearance-none">
+                    <label htmlFor="spot-type" className="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
+                    <select id="spot-type" value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none appearance-none">
                       <option value="bando">Bando / Urban</option>
                       <option value="cinematic">Cinematic</option>
                       <option value="freestyle">Freestyle</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Pilot Name</label>
-                    <input required value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none" placeholder="Your FPV handle" />
+                    <label htmlFor="spot-author" className="block text-xs font-bold text-slate-500 uppercase mb-1">Pilot Name</label>
+                    <input id="spot-author" required value={formData.author} onChange={e => setFormData({...formData, author: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none" placeholder="Your FPV handle" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Description</label>
-                  <textarea required value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none min-h-[80px]" placeholder="What makes this spot good?" />
+                  <label htmlFor="spot-desc" className="block text-xs font-bold text-slate-500 uppercase mb-1">Description</label>
+                  <textarea id="spot-desc" required value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none min-h-[80px]" placeholder="What makes this spot good?" />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-amber-500 uppercase mb-1">Warnings (Optional)</label>
-                  <textarea value={formData.warnings} onChange={e => setFormData({...formData, warnings: e.target.value})} className="w-full bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-100 focus:border-amber-500 focus:outline-none min-h-[60px]" placeholder="Security, dogs, people..." />
+                  <label htmlFor="spot-warnings" className="block text-xs font-bold text-amber-500 uppercase mb-1">Warnings (Optional)</label>
+                  <textarea id="spot-warnings" value={formData.warnings} onChange={e => setFormData({...formData, warnings: e.target.value})} className="w-full bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-100 focus:border-amber-500 focus:outline-none min-h-[60px]" placeholder="Security, dogs, people..." />
                 </div>
 
                 <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-2 py-3 bg-sky-500 hover:bg-sky-400 disabled:bg-sky-500/50 text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all mt-4">

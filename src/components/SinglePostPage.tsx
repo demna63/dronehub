@@ -4,12 +4,12 @@ import { Post, User } from '../types';
 import PostCard from './PostCard';
 import MarketItemView from './MarketItemView'; // ✅ ახალი იმპორტი
 import { CornerDownLeft, ArrowRight, Hash, AlertTriangle } from 'lucide-react';
+import { isMarketItem } from '../constants/market';
 
 interface SinglePostPageProps {
   post: Post;
   currentUser: User | null;
   allPosts: Post[];
-  onVote: (postId: string, type: 'up' | 'down') => void;
   onToggleSave: (postId: string) => void;
   savedPostIds: string[];
   onLoginClick: () => void;
@@ -19,7 +19,7 @@ interface SinglePostPageProps {
 }
 
 const SinglePostPage: React.FC<SinglePostPageProps> = ({
-  post, currentUser, allPosts, onVote, onToggleSave, savedPostIds,
+  post, currentUser, allPosts, onToggleSave, savedPostIds,
   onLoginClick, onDeletePost, onEditPost, onAddComment
 }) => {
   const navigate = useNavigate();
@@ -32,25 +32,27 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
     if (window.history.state && window.history.state.idx > 0) {
       navigate(-1);
     } else {
-      navigate(post.category === 'marketplace' ? '/market' : '/');
+      navigate(isMarketItem(post.category) ? '/market' : '/');
     }
   };
 
   const similarPosts = useMemo(() => {
-    if (post.category === 'marketplace') return [];
+    if (isMarketItem(post.category)) return [];
     return allPosts
       .filter(p => p.id !== post.id && (p.category === post.category || p.tags?.some(t => post.tags?.includes(t))))
       .slice(0, 3);
   }, [post, allPosts]);
 
-  const isMarketItem = post.category === 'marketplace';
+  const isListing = isMarketItem(post.category);
 
   return (
     <div className="max-w-5xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {!isListing && <h1 className="sr-only">{post.title}</h1>}
       
       {/* Header / Back Button */}
       <div className="mb-6 pt-4 px-4 md:px-0">
         <button 
+          type="button"
           onClick={handleBack}
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
         >
@@ -64,10 +66,10 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-0">
         
         {/* MAIN CONTENT AREA */}
-        <div className={isMarketItem ? "lg:col-span-3" : "lg:col-span-2"}>
+        <div className={isListing ? "lg:col-span-3" : "lg:col-span-2"}>
           
           {/* ✅ ლოგიკა: მარკეტისთვის MarketItemView, სხვებისთვის PostCard */}
-          {isMarketItem ? (
+          {isListing ? (
             <MarketItemView 
               item={post}
               currentUser={currentUser}
@@ -79,7 +81,6 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
             <PostCard 
               post={post}
               currentUser={currentUser}
-              onVote={async () => onVote(post.id, 'up')}
               onToggleSave={() => onToggleSave(post.id)}
               isSaved={savedPostIds.includes(post.id)}
               onLoginClick={onLoginClick}
@@ -93,24 +94,25 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
         </div>
 
         {/* SIDEBAR (მხოლოდ ჩვეულებრივი პოსტებისთვის) */}
-        {!isMarketItem && (
+        {!isListing && (
           <div className="hidden lg:block space-y-4">
              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 sticky top-24">
-               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+               <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                  <Hash size={14} /> მსგავსი თემები
-               </h3>
+               </h2>
                
                <div className="space-y-3">
                  {similarPosts.length > 0 ? (
                    similarPosts.map(simPost => (
-                     <div 
+                     <button 
+                       type="button"
                        key={simPost.id} 
                        onClick={() => navigate(`/post/${simPost.id}`)}
-                       className="group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all border border-transparent hover:border-white/5"
+                       className="text-left w-full group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all border border-transparent hover:border-white/5"
                      >
-                        <h4 className="text-sm font-bold text-slate-300 group-hover:text-indigo-400 line-clamp-2 transition-colors mb-1">
+                        <span className="block text-sm font-bold text-slate-300 group-hover:text-indigo-400 line-clamp-2 transition-colors mb-1">
                           {simPost.title}
-                        </h4>
+                        </span>
                         <div className="flex items-center justify-between text-[10px] text-slate-400">
                           <span>{simPost.author}</span>
                           <div className="flex items-center gap-1">
@@ -118,7 +120,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
                              <ArrowRight size={10} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                           </div>
                         </div>
-                     </div>
+                     </button>
                    ))
                  ) : (
                    <div className="text-center text-xs text-slate-400 py-8 flex flex-col items-center gap-2">

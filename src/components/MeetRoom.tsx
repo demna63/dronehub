@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MeetRoomData, User, ChatMessage } from '../types'; // VlogChatMessage -> ChatMessage Alias გამოიყენება
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare, Users, Settings } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare } from 'lucide-react';
 import { db, collection, query, where, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from '../lib/firebase';
+import { MESSAGE_MAX_LENGTH } from '../constants/limits';
+import { formatClockTime } from '../utils/dates';
 
 interface MeetRoomProps {
   room: MeetRoomData;
@@ -13,6 +15,7 @@ interface MeetRoomProps {
 
 const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest }) => {
   const [isMicOn, setIsMicOn] = useState(false);
+  const [listenerError, setListenerError] = useState<string | null>(null);
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [showChat, setShowChat] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -42,10 +45,15 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
           avatar: data.avatar,
           text: data.text,
           authorReputation: data.reputation || 0, // შესწორება: Fallback
-          timestamp: data.createdAt?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) || '...'
+          timestamp: formatClockTime(data.createdAt) || '...'
         } as ChatMessage;
       });
       setMessages(msgs);
+    }, (snapshotError) => {
+      // Without this a rules rejection or a dropped connection was silent: the
+      // list simply stopped updating with no indication that anything failed.
+      console.error('Message listener error:', snapshotError);
+      setListenerError('შეტყობინებები ვერ ჩაიტვირთა.');
     });
     
     return () => unsubscribe();
@@ -79,21 +87,6 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
     }
   };
 
-  // ლოკალური "ოპტიმისტური" მესიჯის ობიექტი (თუ სადმე გჭირდება)
-  const createLocalMessage = () => {
-      if(!user) return;
-      const newMsg: ChatMessage = {
-        id: Date.now().toString(),
-        roomId: room.id,
-        authorId: user.id,
-        authorName: user.name,
-        avatar: user.avatar,
-        text: chatInput,
-        timestamp: 'Just now',
-        authorReputation: user.reputation || 0 // <--- აუცილებელი შესწორება
-      };
-      // აქ შეიძლება setMessages-ის გამოძახება, თუ Firestore-ს არ ველოდებით
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
@@ -113,14 +106,8 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
         </div>
         
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowChat(!showChat)} className={`p-3 rounded-xl transition-colors ${showChat ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>
+          <button onClick={() => setShowChat(!showChat)} aria-label="ჩატის ჩვენება/დამალვა" aria-expanded={showChat} className={`p-3 rounded-xl transition-colors ${showChat ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>
             <MessageSquare className="w-5 h-5" />
-          </button>
-          <button className="p-3 text-slate-400 hover:text-white rounded-xl hover:bg-white/5">
-            <Users className="w-5 h-5" />
-          </button>
-          <button className="p-3 text-slate-400 hover:text-white rounded-xl hover:bg-white/5">
-            <Settings className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -133,17 +120,17 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
               {!isVideoOn && (
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center">
-                    {user ? <img src={user.avatar} className="w-full h-full rounded-full object-cover opacity-50" /> : <VideoOff className="w-10 h-10 text-slate-400" />}
+                    {user ? <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover opacity-50" /> : <VideoOff className="w-10 h-10 text-slate-400" />}
                   </div>
                   <p className="text-slate-400 font-mono text-sm">Camera is off</p>
                 </div>
               )}
               {/* Controls Overlay */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-white/10">
-                 <button onClick={() => setIsMicOn(!isMicOn)} className={`p-4 rounded-xl transition-all ${isMicOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
+                 <button onClick={() => setIsMicOn(!isMicOn)} aria-label={isMicOn ? 'მიკროფონის გამორთვა' : 'მიკროფონის ჩართვა'} className={`p-4 rounded-xl transition-all ${isMicOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
                    {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                  </button>
-                 <button onClick={() => setIsVideoOn(!isVideoOn)} className={`p-4 rounded-xl transition-all ${isVideoOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
+                 <button onClick={() => setIsVideoOn(!isVideoOn)} aria-label={isVideoOn ? 'კამერის გამორთვა' : 'კამერის ჩართვა'} className={`p-4 rounded-xl transition-all ${isVideoOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
                    {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                  </button>
                  <div className="w-px h-8 bg-white/10 mx-2"></div>
@@ -178,6 +165,11 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                  </div>
                </div>
              ))}
+             {listenerError && (
+               <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] font-bold text-rose-300">
+                 {listenerError}
+               </p>
+             )}
              <div ref={chatEndRef} />
            </div>
 
@@ -188,6 +180,8 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                id="meet-chat-input"
                value={chatInput}
                onChange={(e) => setChatInput(e.target.value)}
+               aria-label="შეტყობინება"
+               maxLength={MESSAGE_MAX_LENGTH}
                placeholder={user ? "Send a message..." : "Login to chat"}
                disabled={!user}
                className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none"

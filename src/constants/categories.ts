@@ -1,28 +1,12 @@
-import { Category, Post, Notification, User } from './types';
+import type { Category } from '../types';
 
-// ==========================================
-// 1. POPULAR TAGS
-// ==========================================
-export const POPULAR_TAGS = [
-  'FPV', 
-  'Freestyle', 
-  'Cinematic', 
-  'Long Range', 
-  'Racing', 
-  'Build Log', 
-  'Tutorial', 
-  'Betaflight', 
-  'Crash', 
-  'Review', 
-  'DJI', 
-  'Analog', 
-  'ELRS', 
-  'GPS'
-];
-
-// ==========================================
-// 2. CATEGORIES
-// ==========================================
+/**
+ * The feed's category taxonomy.
+ *
+ * Moved out of the old src/constants.ts, which was 80% mock fixtures
+ * (MOCK_USERS, MOCK_NOTIFICATIONS, POPULAR_TAGS, an empty MOCK_POSTS) with no
+ * consumers — this was the only live export in the file.
+ */
 export const CATEGORIES: Category[] = [
   { 
     id: 'general', 
@@ -127,88 +111,5 @@ export const CATEGORIES: Category[] = [
       { id: 'dronehub', label: 'DroneHub Store' },
       { id: 'partners', label: 'Partner Deals' }
     ]
-  }
-];
-
-// ==========================================
-// 3. MOCK POSTS
-// ==========================================
-export const MOCK_POSTS: Post[] = [];
-
-// ==========================================
-// 4. MOCK NOTIFICATIONS
-// ==========================================
-export const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'n1',
-    recipientId: 'current-user-id',
-    senderId: 'u1',
-    senderName: 'პილოტი #1',
-    senderAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=P1',
-    type: 'vote',
-    postId: 'p1',
-    postTitle: 'პირველი ფრენა',
-    read: false,
-    createdAt: new Date()
-  },
-  {
-    id: 'n2',
-    recipientId: 'current-user-id',
-    senderId: 'u2',
-    senderName: 'პილოტი #2',
-    senderAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=P2',
-    type: 'comment',
-    postId: 'p1',
-    postTitle: 'პირველი ფრენა',
-    read: true,
-    createdAt: new Date(Date.now() - 3600000)
-  },
-  {
-    id: 'n3',
-    recipientId: 'current-user-id',
-    senderId: 'system',
-    senderName: 'DroneHub',
-    senderAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=DroneHub',
-    type: 'system',
-    postId: 'regulations',
-    postTitle: 'წესები და რეგულაციები',
-    read: true, 
-    createdAt: new Date(Date.now() - 86400000)
-  }
-];
-
-// ==========================================
-// 5. MOCK USERS
-// ==========================================
-export const MOCK_USERS: User[] = [
-  {
-    id: 'u1',
-    name: 'Nika Pro',
-    email: 'nika@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nika',
-    reputation: 1250,
-    role: 'moderator',
-    bio: 'Professional FPV Pilot',
-    isVerified: true
-  },
-  {
-    id: 'u2',
-    name: 'Sandro FPV',
-    email: 'sandro@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sandro',
-    reputation: 980,
-    role: 'pilot',
-    bio: 'Long range explorer',
-    isVerified: false
-  },
-  {
-    id: 'u3',
-    name: 'Data Drone',
-    email: 'data@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Data',
-    reputation: 890,
-    role: 'pilot',
-    bio: 'Tech enthusiast',
-    isVerified: false
   }
 ];

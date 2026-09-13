@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { VlogEntry, User } from '../types';
-import { Play, Clock, Eye, Plus, User as UserIcon } from 'lucide-react';
+import { Play, Clock, Eye, Plus} from 'lucide-react';
 import VlogRoom from './VlogRoom';
 import AddVlogModal from './AddVlogModal';
 import { apiService } from '../services/apiService';
@@ -60,10 +60,11 @@ const VlogSection: React.FC<VlogSectionProps> = ({
             {/* Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {vlogs.map((vlog) => (
-                <div 
+                <button 
+                  type="button"
                   key={vlog.id}
                   onClick={() => onOpenRoom(vlog.id)}
-                  className="group bg-slate-900 border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-red-500/50 transition-all hover:shadow-2xl hover:shadow-red-900/10"
+                  className="text-left w-full group bg-slate-900 border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-red-500/50 transition-all hover:shadow-2xl hover:shadow-red-900/10"
                 >
                   {/* Thumbnail */}
                   <div className="relative aspect-video bg-slate-950 overflow-hidden">
@@ -84,9 +85,9 @@ const VlogSection: React.FC<VlogSectionProps> = ({
 
                   {/* Info */}
                   <div className="p-4">
-                    <h3 className="font-bold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
+                    <span className="block font-bold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
                       {vlog.title}
-                    </h3>
+                    </span>
                     <div className="flex items-center justify-between text-xs text-slate-400">
                       <div className="flex items-center gap-2">
                          <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[8px] text-white font-bold">
@@ -100,7 +101,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
             

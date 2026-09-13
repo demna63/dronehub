@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Youtube, Loader2, Link as LinkIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Youtube, Loader2, Link as LinkIcon } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import Modal from './Modal';
 
 interface AddVlogModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface AddVlogModalProps {
 }
 
 const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }) => {
+  const { showToast } = useToast();
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,42 +26,33 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
       setTitle('');
       onClose();
     } catch (error) {
-      alert("შეცდომა ვლოგის დამატებისას. შეამოწმეთ ლინკი.");
+      console.error('Error adding vlog:', error);
+      showToast('შეცდომა ვლოგის დამატებისას. შეამოწმეთ ლინკი.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-        />
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-        >
-          <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
-            <h2 className="text-lg font-black text-white uppercase tracking-tight font-mtavruli flex items-center gap-2">
-              <Youtube className="text-red-500" /> ვლოგის დამატება
-            </h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={20} /></button>
-          </div>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="ვლოგის დამატება"
+      size="max-w-md"
+      busy={isSubmitting}
+    >
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Youtube className="text-red-500" aria-hidden="true" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">YouTube</span>
+            </div>
+
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">YouTube ლინკი</label>
+              <label htmlFor="vlog-url" className="text-[10px] font-bold text-slate-400 uppercase ml-1">YouTube ლინკი</label>
               <div className="relative">
                 <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input 
+                  id="vlog-url"
                   type="url" 
                   value={url} 
                   onChange={(e) => setUrl(e.target.value)}
@@ -71,8 +64,9 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">სათაური</label>
+              <label htmlFor="vlog-title" className="text-[10px] font-bold text-slate-400 uppercase ml-1">სათაური</label>
               <input 
+                id="vlog-title"
                 type="text" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)}
@@ -90,9 +84,7 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
               {isSubmitting ? <Loader2 className="animate-spin" /> : 'დამატება'}
             </button>
           </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </Modal>
   );
 };
 

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { 
-  X, Image as ImageIcon, Loader2, Gamepad2, 
+  Image as ImageIcon, Loader2, Gamepad2, 
   Camera, Zap, Flag, Mountain, Newspaper, Upload 
 } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import Modal from './Modal';
 import { apiService } from '../services/apiService';
 import { compressImageFile } from '../services/storageService';
 import type { ProcessedImage } from '../services/storageService';
+import { POST_CONTENT_MAX_LENGTH, POST_TITLE_MAX_LENGTH } from '../constants/limits';
 
 interface CreatePostModalProps {
   onClose: () => void;
@@ -28,6 +31,7 @@ const FPV_SUBCATEGORIES = [
 ];
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreated, currentUser }) => {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   
   // ველები
@@ -54,7 +58,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
     
     // FPV-ს შემთხვევაში ქვეკატეგორია აუცილებელია
     if (mainType === 'fpv' && !subCategory) {
-      alert("გთხოვთ აირჩიოთ FPV კატეგორია (Freestyle, Racing ან Long Range)");
+      showToast('გთხოვთ აირჩიოთ FPV კატეგორია (Freestyle, Racing ან Long Range)', 'error');
       return;
     }
 
@@ -88,31 +92,21 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
       onClose();
     } catch (error) {
       console.error("Error creating post:", error);
-      alert("პოსტი ვერ შეიქმნა. სცადეთ თავიდან.");
+      showToast('პოსტი ვერ შეიქმნა. სცადეთ თავიდან.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/5">
-          <h2 className="text-xl font-black text-white uppercase tracking-wide">
-            ახალი პოსტი
-          </h2>
-          <button 
-            onClick={onClose} 
-            aria-label="ფანჯრის დახურვა" 
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto p-6 custom-scrollbar">
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="ახალი პოსტი"
+      size="max-w-2xl"
+      busy={loading}
+    >
+        <div className="p-6">
           
           {/* 1. კატეგორიის არჩევა (ღილაკები) */}
           <div className="grid grid-cols-3 gap-3 mb-6">
@@ -139,10 +133,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
           {/* 2. FPV ქვეკატეგორიები */}
           {mainType === 'fpv' && (
             <div className="mb-6 animate-in slide-in-from-top-2">
-              <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">
+              <span id="fpv-subcategory-label" className="text-xs font-bold text-slate-400 uppercase mb-3 block">
                 აირჩიე დისციპლინა:
-              </label>
-              <div className="flex flex-wrap gap-2">
+              </span>
+              <div role="group" aria-labelledby="fpv-subcategory-label" className="flex flex-wrap gap-2">
                 {FPV_SUBCATEGORIES.map((sub) => (
                   <button
                     key={sub.id}
@@ -166,10 +160,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
             
             {/* სათაური */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">სათაური</label>
+              <label htmlFor="post-title" className="text-xs font-bold text-slate-400 uppercase">სათაური</label>
               <input
+                id="post-title"
                 type="text"
                 value={title}
+                maxLength={POST_TITLE_MAX_LENGTH}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="მაგ: ჩემი ახალი 5-ინჩიანი ბილდი..."
                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400"
@@ -179,9 +175,11 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
 
             {/* ტექსტი */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">აღწერა</label>
+              <label htmlFor="post-content" className="text-xs font-bold text-slate-400 uppercase">აღწერა</label>
               <textarea
+                id="post-content"
                 value={content}
+                maxLength={POST_CONTENT_MAX_LENGTH}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="რაზეა ეს პოსტი? გაგვიზიარე დეტალები..."
                 className="w-full h-32 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400 resize-none"
@@ -191,7 +189,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
 
             {/* სურათის ატვირთვა */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase">მედია (სურათი)</label>
+              <label htmlFor="image-upload" className="text-xs font-bold text-slate-400 uppercase">მედია (სურათი)</label>
               <div className="relative group">
                 <input
                   type="file"
@@ -257,8 +255,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
 
           </form>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { signInWithGoogle, signInWithDemo, registerWithEmail, loginWithEmail } from '../lib/firebase';
 import { isDemoAuthEnabled } from '../utils/authUtils';
-import { X, Mail, Lock, User as UserIcon, LogIn, Chrome } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, LogIn, Chrome } from 'lucide-react';
+import Modal from './Modal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -70,37 +70,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
     }
   };
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-          >
-            {/* Header */}
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white font-mtavruli">
-                {isLogin ? 'სისტემაში შესვლა' : 'რეგისტრაცია'}
-              </h2>
-              <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isLogin ? 'სისტემაში შესვლა' : 'რეგისტრაცია'}
+      size="max-w-md"
+      busy={loading}
+    >
             <div className="p-6 space-y-6">
               {/* Social Login */}
               <div className="space-y-3">
                 <button
+                  type="button"
                   onClick={handleGoogleLogin}
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-3 bg-white text-slate-900 p-3 rounded-xl font-semibold hover:bg-slate-100 transition-colors disabled:opacity-50"
@@ -114,6 +95,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
                 </button>
                 {isDemoAuthEnabled() && (
                 <button
+                  type="button"
                   onClick={handleDemoLogin}
                   disabled={loading}
                   className="w-full flex items-center justify-center gap-3 bg-slate-800 text-slate-200 border border-white/10 p-3 rounded-xl font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50"
@@ -139,7 +121,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
               <form onSubmit={handleEmailAuth} className="space-y-4">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-400 ml-1">მომხმარებლის სახელი</label>
+                    <label htmlFor="auth-name" className="text-xs font-medium text-slate-400 ml-1">მომხმარებლის სახელი</label>
                     <div className="relative">
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input
@@ -158,7 +140,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400 ml-1">ელ-ფოსტა</label>
+                  <label htmlFor="auth-email" className="text-xs font-medium text-slate-400 ml-1">ელ-ფოსტა</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -176,7 +158,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400 ml-1">პაროლი</label>
+                  <label htmlFor="auth-password" className="text-xs font-medium text-slate-400 ml-1">პაროლი</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -213,6 +195,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
 
               <div className="text-center">
                 <button
+                  type="button"
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-sm text-slate-400 hover:text-sky-400 transition-colors"
                 >
@@ -220,10 +203,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
                 </button>
               </div>
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+    </Modal>
   );
 };
 

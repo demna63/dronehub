@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  RefreshCw, Zap, ArrowRightLeft, Battery, Signal, 
-  Scissors, Target, AlertTriangle, ArrowDown 
+import {
+  RefreshCw,
+  ArrowRightLeft,
+  Battery,
+  Signal,
+  Scissors,
+  Target,
+  AlertTriangle
 } from 'lucide-react';
 
 // ============================================================================
@@ -54,13 +59,14 @@ export const UnitConverter: React.FC = () => {
         <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/5">
                 <Signal className="text-orange-400" size={20} />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">RF Power (VTX)</h3>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">RF Power (VTX)</h2>
             </div>
             <div className="space-y-6 relative">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Milliwatts</label>
+                    <label htmlFor="rf-milliwatts" className="text-[10px] font-bold text-slate-400 uppercase">Milliwatts</label>
                     <div className="relative">
                         <input 
+                            id="rf-milliwatts"
                             type="number" 
                             value={mw}
                             onChange={(e) => handleMwChange(e.target.value)}
@@ -76,9 +82,10 @@ export const UnitConverter: React.FC = () => {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Decibel-milliwatts</label>
+                    <label htmlFor="rf-dbm" className="text-[10px] font-bold text-slate-400 uppercase">Decibel-milliwatts</label>
                     <div className="relative">
                         <input 
+                            id="rf-dbm"
                             type="number" 
                             value={dbm}
                             onChange={(e) => handleDbmChange(e.target.value)}
@@ -95,12 +102,12 @@ export const UnitConverter: React.FC = () => {
         <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/5">
                 <Battery className="text-emerald-400" size={20} />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">LiPo Voltage</h3>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">LiPo Voltage</h2>
             </div>
             <div className="space-y-4">
                 <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Cell Count (S)</label>
-                    <div className="flex flex-wrap gap-2">
+                    <span id="rf-cell-count-label" className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Cell Count (S)</span>
+                    <div className="flex flex-wrap gap-2" role="group" aria-labelledby="rf-cell-count-label">
                         {[1, 2, 3, 4, 6].map((s) => (
                             <button
                                 key={s}
@@ -189,9 +196,10 @@ export const AntennaTuner: React.FC = () => {
       <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-lg">
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Target Freq (MHz)</label>
+                <label htmlFor="rf-target-freq" className="text-[10px] font-bold text-slate-400 uppercase">Target Freq (MHz)</label>
                 <div className="relative">
                     <input 
+                        id="rf-target-freq"
                         type="number" 
                         value={targetFreq}
                         onChange={(e) => setTargetFreq(e.target.value)}
@@ -201,8 +209,9 @@ export const AntennaTuner: React.FC = () => {
                 </div>
             </div>
             <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Measured Freq</label>
+                <label htmlFor="rf-measured-freq" className="text-[10px] font-bold text-slate-400 uppercase">Measured Freq</label>
                 <input 
+                    id="rf-measured-freq"
                     type="number" 
                     value={measuredFreq}
                     onChange={(e) => setMeasuredFreq(e.target.value)}
@@ -210,8 +219,9 @@ export const AntennaTuner: React.FC = () => {
                 />
             </div>
             <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Current Length (mm)</label>
+                <label htmlFor="rf-current-length" className="text-[10px] font-bold text-slate-400 uppercase">Current Length (mm)</label>
                 <input 
+                    id="rf-current-length"
                     type="number" 
                     value={currentLength}
                     onChange={(e) => setCurrentLength(e.target.value)}

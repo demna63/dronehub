@@ -48,6 +48,7 @@ const BatteryCalculator: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <h1 className="sr-only">ბატარეის დატენვის დროის კალკულატორი</h1>
       
       {/* Header */}
       <div className="flex items-center gap-4 border-b border-white/10 pb-4">
@@ -69,11 +70,12 @@ const BatteryCalculator: React.FC = () => {
                 
                 {/* Capacity */}
                 <div>
-                    <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    <label htmlFor="battery-capacity" className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                         <BatteryCharging size={14} /> Capacity
                     </label>
                     <div className="flex bg-slate-950 border border-white/10 rounded-xl overflow-hidden focus-within:border-emerald-500/50 transition-colors">
                         <input 
+                            id="battery-capacity"
                             type="number" 
                             min="0" step="any"
                             value={capacity} 
@@ -81,6 +83,7 @@ const BatteryCalculator: React.FC = () => {
                             className="w-full bg-transparent text-white px-4 py-3 outline-none font-mono"
                         />
                         <select 
+                            aria-label="ტევადობის ერთეული"
                             value={capacityUnit} 
                             onChange={(e) => setCapacityUnit(e.target.value)}
                             className="bg-white/5 text-slate-300 px-3 outline-none border-l border-white/10 cursor-pointer hover:bg-white/10"
@@ -93,11 +96,12 @@ const BatteryCalculator: React.FC = () => {
 
                 {/* Current */}
                 <div>
-                    <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    <label htmlFor="battery-current" className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                         <Zap size={14} /> Charge Rate
                     </label>
                     <div className="flex bg-slate-950 border border-white/10 rounded-xl overflow-hidden focus-within:border-emerald-500/50 transition-colors">
                         <input 
+                            id="battery-current"
                             type="number" 
                             min="0" step="any"
                             value={current} 
@@ -105,6 +109,7 @@ const BatteryCalculator: React.FC = () => {
                             className="w-full bg-transparent text-white px-4 py-3 outline-none font-mono"
                         />
                         <select 
+                            aria-label="დამტენის დენის ერთეული"
                             value={currentUnit} 
                             onChange={(e) => setCurrentUnit(e.target.value)}
                             className="bg-white/5 text-slate-300 px-3 outline-none border-l border-white/10 cursor-pointer hover:bg-white/10"
@@ -120,13 +125,14 @@ const BatteryCalculator: React.FC = () => {
                 {/* State of Charge (SoC) */}
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                        <label htmlFor="battery-soc" className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
                             <Gauge size={14} /> Current Charge
                         </label>
                         <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">{soc}%</span>
                     </div>
                     <div className="bg-slate-950 border border-white/10 rounded-xl p-3 flex items-center h-[50px]">
                         <input
+                            id="battery-soc"
                             type="range" min="0" max="100"
                             value={soc} 
                             onChange={(e) => setSoc(e.target.value)}
@@ -137,10 +143,11 @@ const BatteryCalculator: React.FC = () => {
 
                 {/* Efficiency / Type */}
                 <div>
-                    <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                    <label htmlFor="battery-type" className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
                         <Settings size={14} /> Battery Type
                     </label>
                     <select 
+                        id="battery-type"
                         value={efficiency} 
                         onChange={(e) => setEfficiency(parseFloat(e.target.value))}
                         className="w-full bg-slate-950 border border-white/10 text-slate-300 px-4 h-[50px] rounded-xl outline-none focus:border-emerald-500/50 cursor-pointer hover:bg-white/[0.02]"
@@ -187,10 +194,10 @@ const BatteryCalculator: React.FC = () => {
          {showInfo && (
             <div className="p-5 pt-0 border-t border-white/5 text-sm text-slate-400 leading-relaxed space-y-6">
               <div className="bg-slate-950 p-4 rounded-xl border border-white/5">
-                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                     <Settings size={16} className="text-slate-500"/>
                     გამოთვლის ფორმულა
-                 </h4>
+                 </h3>
                  <div className="font-mono text-xs bg-slate-900 p-3 rounded-lg border border-white/5 text-emerald-400/80 break-all">
                     Time (h) = (Capacity_Ah * (1 - SoC)) / Charge_Current_A / Efficiency
                  </div>

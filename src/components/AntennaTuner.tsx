@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Ruler, Activity, Target, Scissors, Radio, Check, Copy, Settings, Info, AlertTriangle } from 'lucide-react';
+import { Ruler, Scissors, Check, Copy, AlertTriangle } from 'lucide-react';
 
 const SPEED_OF_LIGHT = 299792458; 
 
@@ -15,10 +15,14 @@ const AntennaTuner: React.FC = () => {
   // === DIPOLE CALCULATOR STATE ===
   const [frequency, setFrequency] = useState<string>("915");
   const [freqUnit, setFreqUnit] = useState<string>("MHz");
-  const [diameter, setDiameter] = useState<string>("0"); 
-  const [diameterUnit, setDiameterUnit] = useState<string>("mm");
-  const [kFactor, setKFactor] = useState<string>("0.9515"); 
-  const [autoK, setAutoK] = useState(true); 
+  // Fixed for now — no UI writes this.
+  const [diameter] = useState<string>("0"); 
+  // Fixed for now — no UI writes this.
+  const [diameterUnit] = useState<string>("mm");
+  // Fixed for now — no UI writes this.
+  const [kFactor] = useState<string>("0.9515"); 
+  // Fixed for now — no UI writes this.
+  const [autoK] = useState(true); 
   const [antLength, setAntLength] = useState<string>("");
   const [legLength, setLegLength] = useState<string>("");
   const [copied, setCopied] = useState(false);
@@ -132,7 +136,7 @@ const AntennaTuner: React.FC = () => {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <div className="bg-pink-500/20 p-1.5 rounded text-pink-400"><Ruler size={16}/></div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">1. Dipole Calculator</h3>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">1. Dipole Calculator</h2>
             </div>
 
             <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-lg space-y-5">
@@ -146,10 +150,10 @@ const AntennaTuner: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Frequency</label>
+                    <label htmlFor="antenna-frequency" className="text-[10px] font-bold text-slate-400 uppercase">Frequency</label>
                     <div className="flex gap-2">
-                        <input type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)} className="flex-1 bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-pink-500"/>
-                        <select value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-slate-950 border border-white/10 text-slate-300 text-xs rounded-lg px-2 outline-none">
+                        <input id="antenna-frequency" type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)} className="flex-1 bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-pink-500"/>
+                        <select aria-label="სიხშირის ერთეული" value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-slate-950 border border-white/10 text-slate-300 text-xs rounded-lg px-2 outline-none">
                             <option value="MHz">MHz</option><option value="GHz">GHz</option>
                         </select>
                     </div>
@@ -157,7 +161,7 @@ const AntennaTuner: React.FC = () => {
 
                 {/* Visual Result */}
                 <div className="relative h-32 bg-slate-950 rounded-xl border border-white/5 flex flex-col items-center justify-center overflow-hidden group">
-                    <button onClick={copyResult} className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-pink-500 rounded text-white opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={copyResult} aria-label="შედეგის კოპირება" className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-pink-500 rounded text-white opacity-0 group-hover:opacity-100 transition-all">
                         {copied ? <Check size={12}/> : <Copy size={12}/>}
                     </button>
                     
@@ -181,24 +185,24 @@ const AntennaTuner: React.FC = () => {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <div className="bg-yellow-500/20 p-1.5 rounded text-yellow-400"><Scissors size={16}/></div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">2. SWR Trimmer</h3>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">2. SWR Trimmer</h2>
             </div>
 
             <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-lg space-y-5 h-full">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Target (MHz)</label>
-                        <input type="number" value={targetFreq} onChange={(e) => setTargetFreq(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
+                        <label htmlFor="antenna-target-freq" className="text-[10px] font-bold text-slate-400 uppercase">Target (MHz)</label>
+                        <input id="antenna-target-freq" type="number" value={targetFreq} onChange={(e) => setTargetFreq(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Measured (MHz)</label>
-                        <input type="number" value={measuredFreq} onChange={(e) => setMeasuredFreq(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
+                        <label htmlFor="antenna-measured-freq" className="text-[10px] font-bold text-slate-400 uppercase">Measured (MHz)</label>
+                        <input id="antenna-measured-freq" type="number" value={measuredFreq} onChange={(e) => setMeasuredFreq(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                     </div>
                 </div>
                 
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Current Length (mm)</label>
-                    <input type="number" value={currentLength} onChange={(e) => setCurrentLength(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
+                    <label htmlFor="antenna-current-length" className="text-[10px] font-bold text-slate-400 uppercase">Current Length (mm)</label>
+                    <input id="antenna-current-length" type="number" value={currentLength} onChange={(e) => setCurrentLength(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                 </div>
 
                 {/* Trimmer Result */}

@@ -12,8 +12,8 @@ interface RightSidebarProps {
 }
 
 const RightSidebar: React.FC<RightSidebarProps> = ({ 
-  currentUser, 
-  onOpenAuth, 
+  currentUser: _currentUser, 
+  onOpenAuth: _onOpenAuth, 
   trendingCommunities, 
   onCommunityClick 
 }) => {
@@ -97,8 +97,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             'Vtx ანტენა შეერთებულია?',
             'No-Fly Zone შემოწმებულია?'
           ].map((item, i) => (
-            <label key={i} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg cursor-pointer transition-colors group">
-              <input type="checkbox" className="accent-emerald-500 w-4 h-4 rounded border-white/10 bg-slate-950 cursor-pointer" />
+            <label key={i} htmlFor={`preflight-check-${i}`} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg cursor-pointer transition-colors group">
+              <input id={`preflight-check-${i}`} type="checkbox" className="accent-emerald-500 w-4 h-4 rounded border-white/10 bg-slate-950 cursor-pointer" />
               <span className="group-hover:text-white transition-colors select-none">{item}</span>
             </label>
           ))}

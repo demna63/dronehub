@@ -8,17 +8,18 @@ import {
   limit,
   orderBy,
   query,
+  documentId,
   serverTimestamp,
   updateDoc,
   where,
-  increment,
-  writeBatch,
   setDoc,
   type DocumentData,
+  type QuerySnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Comment, MeetRoomData, Post, User, VlogEntry } from '../types';
+import type { Comment, MeetRoomData, Post, PostTelemetryVote, User, VlogEntry } from '../types';
 import { pickAllowedProfileFields } from '../utils/userProfileAllowlist';
+import { SEARCH_SCAN_LIMIT, searchPosts } from '../utils/search';
 
 const sanitizeFirestoreData = <T extends DocumentData>(data: T): T => {
   if (data === null || data === undefined) return data;
@@ -47,10 +48,100 @@ const sanitizeFirestoreData = <T extends DocumentData>(data: T): T => {
 
 const isValidId = (id?: string | null): boolean => Boolean(id && typeof id === 'string' && id.trim());
 
-export const getPostsFromFirestore = async (limitCount = 50): Promise<Post[]> => {
-  const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(limitCount));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) as Post[];
+/**
+ * Default ceiling for collection reads.
+ *
+ * Every one of these queries used to be unbounded, so their cost grew linearly
+ * with the corpus forever and a single page view could scan an entire
+ * collection. A bound that is generous today is still a bound.
+ */
+const COLLECTION_LIMIT = 100;
+
+/** Firestore caps an `in`/`documentId()` filter at 30 values per query. */
+const IN_CLAUSE_MAX = 30;
+
+const chunk = <T,>(items: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+};
+
+/** How the feed is ordered. */
+export type PostSort = 'rated' | 'new';
+
+/**
+ * Fetch the feed.
+ *
+ * `rated` orders by the stored Bayesian score, then by recency. The secondary
+ * sort matters more than it looks: every post below the vote threshold carries
+ * the same neutral prior, so without it they would come back in an arbitrary
+ * order — with it, unrated posts stay in newest-first order among themselves
+ * while genuinely well-rated posts rise above them.
+ *
+ * Posts written before ratings existed have no `telemetryScore` field at all,
+ * and Firestore omits documents missing the sort field from an orderBy query.
+ * They are fetched separately and appended, so nothing silently vanishes from
+ * the feed.
+ */
+export const getPostsFromFirestore = async (
+  limitCount = 50,
+  sort: PostSort = 'rated',
+): Promise<Post[]> => {
+  const toPosts = (snapshot: QuerySnapshot<DocumentData>): Post[] =>
+    snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) as Post[];
+
+  if (sort === 'new') {
+    return toPosts(await getDocs(
+      query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(limitCount)),
+    ));
+  }
+
+  const ranked = toPosts(await getDocs(query(
+    collection(db, 'posts'),
+    orderBy('telemetryScore', 'desc'),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount),
+  )));
+
+  if (ranked.length >= limitCount) return ranked;
+
+  // Backfill with legacy posts the ranked query cannot see.
+  const recent = toPosts(await getDocs(
+    query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(limitCount)),
+  ));
+  const seen = new Set(ranked.map((post) => post.id));
+  return [...ranked, ...recent.filter((post) => !seen.has(post.id))].slice(0, limitCount);
+};
+
+/**
+ * Fetch specific posts by id.
+ *
+ * SavedPosts used to call `getPosts()` and filter client-side: a user with
+ * three bookmarks paid 50 reads, and any post older than that window silently
+ * vanished from the page while its id stayed in `savedPosts` — so the counter
+ * and the list disagreed and it looked like bookmarks had been lost.
+ */
+export const getPostsByIdsFromFirestore = async (postIds: string[]): Promise<Post[]> => {
+  const ids = [...new Set(postIds.filter(isValidId))];
+  if (ids.length === 0) return [];
+
+  const batches = await Promise.all(
+    chunk(ids, IN_CLAUSE_MAX).map((group) =>
+      getDocs(query(collection(db, 'posts'), where(documentId(), 'in', group)))),
+  );
+
+  const byId = new Map<string, Post>();
+  for (const snapshot of batches) {
+    for (const document of snapshot.docs) {
+      byId.set(document.id, { id: document.id, ...document.data() } as Post);
+    }
+  }
+
+  // Preserve the caller's order; a document that has since been deleted is
+  // simply absent rather than a hole.
+  return ids.map((id) => byId.get(id)).filter((post): post is Post => Boolean(post));
 };
 
 export const getPostByIdFromFirestore = async (postId: string): Promise<Post | null> => {
@@ -69,24 +160,35 @@ export const getCommentsFromFirestore = async (postId: string): Promise<Comment[
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((document) => ({
-    id: document.id,
-    postId,
     ...document.data(),
+    // The document id must win over any `id` field an older client wrote into
+    // the payload: edit and delete address the document, so a stale client-side
+    // id would silently target nothing. Same reasoning for `postId`.
+    postId,
+    id: document.id,
   })) as Comment[];
 };
 
+/**
+ * Full-text search over recent posts.
+ *
+ * Firestore has no full-text index, so the newest {@link SEARCH_SCAN_LIMIT}
+ * posts are fetched and matched in memory. That is fine at the current corpus
+ * size and honest about its ceiling: past that limit older posts stop being
+ * searchable and a real index (Algolia/Typesense, or a search-terms array field
+ * written on save) becomes necessary.
+ *
+ * Ranking and field handling live in utils/search.ts so they can be tested
+ * without a database.
+ */
 export const getPostsBySearchFromFirestore = async (searchQuery: string): Promise<Post[]> => {
-  if (!searchQuery) return [];
-  const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(200));
+  if (!searchQuery || !searchQuery.trim()) return [];
+
+  const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(SEARCH_SCAN_LIMIT));
   const snapshot = await getDocs(q);
   const posts = snapshot.docs.map((document) => ({ id: document.id, ...document.data() } as Post));
-  const lowerQuery = searchQuery.toLowerCase();
-  return posts.filter((post) =>
-    post.title.toLowerCase().includes(lowerQuery) ||
-    post.content.toLowerCase().includes(lowerQuery) ||
-    post.author.toLowerCase().includes(lowerQuery) ||
-    post.brand?.toLowerCase().includes(lowerQuery)
-  );
+
+  return searchPosts(posts, searchQuery);
 };
 
 export const addPostToFirestore = async (newPost: DocumentData): Promise<void> => {
@@ -118,13 +220,13 @@ export const addVlogToFirestore = async (vlogData: DocumentData): Promise<{ id: 
 };
 
 export const getVlogsFromFirestore = async (): Promise<VlogEntry[]> => {
-  const q = query(collection(db, 'vlogs'), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, 'vlogs'), orderBy('createdAt', 'desc'), limit(COLLECTION_LIMIT));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) as VlogEntry[];
 };
 
 export const getMeetRoomsFromFirestore = async (): Promise<MeetRoomData[]> => {
-  const snapshot = await getDocs(collection(db, 'meetRooms'));
+  const snapshot = await getDocs(query(collection(db, 'meetRooms'), limit(COLLECTION_LIMIT)));
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) as MeetRoomData[];
 };
 
@@ -133,45 +235,90 @@ export const createNotificationInFirestore = async (notificationData: DocumentDa
   await addDoc(collection(db, 'notifications'), payload);
 };
 
-export const ratePostTelemetryInFirestore = async (
+/**
+ * Read the signed-in user's own rating of a post, if they have one.
+ *
+ * Without this the UI could not tell a first-time visitor from someone who
+ * already rated: `userHasVoted` reset to false on every mount, so returning
+ * users were invited to rate again and their "new" rating was silently
+ * discarded server-side.
+ *
+ * Returns null when there is no vote, and also when the read fails — a missing
+ * rating must degrade to "not rated yet", never break the card.
+ */
+export const getUserTelemetryVote = async (
   postId: string,
   userId: string,
-  category: string,
-  voteValue: number
-): Promise<void> => {
-  if (!isValidId(postId) || !isValidId(userId) || !['utility', 'skill', 'vision'].includes(category)) return;
+): Promise<PostTelemetryVote | null> => {
+  if (!isValidId(postId) || !isValidId(userId)) return null;
 
-  const voteRef = doc(db, 'posts', postId, 'votes', userId);
-  const existingVote = await getDoc(voteRef);
-  if (existingVote.exists()) return;
+  try {
+    const snapshot = await getDoc(doc(db, 'posts', postId, 'votes', userId));
+    if (!snapshot.exists()) return null;
 
-  const postRef = doc(db, 'posts', postId);
-  const batch = writeBatch(db);
-
-  batch.set(voteRef, sanitizeFirestoreData({
-    userId,
-    category,
-    value: voteValue,
-    createdAt: serverTimestamp(),
-  }));
-
-  batch.update(postRef, {
-    [`telemetry.${category}`]: increment(voteValue),
-    'telemetry.count': increment(1),
-    votes: increment(voteValue),
-  });
-
-  await batch.commit();
+    const data = snapshot.data();
+    return {
+      utility: Number(data.utility) || 0,
+      skill: Number(data.skill) || 0,
+      vision: Number(data.vision) || 0,
+    };
+  } catch {
+    return null;
+  }
 };
 
-export const addCommentToFirestore = async (postId: string, commentData: DocumentData): Promise<void> => {
-  if (!isValidId(postId)) return;
+/** Longest comment body accepted by the editor; mirrors the compose input. */
+export const MAX_COMMENT_LENGTH = 2000;
+
+export const addCommentToFirestore = async (
+  postId: string,
+  commentData: DocumentData,
+): Promise<string | null> => {
+  if (!isValidId(postId)) return null;
+
+  const payload: DocumentData = { ...commentData };
+  // Callers still mint a client-side id for their optimistic row. Persisting it
+  // would shadow the real document id on read, so it never reaches Firestore.
+  delete payload.id;
 
   const commentRef = doc(collection(db, 'posts', postId, 'comments'));
   await setDoc(commentRef, sanitizeFirestoreData({
-    ...commentData,
+    ...payload,
     createdAt: serverTimestamp(),
   }));
+  return commentRef.id;
+};
+
+/**
+ * Rewrite a comment body. Authorisation is enforced by the Firestore rule
+ * (`isOwner(resource.data.authorId) || isAdmin()`); this only shapes the write
+ * so a rejected attempt fails at the rule rather than corrupting the document.
+ */
+export const updateCommentInFirestore = async (
+  postId: string,
+  commentId: string,
+  text: string,
+): Promise<void> => {
+  if (!isValidId(postId) || !isValidId(commentId)) {
+    throw new Error('Invalid comment reference.');
+  }
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error('Comment text cannot be empty.');
+
+  await updateDoc(doc(db, 'posts', postId, 'comments', commentId), {
+    text: trimmed.slice(0, MAX_COMMENT_LENGTH),
+    editedAt: serverTimestamp(),
+  });
+};
+
+export const deleteCommentFromFirestore = async (
+  postId: string,
+  commentId: string,
+): Promise<void> => {
+  if (!isValidId(postId) || !isValidId(commentId)) {
+    throw new Error('Invalid comment reference.');
+  }
+  await deleteDoc(doc(db, 'posts', postId, 'comments', commentId));
 };
 
 export const addDocumentToFirestore = async (collectionName: string, data: DocumentData): Promise<{ id: string }> => {
@@ -181,7 +328,7 @@ export const addDocumentToFirestore = async (collectionName: string, data: Docum
 };
 
 export const getCollectionDocuments = async (collectionName: string): Promise<DocumentData[]> => {
-  const snapshot = await getDocs(collection(db, collectionName));
+  const snapshot = await getDocs(query(collection(db, collectionName), limit(COLLECTION_LIMIT)));
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 };
 
@@ -189,14 +336,15 @@ export const getUserDroneBuildsFromFirestore = async (userId: string): Promise<D
   const q = query(
     collection(db, 'droneBuilds'),
     where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(COLLECTION_LIMIT),
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 };
 
 export const getPresetsFromFirestore = async (): Promise<DocumentData[]> => {
-  const q = query(collection(db, 'presets'), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, 'presets'), orderBy('createdAt', 'desc'), limit(COLLECTION_LIMIT));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 };
@@ -214,7 +362,7 @@ export const markNotificationAsReadInFirestore = async (notificationId: string):
 };
 
 export const getSpotsFromFirestore = async (): Promise<DocumentData[]> => {
-  const q = query(collection(db, 'spots'), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, 'spots'), orderBy('createdAt', 'desc'), limit(COLLECTION_LIMIT));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 };
@@ -237,7 +385,7 @@ export const updateDroneBuildInFirestore = async (buildId: string, buildData: Do
 };
 
 export const getSTLFilesFromFirestore = async (): Promise<DocumentData[]> => {
-  const q = query(collection(db, 'stlFiles'), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, 'stlFiles'), orderBy('createdAt', 'desc'), limit(COLLECTION_LIMIT));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
 };

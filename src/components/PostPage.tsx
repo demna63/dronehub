@@ -66,7 +66,6 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
         post={post}
         currentUser={currentUser}
         allPosts={posts}
-        onVote={feedProps.onVote ?? (() => {})}
         onToggleSave={feedProps.onToggleSave ?? (() => {})}
         savedPostIds={feedProps.savedPostIds ?? []}
         onLoginClick={feedProps.onLoginClick ?? (() => {})}

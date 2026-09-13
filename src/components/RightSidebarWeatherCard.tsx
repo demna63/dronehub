@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Navigation, MapPin, Thermometer, Zap, Droplets, Compass, Sunrise, Sunset } from 'lucide-react';
+import { Wind, MapPin, Thermometer, Droplets, Compass, Sunrise, Sunset } from 'lucide-react';
 
 interface RightSidebarWeatherCardProps {
   weather: any;

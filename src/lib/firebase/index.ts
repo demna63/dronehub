@@ -30,7 +30,6 @@ import {
   increment,
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getPerformance } from 'firebase/performance';
 import { getFirebaseConfig } from './config';
 
 export const app = initializeApp(getFirebaseConfig());
@@ -38,7 +37,42 @@ export const app = initializeApp(getFirebaseConfig());
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const perf = getPerformance(app);
+/**
+ * Firebase Performance Monitoring beacons to firebaselogging-pa.googleapis.com.
+ * Initializing it eagerly put that request on the LCP critical path (it dominated
+ * the critical request chain). Defer it to idle time after first paint and load the
+ * SDK as its own dynamic chunk, so it never blocks rendering.
+ */
+const initPerformanceMonitoring = (): void => {
+  if (typeof window === 'undefined') return;
+
+  const start = (): void => {
+    void import('firebase/performance')
+      .then(({ getPerformance }) => getPerformance(app))
+      .catch(() => {
+        /* Performance monitoring is best-effort; never surface init failures. */
+      });
+  };
+
+  const schedule = (): void => {
+    // requestIdleCallback typing varies across TS lib targets; access it defensively.
+    const idle = (window as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void })
+      .requestIdleCallback;
+    if (typeof idle === 'function') {
+      idle(start, { timeout: 3000 });
+    } else {
+      window.setTimeout(start, 2000);
+    }
+  };
+
+  if (document.readyState === 'complete') {
+    schedule();
+  } else {
+    window.addEventListener('load', schedule, { once: true });
+  }
+};
+
+initPerformanceMonitoring();
 export const googleProvider = new GoogleAuthProvider();
 
 export const initializeUserProfile = async (user: any) => {
@@ -47,11 +81,13 @@ export const initializeUserProfile = async (user: any) => {
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
-    const { uid, displayName, email, photoURL } = user;
+    const { uid, displayName, photoURL } = user;
+    // `email` is deliberately NOT stored here. It already lives in Firebase
+    // Auth, nothing in the UI reads it from the profile, and while it was on
+    // the document any signed-in account could read another member's address.
     await setDoc(userRef, {
       id: uid,
       name: displayName || 'Pilot',
-      email: email || '',
       avatar: photoURL || '',
       reputation: 0,
       isAdmin: false,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Post, DroneBuild } from '../types';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
@@ -9,8 +9,9 @@ import HangarCard from './HangarCard';
 import ProfileHeader from './ProfileHeader';
 import ProfileTabs from './ProfileTabs';
 import ProfileEmptyState from './ProfileEmptyState';
-import { Plus, X, Save, Camera, Loader2, Grid, Plane } from 'lucide-react';
+import { Plus, Check, X, Save, Camera, Loader2 } from 'lucide-react';
 import EditProfileModal from './EditProfileModal';
+import Modal from './Modal';
 
 interface ProfilePageProps {
   currentUser?: User | null;
@@ -24,7 +25,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   onLoginClick
 }) => {
   const { userId } = useParams();
-  const navigate = useNavigate();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userBuilds, setUserBuilds] = useState<DroneBuild[]>([]);
@@ -48,6 +48,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   });
 
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+
+  // Deletion is confirmed inline rather than with `window.confirm`, which
+  // blocks the whole page and cannot be styled or dismissed with Escape.
+  const [pendingDelete, setPendingDelete] = useState<{ kind: 'drone' | 'post'; id: string } | null>(null);
 
   const isOwnProfile = currentUser?.id === profileUser?.id;
 
@@ -122,7 +126,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   };
 
   const handleDeleteDrone = async (droneId: string) => {
-    if (!window.confirm("ნამდვილად გსურთ ამ დრონის წაშლა ანგარიდან?")) return;
     try {
       await apiService.deleteDroneBuild(droneId);
       setUserBuilds(prev => prev.filter(b => b.id !== droneId)); 
@@ -165,12 +168,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!window.confirm("ნამდვილად გსურთ პოსტის წაშლა?")) return;
     try {
       await apiService.deletePost(postId);
       setUserPosts(prev => prev.filter(p => p.id !== postId));
     } catch (error) {
       console.error("Error deleting post:", error);
+    }
+  };
+
+  const confirmPendingDelete = async () => {
+    if (!pendingDelete) return;
+    const { kind, id } = pendingDelete;
+    setPendingDelete(null);
+    if (kind === 'drone') {
+      await handleDeleteDrone(id);
+    } else {
+      await handleDeletePost(id);
     }
   };
 
@@ -193,23 +206,47 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         profileUser={profileUser}
         isOwnProfile={Boolean(isOwnProfile)}
         onEditProfile={() => setIsEditProfileOpen(true)}
+        postsCount={userPosts.length}
+        buildsCount={userBuilds.length}
       />
 
-      {/* TABS */}
-      <div className="flex gap-4 border-b border-white/10 px-2">
-        <button 
-          onClick={() => setActiveTab('posts')}
-          className={`pb-4 text-sm font-bold uppercase tracking-widest transition-colors flex items-center gap-2 border-b-2 ${activeTab === 'posts' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+      {pendingDelete && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl px-4 py-3"
         >
-          <Grid size={16} /> პოსტები ({userPosts.length})
-        </button>
-        <button 
-          onClick={() => setActiveTab('hangar')}
-          className={`pb-4 text-sm font-bold uppercase tracking-widest transition-colors flex items-center gap-2 border-b-2 ${activeTab === 'hangar' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-        >
-          <Plane size={16} /> ანგარი ({userBuilds.length})
-        </button>
-      </div>
+          <p className="text-sm font-bold text-rose-200">
+            {pendingDelete.kind === 'drone'
+              ? 'ნამდვილად გსურთ ამ დრონის წაშლა ანგარიდან?'
+              : 'ნამდვილად გსურთ პოსტის წაშლა?'}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingDelete(null)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <X size={14} aria-hidden="true" /> გაუქმება
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmPendingDelete()}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 hover:text-rose-200 transition-colors"
+            >
+              <Check size={14} aria-hidden="true" /> დიახ, წაშალე
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ProfileTabs and ProfileEmptyState were imported but the markup was
+          duplicated inline, so the two copies had already drifted. */}
+      <ProfileTabs
+        activeTab={activeTab}
+        postsCount={userPosts.length}
+        buildsCount={userBuilds.length}
+        onTabChange={setActiveTab}
+      />
 
       {/* CONTENT */}
       <div className="py-4">
@@ -222,8 +259,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                   post={post} 
                   currentUser={currentUser ?? null}
                   onAddComment={async () => {}} 
-                  onVote={async () => {}} 
-                  onDelete={async () => await handleDeletePost(post.id)}
+                  onDelete={() => setPendingDelete({ kind: 'post', id: post.id })}
                   onEdit={(newContent) => {
                     setUserPosts(prev => prev.map(p => 
                       p.id === post.id ? { ...p, content: newContent } : p
@@ -235,9 +271,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 />
               ))
             ) : (
-              <div className="text-center py-20 text-slate-500 font-bold uppercase tracking-widest border-2 border-dashed border-white/5 rounded-3xl">
-                პოსტები ჯერ არ არის
-              </div>
+              <ProfileEmptyState message={isOwnProfile ? 'ჯერ არაფერი გამოგიქვეყნებია' : 'პოსტები ჯერ არ არის'} />
             )}
           </div>
         )}
@@ -246,6 +280,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
           <div>
             {isOwnProfile && (
               <button 
+                type="button"
                 onClick={openAddDroneModal}
                 className="w-full mb-8 py-4 border-2 border-dashed border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5 text-emerald-500 font-bold uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2"
               >
@@ -260,38 +295,27 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                   build={build} 
                   isOwner={isOwnProfile}
                   onEdit={() => openEditDroneModal(build)}
-                  onDelete={() => handleDeleteDrone(build.id)}
+                  onDelete={() => setPendingDelete({ kind: 'drone', id: build.id })}
                 />
               ))}
             </div>
 
             {userBuilds.length === 0 && !isOwnProfile && (
-              <div className="text-center py-20 text-slate-500 font-bold uppercase tracking-widest border-2 border-dashed border-white/5 rounded-3xl">
-                ანგარი ცარიელია
-              </div>
+              <ProfileEmptyState message="ანგარი ცარიელია" />
             )}
           </div>
         )}
       </div>
 
       {/* ADD / EDIT DRONE MODAL */}
-      {showAddModal && isOwnProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => !isSubmitting && setShowAddModal(false)}></div>
-          <div className="bg-slate-900 border border-white/10 p-6 md:p-8 rounded-3xl w-full max-w-xl relative z-10 shadow-2xl animate-in zoom-in-95 duration-200">
-            <button 
-              onClick={() => setShowAddModal(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
-              disabled={isSubmitting}
-            >
-              <X size={24} />
-            </button>
-            
-            <h2 className="text-2xl font-black text-white tracking-tight mb-8 flex items-center gap-3">
-              <Plane className="text-emerald-500" /> {editingDroneId ? 'დრონის რედაქტირება' : 'ახალი დრონი'}
-            </h2>
-
-            <form onSubmit={handleSaveDrone} className="space-y-6">
+      <Modal
+        isOpen={showAddModal && Boolean(isOwnProfile)}
+        onClose={() => setShowAddModal(false)}
+        title={editingDroneId ? 'დრონის რედაქტირება' : 'ახალი დრონი'}
+        size="max-w-xl"
+        busy={isSubmitting}
+      >
+            <form onSubmit={handleSaveDrone} className="space-y-6 p-6 md:p-8">
               
               <div className="flex gap-6">
                 <div className="w-32 h-32 shrink-0 bg-slate-950 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-emerald-500/50 transition-colors">
@@ -303,13 +327,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                       <span className="text-[10px] text-slate-500 font-bold uppercase">ფოტო</span>
                     </>
                   )}
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input id="drone-image" aria-label="დრონის ფოტოს ატვირთვა" type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
 
                 <div className="flex-1 space-y-4">
-                  <input required placeholder="Drone Name (e.g. Apex 5)" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-bold focus:border-emerald-500 focus:outline-none" />
+                  <input id="drone-name" aria-label="დრონის სახელი" required placeholder="Drone Name (e.g. Apex 5)" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-bold focus:border-emerald-500 focus:outline-none" />
                   
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as 'flying' | 'broken' | 'wip'})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer">
+                  <select id="drone-status" aria-label="დრონის სტატუსი" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as 'flying' | 'broken' | 'wip'})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer">
                     <option value="flying">🟢 Ready to Fly</option>
                     <option value="wip">🟡 Work in Progress</option>
                     <option value="broken">🔴 Broken / Repairing</option>
@@ -337,9 +361,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 {isSubmitting ? 'ინახება...' : 'შენახვა'}
               </button>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* EDIT PROFILE MODAL */}
       {isEditProfileOpen && profileUser && (

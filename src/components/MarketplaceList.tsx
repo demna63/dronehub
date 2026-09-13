@@ -1,28 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MarketplaceCard from './MarketplaceCard';
 import MarketplaceFilters from './MarketplaceFilters';
 import MarketplaceEmptyState from './MarketplaceEmptyState';
 import { Post, User } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { isMarketItem } from '../constants/market';
 
 interface MarketplaceListProps {
-  posts?: Post[]; // 👈 ახლა იღებს posts, როგორც App.tsx აწვდის
-  user?: User | null;
-  [key: string]: any; // ვიზღვევთ თავს სხვა გაუთვალისწინებელი ერორებისგან
+  posts: Post[];
+  currentUser?: User | null;
+  isFetching?: boolean;
+  onLoginRequest?: () => void;
 }
 
-const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts = [], user }) => {
-  const [activeFilter, setActiveFilter] = useState('all');
+const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts, isFetching = false }) => {
+  const { categoryId } = useParams<{ categoryId: string }>();
+  // The /market/category/:id route existed but its param was never read, so the
+  // filter always started at "all" no matter which link brought you here.
+  const [activeFilter, setActiveFilter] = useState(categoryId ?? 'all');
   const navigate = useNavigate();
 
-  // ვიღებთ მხოლოდ მარკეტის განცხადებებს
-  const marketItems = posts.filter(post => post.category === 'market' || post.price !== undefined);
+  useEffect(() => { setActiveFilter(categoryId ?? 'all'); }, [categoryId]);
 
-  // ვფილტრავთ კატეგორიების მიხედვით
-  const filteredItems = marketItems.filter(item => {
-    if (activeFilter === 'all') return true;
-    return item.subCategory === activeFilter;
-  });
+  const marketItems = useMemo(
+    () => posts.filter((post) => isMarketItem(post.category)),
+    [posts],
+  );
+
+  const filteredItems = useMemo(
+    () => (activeFilter === 'all'
+      ? marketItems
+      : marketItems.filter((item) => item.subCategory === activeFilter)),
+    [marketItems, activeFilter],
+  );
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
@@ -35,7 +45,13 @@ const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts = [], user }) =
       <MarketplaceFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
       {/* Items Grid */}
-      {filteredItems.length > 0 ? (
+      {isFetching && marketItems.length === 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-hidden="true">
+          {[0, 1, 2].map((index) => (
+            <div key={index} className="h-56 rounded-2xl bg-slate-900 border border-white/5 animate-pulse" />
+          ))}
+        </div>
+      ) : filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredItems.map((item) => (
             <MarketplaceCard 

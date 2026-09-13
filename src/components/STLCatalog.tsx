@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Box, Download, Search, User, Layers, Cuboid, Loader2 } from 'lucide-react';
+import { Box, Download, Search, User, Cuboid, Loader2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 // ⚠️ ამოვიღეთ STL_ITEMS_DATA, მაგრამ დავტოვეთ კატეგორიები ფილტრებისთვის:
 import { STL_TYPES, STL_FRAMES, STL_AUTHORS } from '../constants/toolsData';
 import { apiService } from '../services/apiService';
+import { formatShortDate } from '../utils/dates';
 
 const STLCatalog: React.FC = () => {
   const { t } = useLanguage();
@@ -16,18 +17,32 @@ const STLCatalog: React.FC = () => {
   const [filterFrame, setFilterFrame] = useState('All');
   const [filterAuthor, setFilterAuthor] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   // --- FETCH DATA FROM FIREBASE ---
   useEffect(() => {
+    let cancelled = false;
+
     const fetchItems = async () => {
       setIsLoading(true);
-      const data = await apiService.getSTLFiles();
-      setItems(data);
-      setIsLoading(false);
+      setLoadError(null);
+      try {
+        const data = await apiService.getSTLFiles();
+        if (!cancelled) setItems(data);
+      } catch (error) {
+        // Uncaught, this left `isLoading` true forever — the page rendered its
+        // spinner indefinitely with no way to tell that the read had failed.
+        console.error('Error fetching STL files:', error);
+        if (!cancelled) setLoadError('ფაილები ვერ ჩაიტვირთა.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     };
     fetchItems();
-  }, []);
+    return () => { cancelled = true; };
+  }, [reloadToken]);
 
   // --- FILTERING ---
   const filteredItems = useMemo(() => {
@@ -63,7 +78,12 @@ const STLCatalog: React.FC = () => {
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Download failed, opening in new tab instead", error);
-      window.open(url, '_blank');
+      // Only ever open our own storage. `downloadUrl` is document data; before
+      // the rules were tightened any signed-in user could put an arbitrary URL
+      // here and it would be opened for every visitor.
+      if (url.startsWith('https://firebasestorage.googleapis.com/')) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     } finally {
       setDownloadingId(null);
     }
@@ -141,6 +161,17 @@ const STLCatalog: React.FC = () => {
         <div className="flex justify-center items-center py-20">
           <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
         </div>
+      ) : loadError ? (
+        <div className="text-center py-20 border-2 border-dashed border-rose-500/20 rounded-3xl">
+          <p role="alert" className="text-sm font-bold text-rose-400 mb-4">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => setReloadToken((token) => token + 1)}
+            className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
+          >
+            ხელახლა ცდა
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredItems.length > 0 ? (
@@ -172,7 +203,7 @@ const STLCatalog: React.FC = () => {
                   <div className="pt-3 mt-3 border-t border-white/5 flex justify-between items-center">
                      <span className="text-[10px] text-slate-400">
                        {/* თუ თარიღი Firebase timestamp-ია, ვწერთ ასე: */}
-                       {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : item.date}
+                       {formatShortDate(item.createdAt) || item.date}
                      </span>
                      
                      <button 

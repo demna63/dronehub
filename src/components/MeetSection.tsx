@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { MeetRoomData, User } from '../types';
+import { Video } from 'lucide-react';
 
 interface MeetSectionProps {
   rooms: MeetRoomData[];
@@ -12,6 +13,7 @@ interface MeetSectionProps {
 const MeetSection: React.FC<MeetSectionProps> = ({ rooms, user, onOpenRoom, onLoginClick }) => {
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20">
+      <h1 className="sr-only">ვიდეო ოთახები — Google Meet</h1>
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-gradient-to-r from-emerald-500/10 to-sky-500/10 p-10 md:p-14 rounded-[48px] border border-white/10 relative overflow-hidden group shadow-xl">
         <div className="space-y-4 relative z-10">
           <div className="flex items-center gap-4">
@@ -30,6 +32,14 @@ const MeetSection: React.FC<MeetSectionProps> = ({ rooms, user, onOpenRoom, onLo
       </header>
 
       {/* Rooms Grid */}
+      {rooms.length === 0 && (
+        <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-3xl">
+          <Video size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
+          <p className="text-sm font-bold text-slate-300">ღია ოთახები ჯერ არ არის</p>
+          <p className="text-xs text-slate-500 mt-2">შეამოწმე მოგვიანებით — ოთახებს ადმინი ხსნის.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {rooms.map(room => (
           <div 
@@ -63,7 +73,15 @@ const MeetSection: React.FC<MeetSectionProps> = ({ rooms, user, onOpenRoom, onLo
                     <p className="text-slate-400 text-xs mt-1 line-clamp-1">{room.description}</p>
                   </div>
 
-                  <button className="w-full py-4 bg-sky-500 hover:bg-sky-400 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest shadow-lg shadow-sky-500/20 transition-all active:scale-95 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (user) { onOpenRoom(room.id); } else { onLoginClick(); }
+                    }}
+                    aria-label={`შეერთება ოთახთან: ${room.name}`}
+                    className="w-full py-4 bg-sky-500 hover:bg-sky-400 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest shadow-lg shadow-sky-500/20 transition-all active:scale-95 flex items-center justify-center gap-3"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     შეერთება (Join)
                   </button>

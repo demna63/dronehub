@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Post } from '../types';
 import { apiService } from '../services/apiService';
 import PostCard from './PostCard';
-import { Bookmark, Loader2, LayoutGrid } from 'lucide-react';
+import { Bookmark, Loader2 } from 'lucide-react';
 
 interface SavedPostsProps {
   currentUser: User | null;
@@ -13,10 +13,15 @@ interface SavedPostsProps {
 const SavedPosts: React.FC<SavedPostsProps> = ({ currentUser, onToggleSave, onLoginClick }) => {
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const savedIds = currentUser?.savedPosts;
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchSavedPosts = async () => {
-      if (!currentUser || !currentUser.savedPosts || currentUser.savedPosts.length === 0) {
+      if (!currentUser || !savedIds || savedIds.length === 0) {
         setSavedPosts([]);
         setLoading(false);
         return;
@@ -24,19 +29,26 @@ const SavedPosts: React.FC<SavedPostsProps> = ({ currentUser, onToggleSave, onLo
 
       try {
         setLoading(true);
-        // მოგვაქვს ყველა პოსტი და ვფილტრავთ ლოკალურად (ან მოგვაქვს მხოლოდ ID-ებით სერვერიდან)
-        const allPosts = await apiService.getPosts();
-        const filtered = allPosts.filter(post => currentUser.savedPosts?.includes(post.id));
-        setSavedPosts(filtered);
-      } catch (error) {
-        console.error("Error fetching saved posts:", error);
+        setError(null);
+        // Fetched by id rather than by scanning the newest 50 posts: a bookmark
+        // older than that window used to disappear from this page while its id
+        // stayed in `savedPosts`, so the count and the list disagreed.
+        const saved = await apiService.getPostsByIds(currentUser.savedPosts);
+        if (!cancelled) setSavedPosts(saved);
+      } catch (fetchError) {
+        console.error("Error fetching saved posts:", fetchError);
+        // The empty state used to double as the error state, which told the
+        // user they had saved nothing — a lie on a failed read.
+        if (!cancelled) setError('შენახული პოსტები ვერ ჩაიტვირთა.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchSavedPosts();
-  }, [currentUser]);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, savedIds?.join(',')]);
 
   if (loading) {
     return (
@@ -71,26 +83,31 @@ const SavedPosts: React.FC<SavedPostsProps> = ({ currentUser, onToggleSave, onLo
         </div>
       </div>
 
-      {savedPosts.length > 0 ? (
+      {error && (
+        <p role="alert" className="text-center py-10 text-sm font-bold text-rose-400 border-2 border-dashed border-rose-500/20 rounded-3xl">
+          {error}
+        </p>
+      )}
+
+      {!error && savedPosts.length > 0 ? (
         <div className="space-y-4">
           {savedPosts.map(post => (
             <PostCard 
               key={post.id} 
               post={post} 
               currentUser={currentUser}
-              onVote={() => {}} // სურვილისამებრ დაამატე ხმის მიცემა აქაც
               onToggleSave={onToggleSave}
               isSaved={true}
               onLoginClick={onLoginClick}
             />
           ))}
         </div>
-      ) : (
+      ) : !error ? (
         <div className="text-center py-32 bg-slate-900/30 rounded-3xl border border-white/5 border-dashed">
           <Bookmark className="mx-auto text-slate-800 mb-4" size={40} />
           <p className="text-slate-500 font-bold text-sm">ჯერჯერობით არაფერი გაქვთ შენახული</p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

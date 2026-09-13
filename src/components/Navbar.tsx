@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, Bell, Search, LogOut, 
-  ChevronDown, Plus, Globe, Settings, UserCircle 
+  ChevronDown, Plus, Globe, Settings, UserCircle, ArrowRight
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { User, Notification } from '../types';
 import Logo from './Logo';
+import Avatar from './Avatar';
 import NotificationsDropdown from './NotificationsDropdown';
 import { NavLink, MobileNavLink, ProfileMenuItem } from './NavbarLinks';
 import EcosystemLinksNav from './EcosystemLinksNav';
@@ -73,15 +74,24 @@ const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  /**
+   * Hand the query to /search and let that page own everything else.
+   *
+   * This used to navigate to `/?q=...`, but nothing anywhere read that
+   * parameter — the URL changed, the feed re-rendered unfiltered, and search
+   * appeared to do nothing at all.
+   */
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = searchValue.trim();
     if (!q) return;
+
     if (onSearch) {
       onSearch(q);
     } else {
-      navigate(`/?q=${encodeURIComponent(q)}`);
+      navigate(`/search?q=${encodeURIComponent(q)}`);
     }
+    setIsMobileMenuOpen(false);
   };
 
   const handleLogout = async (e?: React.MouseEvent) => {
@@ -129,8 +139,18 @@ const Navbar: React.FC<NavbarProps> = ({
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               placeholder="ძებნა..."
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500/50 transition-all text-white placeholder:text-slate-400"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-12 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500/50 transition-all text-white placeholder:text-slate-400"
             />
+            {/* A form whose only trigger is the Enter key is unusable by touch
+                and by anyone who never guesses that Enter submits. */}
+            <button
+              type="submit"
+              aria-label="ძებნა"
+              disabled={!searchValue.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-sky-400 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
+            >
+              <ArrowRight size={16} />
+            </button>
           </form>
 
           <div className="flex items-center gap-2 md:gap-4">
@@ -147,7 +167,7 @@ const Navbar: React.FC<NavbarProps> = ({
               <>
                 <button 
                   onClick={location.pathname.startsWith('/market') ? onCreateMarketItem : onAddPost}
-                  className="hidden sm:flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-4 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-sky-500/20 active:scale-95"
+                  className="hidden sm:flex items-center gap-2 bg-sky-700 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-sky-500/20 active:scale-95"
                 >
                   <Plus size={18} /> <span className="uppercase tracking-widest text-[11px]">დამატება</span>
                 </button>
@@ -185,13 +205,11 @@ const Navbar: React.FC<NavbarProps> = ({
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all"
                   >
-                    <img 
-                      src={currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.id}`} 
-                      alt={currentUser.name} 
-                      loading="lazy"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-lg object-cover bg-slate-800" 
+                    <Avatar
+                      src={currentUser.avatar}
+                      name={currentUser.name}
+                      size={32}
+                      className="rounded-lg"
                     />
                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                   </button>
@@ -262,6 +280,30 @@ const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
           
+          {/* The desktop search form is `hidden md:flex`, so on a phone the
+              site had no search at all. */}
+          <form onSubmit={handleSearch} className="relative mb-8">
+            <Search size={18} aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              name="mobile-search"
+              id="mobile-search"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="ძებნა..."
+              aria-label="ძებნა"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-12 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500/50"
+            />
+            <button
+              type="submit"
+              aria-label="ძებნა"
+              disabled={!searchValue.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-sky-400 disabled:opacity-30 transition-colors"
+            >
+              <ArrowRight size={16} />
+            </button>
+          </form>
+
           <div className="space-y-4">
             <MobileNavLink to="/" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname === '/'} label="მთავარი" />
             <MobileNavLink to="/market" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/market')} label="მარკეტი" />

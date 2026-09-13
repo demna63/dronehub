@@ -1,8 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
 import { apiService } from '../services/apiService';
-import { X, Upload, Loader2, Camera } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { prepareAvatarFile } from '../services/storageService';
+import { AlertCircle, Loader2, Upload } from 'lucide-react';
+import Avatar from './Avatar';
+import Modal from './Modal';
+
+/** Matches the 5MB the copy promises; the crop shrinks it far below this. */
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -23,6 +28,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // სთეითის სინქრონიზაცია, როცა ახალი currentUser მოვა ან მოდალი გაიხსნება
@@ -33,26 +39,47 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setLocation(currentUser.location || '');
       setGear(currentUser.gear?.join(', ') || '');
       setAvatar(currentUser.avatar || '');
+      setError(null);
     }
   }, [isOpen, currentUser]);
 
-  // ავატარის ატვირთვა
+  /**
+   * Crop first, upload second.
+   *
+   * The previous version uploaded the picked file untouched, so a wide
+   * screenshot was stored as-is and every circular avatar in the app showed a
+   * `object-cover` slice of its middle. `prepareAvatarFile` centre-crops to a
+   * square and re-encodes at 512px, so the stored bytes are exactly what is
+   * shown here in the preview.
+   */
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Reset the input so re-picking the same file after a failure still fires.
+    e.target.value = '';
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("ფაილი ძალიან დიდია (მაქს. 5MB)");
+    if (file.size > MAX_AVATAR_BYTES) {
+      setError('ფაილი ძალიან დიდია (მაქს. 5MB).');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setError('აირჩიე სურათი (JPEG, PNG ან WebP).');
       return;
     }
 
     setIsUploading(true);
+    setError(null);
     try {
-      const url = await apiService.uploadImage(file, 'avatars');
+      const cropped = await prepareAvatarFile(file);
+      const { url } = await apiService.uploadImageWithMeta(cropped, 'avatars');
       setAvatar(url);
-    } catch (error) {
-      console.error(error);
-      alert("სურათის ატვირთვა ვერ მოხერხდა");
+    } catch (uploadError) {
+      console.error('Avatar upload failed:', uploadError);
+      setError(
+        uploadError instanceof Error && /ვერ|აირჩიე/.test(uploadError.message)
+          ? uploadError.message
+          : 'სურათის ატვირთვა ვერ მოხერხდა. სცადე ხელახლა.',
+      );
     } finally {
       setIsUploading(false);
     }
@@ -63,6 +90,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (!name.trim()) return;
 
     setIsSaving(true);
+    setError(null);
     try {
       const gearArray = gear.split(',').map(g => g.trim()).filter(g => g !== "");
       
@@ -84,44 +112,22 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       });
       
       onClose();
-    } catch (error) {
-      console.error(error);
-      alert("პროფილის განახლება ვერ მოხერხდა");
+    } catch (saveError) {
+      console.error('Profile update failed:', saveError);
+      setError('პროფილის განახლება ვერ მოხერხდა. სცადე ხელახლა.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-        />
-        
-        {/* Modal Content */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-        >
-          {/* Header */}
-          <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
-            <h2 className="text-lg font-black text-white uppercase tracking-tight">
-              პროფილის რედაქტირება
-            </h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="პროფილის რედაქტირება"
+      busy={isSaving || isUploading}
+    >
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             
             {/* Avatar Upload */}
             <div className="flex flex-col items-center gap-4">
@@ -129,15 +135,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 className="relative group cursor-pointer" 
                 onClick={() => fileInputRef.current?.click()}
               >
-                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-white/20 group-hover:border-indigo-500 transition-colors bg-slate-800">
-                  {avatar ? (
-                    <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                      <Camera size={32} />
-                    </div>
-                  )}
-                </div>
+                <Avatar
+                  src={avatar}
+                  name={name || currentUser.name}
+                  size={96}
+                  ringClassName="border-2 border-dashed border-white/20 group-hover:border-indigo-500 transition-colors"
+                />
                 {/* Hover Overlay */}
                 <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   {isUploading ? <Loader2 className="animate-spin text-white" /> : <Upload className="text-white" size={24} />}
@@ -150,16 +153,20 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   onChange={handleImageUpload}
                 />
               </div>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
-                დააჭირეთ ფოტოს შესაცვლელად
+              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 text-center">
+                დააჭირე ფოტოს შესაცვლელად
+                <span className="block mt-1 normal-case tracking-normal text-slate-600">
+                  კვადრატულად ჩამოიჭრება ცენტრიდან
+                </span>
               </span>
             </div>
 
             {/* Fields */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">სახელი</label>
+                <label htmlFor="edit-profile-name" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">სახელი</label>
                 <input 
+                  id="edit-profile-name"
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
@@ -170,8 +177,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">ბიოგრაფია</label>
+                <label htmlFor="edit-profile-bio" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">ბიოგრაფია</label>
                 <textarea 
+                  id="edit-profile-bio"
                   value={bio} 
                   onChange={(e) => setBio(e.target.value)}
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none resize-none h-24 text-sm transition-colors"
@@ -180,8 +188,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">ლოკაცია</label>
+                <label htmlFor="edit-profile-location" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">ლოკაცია</label>
                 <input 
+                  id="edit-profile-location"
                   type="text" 
                   value={location} 
                   onChange={(e) => setLocation(e.target.value)}
@@ -191,8 +200,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">აღჭურვილობა (Gear)</label>
+                <label htmlFor="edit-profile-gear" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">აღჭურვილობა (Gear)</label>
                 <input 
+                  id="edit-profile-gear"
                   type="text" 
                   value={gear} 
                   onChange={(e) => setGear(e.target.value)}
@@ -201,6 +211,15 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 />
               </div>
             </div>
+
+            {error && (
+              <p
+                role="alert"
+                className="flex items-center gap-2 text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2.5"
+              >
+                <AlertCircle size={14} className="shrink-0" aria-hidden="true" /> {error}
+              </p>
+            )}
 
             {/* Action Buttons */}
             <div className="pt-4 flex gap-4">
@@ -227,10 +246,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </button>
             </div>
 
-          </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+      </form>
+    </Modal>
   );
 };
 

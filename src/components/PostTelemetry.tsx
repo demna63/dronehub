@@ -1,122 +1,222 @@
-import React, { useState } from 'react';
-import { PostRatings } from '../types';
-import { Activity, Zap, Eye, Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Check, ChevronDown, Eye, Loader2, Wrench, Zap } from 'lucide-react';
+import type { PostRatings, PostTelemetryVote } from '../types';
+import StarRating from './StarRating';
+import {
+  MIN_VOTES_FOR_VERDICT,
+  percentToStars,
+  starsToPercent,
+  telemetryAverages,
+  telemetryDisplay,
+  voteStars,
+} from '../utils/telemetry';
 
-interface PostTelemetryProps {
-  stats?: PostRatings;
-  onRate: (u: number, s: number, v: number) => Promise<void>;
-  userHasVoted: boolean;
+export interface PostTelemetryProps {
+  stats: PostRatings;
+  /** Rejects to signal the rating was not saved; the caller rolls back. */
+  onRate: (ratings: PostTelemetryVote) => Promise<void>;
+  /** The caller's own rating, or null when they have not rated. */
+  currentUserVote: PostTelemetryVote | null;
+  /** True while the caller's existing vote is still being fetched. */
+  isLoadingVote?: boolean;
+  /** False when nobody is signed in: opening asks them to log in instead. */
+  canRate?: boolean;
+  onRequireLogin?: () => void;
+  /** Render already expanded. */
+  defaultOpen?: boolean;
 }
 
-const PostTelemetry: React.FC<PostTelemetryProps> = ({ stats, onRate, userHasVoted }) => {
-  const [isVoting, setIsVoting] = useState(false);
-  // სლაიდერების სთეითი (0-100)
-  const [inputs, setInputs] = useState({ u: 50, s: 50, v: 50 });
+const AXES = [
+  { key: 'utility', label: 'სარგებელი', icon: Wrench },
+  { key: 'skill', label: 'ოსტატობა', icon: Zap },
+  { key: 'vision', label: 'ხედვა', icon: Eye },
+] as const;
 
-  // პროცენტების გამოთვლა (საშუალო მაჩვენებელი)
-  const count = stats?.count || 0;
-  const avgU = count ? Math.round(stats!.utility / count) : 0;
-  const avgS = count ? Math.round(stats!.skill / count) : 0;
-  const avgV = count ? Math.round(stats!.vision / count) : 0;
+const NOT_RATED: PostTelemetryVote = { utility: 0, skill: 0, vision: 0 };
 
-  const handleSubmit = async () => {
-    await onRate(inputs.u, inputs.s, inputs.v);
-    setIsVoting(false);
+/**
+ * The whole rating control for a post: one summary line that expands into three
+ * five-star rows.
+ *
+ * Design notes worth keeping:
+ * - One widget, one number. The previous version showed the same data three
+ *   times (a battery, three per-axis bars, and a collapsed score bar) and none
+ *   of them agreed at a glance.
+ * - Stars, not sliders. A 0-100 slider invites precision nobody has and is
+ *   miserable on a phone; five taps carry the same signal.
+ * - Nothing is preselected. The old panel opened at 50% on every axis, so a
+ *   distracted tap on "save" submitted a neutral rating the person never chose.
+ * - The headline is the Bayesian score (see utils/telemetry.ts) and is withheld
+ *   entirely below MIN_VOTES_FOR_VERDICT: one person's opinion must not be
+ *   dressed up in the same visual language as a forty-person consensus.
+ */
+const PostTelemetry: React.FC<PostTelemetryProps> = ({
+  stats,
+  onRate,
+  currentUserVote,
+  isLoadingVote = false,
+  canRate = true,
+  onRequireLogin,
+  defaultOpen = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [inputs, setInputs] = useState<PostTelemetryVote>(currentUserVote ?? NOT_RATED);
+
+  // Follow the server's copy of the caller's vote as it arrives or changes.
+  useEffect(() => {
+    setInputs(currentUserVote ?? NOT_RATED);
+  }, [currentUserVote]);
+
+  const { stars: overallStars, isConfirmed, hasAny, count } = telemetryDisplay(stats);
+  const averages = telemetryAverages(stats);
+  const hasVoted = currentUserVote !== null;
+  const ownStars = voteStars(currentUserVote);
+  const isComplete = AXES.every((axis) => inputs[axis.key] > 0);
+
+  const toggle = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!isOpen && !canRate) {
+      onRequireLogin?.();
+      return;
+    }
+    setIsOpen((open) => !open);
   };
 
-  // შენი CSS სტილები (Tailwind-ით)
-  // bg-[#1a1a1a] -> შავი ფონი
-  // text-[#00ff00] -> ტერმინალის მწვანე
-  // font-mono -> Courier New სტილი
+  const handleSubmit = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (isSaving || !isComplete) return;
+
+    setIsSaving(true);
+    setError(null);
+    try {
+      await onRate(inputs);
+      setIsOpen(false);
+    } catch (err) {
+      // Keep the panel open so the choices are not lost, and say what actually
+      // failed instead of silently showing a rating the server rejected.
+      setError(err instanceof Error && err.message ? err.message : 'ვერ შევინახე. სცადე ხელახლა.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
-    <div className="w-full max-w-[320px] bg-[#1a1a1a] border-2 border-[#333] rounded-lg p-5 font-mono text-[#00ff00] shadow-lg shadow-green-900/10 mt-4">
-      
-      <div className="flex justify-between items-center mb-4 border-b border-[#333] pb-2">
-        <h4 className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-          <Activity size={14} /> OSD Telemetry
-        </h4>
-        {!userHasVoted && !isVoting && (
-          <button 
-            onClick={() => setIsVoting(true)}
-            className="text-[10px] bg-[#333] hover:bg-[#00ff00] hover:text-black px-2 py-1 rounded transition-colors"
-          >
-            RATE
-          </button>
+    <div className="w-full min-w-0">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={isOpen}
+        aria-label={
+          hasAny
+            ? `შეფასება ${overallStars.toFixed(1)} ხუთიდან, ${count} შეფასება${isConfirmed ? '' : ' — წინასწარი'}`
+            : 'ჯერ არავის შეუფასებია'
+        }
+        className={`w-full h-10 px-3 rounded-xl border flex items-center gap-2 transition-all ${
+          isOpen
+            ? 'bg-slate-900 border-white/20'
+            : 'bg-white/[0.03] border-white/5 hover:border-white/15 hover:bg-white/[0.06]'
+        }`}
+      >
+        <StarRating
+          value={overallStars}
+          label="საშუალო შეფასება"
+          size={14}
+          tone={isConfirmed ? 'gold' : 'muted'}
+        />
+
+        <span className={`text-xs font-bold tabular-nums ${isConfirmed ? 'text-white' : 'text-slate-300'}`}>
+          {hasAny ? overallStars.toFixed(1) : '–'}
+        </span>
+
+        {/* A number backed by one or two people is still shown — hiding it read
+            as "my rating did not save" — but it is labelled provisional and
+            drawn in a muted tone so it is never mistaken for a consensus. */}
+        <span className="text-[10px] text-slate-400 truncate">
+          {!hasAny
+            ? 'ჯერ არავის შეუფასებია'
+            : isConfirmed
+              ? `${count} შეფასება`
+              : `წინასწარი · ${count}/${MIN_VOTES_FOR_VERDICT}`}
+        </span>
+
+        <span className="flex-1" />
+
+        {hasVoted && (
+          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 shrink-0 tabular-nums">
+            <Check size={11} aria-hidden="true" /> შენი {ownStars.toFixed(1)}
+          </span>
         )}
-      </div>
 
-      {isVoting ? (
-        /* --- ხმის მიცემის რეჟიმი --- */
-        <div className="space-y-4 animate-in fade-in">
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs"><span>Utility</span> <span>{inputs.u}%</span></div>
-            <input type="range" min="0" max="100" value={inputs.u} onChange={e => setInputs({...inputs, u: Number(e.target.value)})} className="w-full accent-[#00ff00] h-2 bg-[#333] rounded-lg appearance-none cursor-pointer"/>
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs"><span>Skill</span> <span>{inputs.s}%</span></div>
-            <input type="range" min="0" max="100" value={inputs.s} onChange={e => setInputs({...inputs, s: Number(e.target.value)})} className="w-full accent-[#00ff00] h-2 bg-[#333] rounded-lg appearance-none cursor-pointer"/>
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs"><span>Vision</span> <span>{inputs.v}%</span></div>
-            <input type="range" min="0" max="100" value={inputs.v} onChange={e => setInputs({...inputs, v: Number(e.target.value)})} className="w-full accent-[#00ff00] h-2 bg-[#333] rounded-lg appearance-none cursor-pointer"/>
-          </div>
-          <button onClick={handleSubmit} className="w-full mt-2 bg-[#00ff00] text-black font-bold py-1 rounded text-xs flex items-center justify-center gap-2 hover:opacity-90">
-            <Check size={14} /> CONFIRM DATA
-          </button>
-        </div>
-      ) : (
-        /* --- ჩვენების რეჟიმი (შენი HTML სტრუქტურა) --- */
-        <div className="space-y-3">
-          
-          {/* Utility Bar */}
-          <div className="stat-row">
-            <div className="flex justify-between text-[10px] mb-1 opacity-60">
-              <span className="flex items-center gap-1"><Zap size={10}/> UTILITY</span>
-              <span>{avgU}%</span>
-            </div>
-            <div className="h-2.5 bg-[#333] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[#00ff00] rounded-full shadow-[0_0_10px_#00ff00]" 
-                style={{ width: `${avgU}%`, transition: 'width 1s ease-out' }}
-              ></div>
-            </div>
-          </div>
+        <ChevronDown
+          size={14}
+          aria-hidden="true"
+          className={`text-slate-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
 
-          {/* Skill Bar */}
-          <div className="stat-row">
-            <div className="flex justify-between text-[10px] mb-1 opacity-60">
-              <span className="flex items-center gap-1"><Activity size={10}/> SKILL</span>
-              <span>{avgS}%</span>
-            </div>
-            <div className="h-2.5 bg-[#333] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[#00ff00] rounded-full shadow-[0_0_10px_#00ff00]" 
-                style={{ width: `${avgS}%`, transition: 'width 1s ease-out' }}
-              ></div>
-            </div>
-          </div>
+      {isOpen && (
+        <div
+          onClick={(event) => event.stopPropagation()}
+          className="mt-2 bg-slate-950 border border-white/10 rounded-xl p-3 animate-in slide-in-from-top-1 fade-in duration-200"
+        >
+          {isLoadingVote ? (
+            <p className="text-[11px] text-slate-500 py-6 text-center">იტვირთება…</p>
+          ) : (
+            <>
+              <div className="space-y-2.5">
+                {AXES.map((axis) => (
+                  <div key={axis.key} className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 w-[86px] shrink-0">
+                      <axis.icon size={12} className="text-slate-500" aria-hidden="true" />
+                      {axis.label}
+                    </span>
 
-          {/* Vision Bar */}
-          <div className="stat-row">
-            <div className="flex justify-between text-[10px] mb-1 opacity-60">
-              <span className="flex items-center gap-1"><Eye size={10}/> VISION</span>
-              <span>{avgV}%</span>
-            </div>
-            <div className="h-2.5 bg-[#333] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[#00ff00] rounded-full shadow-[0_0_10px_#00ff00]" 
-                style={{ width: `${avgV}%`, transition: 'width 1s ease-out' }}
-              ></div>
-            </div>
-          </div>
+                    <StarRating
+                      value={percentToStars(inputs[axis.key])}
+                      onChange={(starValue) =>
+                        setInputs((prev) => ({ ...prev, [axis.key]: starsToPercent(starValue) }))
+                      }
+                      disabled={isSaving}
+                      label={axis.label}
+                      size={18}
+                    />
 
-          {/* Footer Stats */}
-          <div className="mt-4 pt-2 border-t border-dashed border-[#555] flex justify-between items-center text-[10px]">
-            <span>Total Votes: {count}</span>
-            <span className="font-bold">XP Gained: +{Math.round((avgU + avgS + avgV)/3)}</span>
-          </div>
+                    <span className="flex-1" />
 
+                    {/* The community's own average per axis, so a rater can
+                        see where they sit without leaving the panel. */}
+                    {hasAny && (
+                      <span
+                        title={isConfirmed ? 'საზოგადოების საშუალო' : 'წინასწარი საშუალო'}
+                        className={`text-[10px] tabular-nums shrink-0 ${isConfirmed ? 'text-slate-400' : 'text-slate-600'}`}
+                      >
+                        {percentToStars(averages[axis.key]).toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {error && (
+                <p role="alert" className="mt-3 text-[10px] text-rose-400 text-center">{error}</p>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSaving || !isComplete}
+                className="w-full mt-3 h-8 rounded-lg bg-amber-400 text-black text-[11px] font-bold flex items-center justify-center gap-2 hover:bg-amber-300 transition-colors disabled:bg-slate-800 disabled:text-slate-500"
+              >
+                {isSaving
+                  ? <><Loader2 size={12} className="animate-spin" /> ინახება…</>
+                  : isComplete
+                    ? <><Check size={12} /> {hasVoted ? 'განახლება' : 'შენახვა'}</>
+                    : 'შეაფასე სამივე კრიტერიუმი'}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

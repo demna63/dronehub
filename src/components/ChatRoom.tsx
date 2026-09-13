@@ -3,6 +3,10 @@ import { User, VlogChatMessage } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from '../lib/firebase';
 import { Send, Loader2, Lock, MessageSquare } from 'lucide-react';
+import Avatar from './Avatar';
+import { MESSAGE_MAX_LENGTH } from '../constants/limits';
+import { useToast } from '../contexts/ToastContext';
+import { formatClockTime } from '../utils/dates';
 
 interface ChatRoomProps {
   user: User | null;
@@ -11,7 +15,9 @@ interface ChatRoomProps {
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) => {
+  const { showToast } = useToast();
   const [messages, setMessages] = useState<VlogChatMessage[]>([]);
+  const [listenerError, setListenerError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -39,6 +45,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
         } as VlogChatMessage;
       });
       setMessages(msgs);
+    }, (snapshotError) => {
+      // Without this a rules rejection or a dropped connection was silent: the
+      // list simply stopped updating with no indication that anything failed.
+      console.error('Message listener error:', snapshotError);
+      setListenerError('შეტყობინებები ვერ ჩაიტვირთა.');
     });
 
     return () => unsubscribe();
@@ -68,7 +79,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
       setInput('');
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("შეტყობინების გაგზავნა ვერ მოხერხდა.");
+      showToast('შეტყობინება ვერ გაიგზავნა.', 'error');
     } finally {
       setIsSending(false);
     }
@@ -88,9 +99,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
             messages.map((msg) => {
               const isMine = msg.authorId === user?.id;
               // უსაფრთხოდ ამოგვაქვს დრო
-              const timeString = (msg.timestamp as any)?.toDate 
-                ? (msg.timestamp as any).toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-                : '';
+              const timeString = formatClockTime(msg.createdAt ?? msg.timestamp) || '';
 
               return (
                 <motion.div
@@ -100,10 +109,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
                   className={`flex items-end gap-3 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
                 >
                   {/* Avatar */}
-                  <img
-                    src={msg.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.authorId}`}
-                    alt="avatar"
-                    className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 shrink-0"
+                  <Avatar
+                    src={msg.avatar}
+                    name={msg.authorName}
+                    size={32}
+                    ringClassName="border border-white/10"
                   />
                   
                   {/* Message Bubble */}
@@ -130,6 +140,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
             })
           )}
         </AnimatePresence>
+        {listenerError && (
+          <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] font-bold text-rose-300">
+            {listenerError}
+          </p>
+        )}
         <div ref={messagesEndRef} className="h-4" />
       </div>
 
@@ -153,6 +168,8 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            aria-label="შეტყობინება"
+            maxLength={MESSAGE_MAX_LENGTH}
             placeholder={`Message #${channelId}...`}
             className="flex-1 bg-slate-900/50 border border-white/10 hover:border-white/20 focus:border-sky-500/50 rounded-xl px-5 py-3 text-sm text-white focus:outline-none focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400"
             disabled={!user || isSending}

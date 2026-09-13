@@ -10,6 +10,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { isUserAdmin } from '../utils/authUtils';
 import { STL_TYPES, STL_FRAMES } from '../constants/toolsData';
+import { isMarketItem } from '../constants/market';
+import { useToast } from '../contexts/ToastContext';
 
 interface AdminDashboardProps {
   currentUser: User | null;
@@ -17,6 +19,7 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: initialPosts }) => {
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'posts' | 'market' | 'stl' | 'users'>('overview');
@@ -33,6 +36,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   const [stlFile, setStlFile] = useState<File | null>(null);
   const [stlImage, setStlImage] = useState<File | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  /** What the admin has asked to delete, awaiting inline confirmation. */
+  const [pendingDelete, setPendingDelete] = useState<{ kind: 'post' | 'stl'; id: string } | null>(null);
 
   const stlFileInputRef = useRef<HTMLInputElement>(null);
   const stlImageInputRef = useRef<HTMLInputElement>(null);
@@ -64,29 +69,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   }, [activeTab]);
 
   // --- Delete handlers ---
+  //
+  // Two-step instead of window.confirm: a blocking browser dialog freezes the
+  // tab, cannot be dismissed with Escape, and looks nothing like the app.
+  // `pendingDelete` holds what the admin has asked to remove; the row renders
+  // the confirmation inline.
   const handleDeletePost = async (id: string) => {
-    if (!window.confirm('ნამდვილად გსურთ ამ პოსტის/ნივთის წაშლა?')) return;
+    setPendingDelete(null);
     setDeletingId(id);
     try {
       await apiService.deletePost(id);
       setPosts(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('წაშლა ვერ მოხერხდა.');
+      showToast('წაშლა ვერ მოხერხდა.', 'error');
     } finally {
       setDeletingId(null);
     }
   };
 
   const handleDeleteStl = async (id: string) => {
-    if (!window.confirm('ნამდვილად გსურთ ამ STL მოდელის წაშლა?')) return;
+    setPendingDelete(null);
     setDeletingId(id);
     try {
       await deleteDoc(doc(db, 'stlFiles', id));
       setStls(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error('Error deleting STL:', error);
-      alert('წაშლა ვერ მოხერხდა.');
+      showToast('წაშლა ვერ მოხერხდა.', 'error');
     } finally {
       setDeletingId(null);
     }
@@ -95,12 +105,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   // --- STL upload ---
   const handleStlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stlFile) return alert('გთხოვთ აირჩიოთ STL ფაილი!');
-    if (!stlImage) return alert('გთხოვთ აირჩიოთ სურათი!');
+    if (!stlFile) { showToast('აირჩიე STL ფაილი.', 'error'); return; }
+    if (!stlImage) { showToast('აირჩიე სურათი.', 'error'); return; }
     setIsUploadingStl(true);
     try {
       await apiService.uploadSTLItem(stlForm, stlImage, stlFile);
-      alert('STL წარმატებით აიტვირთა!');
+      showToast('STL წარმატებით აიტვირთა.', 'success');
       setStlForm(prev => ({ ...prev, title: '' }));
       setStlFile(null);
       setStlImage(null);
@@ -109,10 +119,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
       fetchStls();
     } catch (error) {
       console.error('Error uploading STL:', error);
-      alert('ატვირთვა ვერ მოხერხდა.');
+      showToast('ატვირთვა ვერ მოხერხდა.', 'error');
     } finally {
       setIsUploadingStl(false);
     }
+  };
+
+  const DeleteControl: React.FC<{ kind: 'post' | 'stl'; id: string }> = ({ kind, id }) => {
+    const isConfirming = pendingDelete?.kind === kind && pendingDelete.id === id;
+    const isDeleting = deletingId === id;
+
+    if (isConfirming) {
+      return (
+        <span role="alert" className="shrink-0 flex items-center gap-2">
+          <span className="text-[11px] font-bold text-rose-300 hidden sm:inline">წავშალო?</span>
+          <button
+            type="button"
+            aria-label="წაშლის დადასტურება"
+            onClick={() => (kind === 'post' ? handleDeletePost(id) : handleDeleteStl(id))}
+            className="px-2.5 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors"
+          >
+            დიახ
+          </button>
+          <button
+            type="button"
+            aria-label="წაშლის გაუქმება"
+            onClick={() => setPendingDelete(null)}
+            className="px-2.5 py-1.5 rounded-lg bg-white/5 text-slate-300 text-[11px] font-bold hover:bg-white/10 transition-colors"
+          >
+            არა
+          </button>
+        </span>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        aria-label="წაშლა"
+        onClick={() => setPendingDelete({ kind, id })}
+        disabled={isDeleting}
+        className="shrink-0 p-2.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+      </button>
+    );
   };
 
   if (!currentUser) return null;
@@ -137,8 +188,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     { id: 'users',    label: 'მომხმარებლები',  icon: Users       },
   ];
 
-  const marketItems  = posts.filter(p =>  p.price || p.category === 'market');
-  const regularPosts = posts.filter(p => !p.price && p.category !== 'market');
+  // Classify by the stored category alone. The old `p.price ||` test treated a
+  // free listing (price 0, falsy) as an ordinary post.
+  const marketItems  = posts.filter(p =>  isMarketItem(p.category));
+  const regularPosts = posts.filter(p => !isMarketItem(p.category));
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -209,13 +262,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       <p className="text-sm font-bold text-white truncate max-w-xs md:max-w-md">{post.title || post.content}</p>
                       <p className="text-xs text-slate-500">ავტორი: {post.author || 'უცნობი'}</p>
                     </div>
-                    <button
-                      onClick={() => handleDeletePost(post.id)}
-                      disabled={deletingId === post.id}
-                      className="shrink-0 p-2.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {deletingId === post.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-                    </button>
+                    <DeleteControl kind="post" id={post.id} />
                   </div>
                 ))}
                 {regularPosts.length === 0 && <p className="text-slate-500 text-sm">პოსტები არ მოიძებნა.</p>}
@@ -237,13 +284,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                         <p className="text-xs font-bold text-emerald-400">{item.price} ₾</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeletePost(item.id)}
-                      disabled={deletingId === item.id}
-                      className="shrink-0 p-2.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {deletingId === item.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-                    </button>
+                    <DeleteControl kind="post" id={item.id} />
                   </div>
                 ))}
                 {marketItems.length === 0 && <p className="text-slate-500 text-sm">მარკეტში ნივთები არ არის.</p>}
@@ -262,8 +303,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                 <form onSubmit={handleStlSubmit} className="space-y-4 max-w-2xl">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-slate-400 mb-1 block">მოდელის სახელი</label>
+                      <label htmlFor="stl-title" className="text-xs font-bold text-slate-400 mb-1 block">მოდელის სახელი</label>
                       <input
+                        id="stl-title"
                         required type="text" placeholder="მაგ: GoPro Mount"
                         value={stlForm.title}
                         onChange={e => setStlForm(prev => ({ ...prev, title: e.target.value }))}
@@ -271,8 +313,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-400 mb-1 block">ავტორი</label>
+                      <label htmlFor="stl-author" className="text-xs font-bold text-slate-400 mb-1 block">ავტორი</label>
                       <input
+                        id="stl-author"
                         required type="text"
                         value={stlForm.author}
                         onChange={e => setStlForm(prev => ({ ...prev, author: e.target.value }))}
@@ -280,8 +323,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-400 mb-1 block">ნაწილის ტიპი</label>
+                      <label htmlFor="stl-type" className="text-xs font-bold text-slate-400 mb-1 block">ნაწილის ტიპი</label>
                       <select
+                        id="stl-type"
                         value={stlForm.type}
                         onChange={e => setStlForm(prev => ({ ...prev, type: e.target.value }))}
                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
@@ -290,8 +334,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-400 mb-1 block">თავსებადი ჩარჩო</label>
+                      <label htmlFor="stl-frame" className="text-xs font-bold text-slate-400 mb-1 block">თავსებადი ჩარჩო</label>
                       <select
+                        id="stl-frame"
                         value={stlForm.frame}
                         onChange={e => setStlForm(prev => ({ ...prev, frame: e.target.value }))}
                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
@@ -303,16 +348,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-slate-400 mb-1 block">სურათი (PNG/JPG)</label>
+                      <label htmlFor="stl-image" className="text-xs font-bold text-slate-400 mb-1 block">სურათი (PNG/JPG)</label>
                       <input
+                        id="stl-image"
                         required ref={stlImageInputRef} type="file" accept="image/*"
                         onChange={e => setStlImage(e.target.files?.[0] || null)}
                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-white/5 file:text-white hover:file:bg-white/10"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-slate-400 mb-1 block">3D მოდელი (.STL)</label>
+                      <label htmlFor="stl-file" className="text-xs font-bold text-slate-400 mb-1 block">3D მოდელი (.STL)</label>
                       <input
+                        id="stl-file"
                         required ref={stlFileInputRef} type="file" accept=".stl"
                         onChange={e => setStlFile(e.target.files?.[0] || null)}
                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-sky-500/20 file:text-sky-400 hover:file:bg-sky-500/30"
@@ -341,13 +388,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       <p className="text-sm font-bold text-white">{stl.title}</p>
                       <p className="text-xs text-slate-500">{stl.type} • {stl.frame} • ავტორი: {stl.author}</p>
                     </div>
-                    <button
-                      onClick={() => handleDeleteStl(stl.id)}
-                      disabled={deletingId === stl.id}
-                      className="shrink-0 p-2.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {deletingId === stl.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-                    </button>
+                    <DeleteControl kind="stl" id={stl.id} />
                   </div>
                 ))}
                 {stls.length === 0 && <p className="text-slate-500 text-sm">STL მოდელები არ არის.</p>}

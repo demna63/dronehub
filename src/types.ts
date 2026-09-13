@@ -1,4 +1,4 @@
-import React from 'react';
+import type { TimestampLike } from './utils/dates';
 
 // =====================
 // 1. მომხმარებელი (User)
@@ -26,8 +26,8 @@ export interface User {
   following?: string[];
   followersCount?: number;
   followingCount?: number;
-  lastSeen?: any;
-  createdAt?: any;
+  lastSeen?: TimestampLike;
+  createdAt?: TimestampLike;
   isAdmin?: boolean;
   location?: string;
   gear?: string[];
@@ -40,13 +40,6 @@ export interface User {
   experienceLevel?: 'beginner' | 'intermediate' | 'pro' | 'experienced'; 
   droneInterests?: string[];
   socialLinks?: SocialLinks;
-}
-
-export interface Telemetry {
-  utility: number;
-  skill: number;
-  vision: number;
-  count: number; // რამდენმა ადამიანმა მისცა ხმა ჯამში
 }
 
 // =====================
@@ -77,11 +70,19 @@ export interface Category {
 // =====================
 
 // ✅ რეიტინგის სტრუქტურა
+/** Running sums of every rating, plus how many people rated. Never averages. */
 export interface PostRatings {
   utility: number;
   skill: number;
   vision: number;
   count: number;
+}
+
+/** One user's own rating of one post, as stored in posts/{id}/votes/{uid}. */
+export interface PostTelemetryVote {
+  utility: number;
+  skill: number;
+  vision: number;
 }
 
 export interface Comment {
@@ -95,7 +96,9 @@ export interface Comment {
   votes: number;
   parentId?: string | null;
   replies?: Comment[];
-  createdAt?: any;
+  createdAt?: TimestampLike;
+  /** Set by `updateCommentInFirestore`; absent on comments never edited. */
+  editedAt?: unknown;
   likes: number;       // ✅ აი ეს ველი აკლდა
   authorName?: string;    
   authorAvatar?: string;
@@ -122,8 +125,9 @@ export interface Post {
   commentsCount: number;
   sharesCount?: number;
   views?: number;
-  createdAt: any;
+  createdAt: TimestampLike;
   timestamp?: string;
+  /** Bayesian-shrunk 0-100 rating, written by the ratePost function. Sort key. */
   telemetryScore?: number;
   comments?: Comment[];
   authorAvatar?: string;
@@ -157,7 +161,7 @@ export interface DroneBuild {
   camera: string;
   image?: string;
   status: 'flying' | 'broken' | 'wip';
-  createdAt?: any;
+  createdAt?: TimestampLike;
   likes?: number;
 }
 
@@ -176,7 +180,10 @@ export interface VlogEntry {
   description?: string;
   thumbnail: string;
   coverImage?: string;
+  /** Legacy/in-memory field. `videoUrl` is what `addVlog` actually persists. */
   url: string;
+  videoUrl?: string;
+  content?: string;
   author: string;
   authorName: string;
   authorId: string;
@@ -186,7 +193,7 @@ export interface VlogEntry {
   likes: number;
   engagement?: number;
   isTrending?: boolean;
-  createdAt: any;
+  createdAt: TimestampLike;
   timestamp?: string; 
   duration?: string;
   links?: VlogLink[];
@@ -209,7 +216,7 @@ export interface VlogChatMessage {
   text: string;
   translatedText?: string;
   timestamp: string;
-  createdAt: any;
+  createdAt: TimestampLike;
 
   // Legacy/Duplicate fields handling (Optional)
   userId?: string;     // Use authorId instead where possible
@@ -259,7 +266,7 @@ export interface UserQuestion {
   text?: string; 
   answer?: string; 
   status: 'pending' | 'answered';
-  createdAt: any;
+  createdAt: TimestampLike;
   timestamp?: string; 
 }
 
@@ -273,7 +280,7 @@ export interface Notification {
   postId: string;
   postTitle: string;
   read: boolean;
-  createdAt: any;
+  createdAt: TimestampLike;
   // userId და content ამოღებულია, რადგან ახალ სტრუქტურაში მათ postTitle და recipientId ანაცვლებს
 }// ვინ გამოიწვია შეტყობინებ
 
@@ -289,7 +296,7 @@ export interface Preset {
   downloadUrl: string;
   authorId: string;
   authorName: string;
-  createdAt: any;
+  createdAt: TimestampLike;
   command?: string; 
   tags?: string[];
 }

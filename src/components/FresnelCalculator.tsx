@@ -52,11 +52,12 @@ const FresnelCalculator: React.FC = () => {
 
             {/* Frequency Input */}
             <div className="space-y-2">
-              <label className="text-[10px] text-slate-400 font-bold uppercase ml-1">
+              <label htmlFor="fresnel-frequency" className="text-[10px] text-slate-400 font-bold uppercase ml-1">
                 {t('frequency') || 'Frequency (MHz)'}
               </label>
               <div className="relative group">
                 <input 
+                  id="fresnel-frequency"
                   type="number" 
                   value={frequency}
                   onChange={(e) => setFrequency(Number(e.target.value))}
@@ -72,11 +73,12 @@ const FresnelCalculator: React.FC = () => {
 
             {/* Distance Input */}
             <div className="space-y-2">
-              <label className="text-[10px] text-slate-400 font-bold uppercase ml-1">
+              <label htmlFor="fresnel-distance" className="text-[10px] text-slate-400 font-bold uppercase ml-1">
                 {t('distance') || 'Distance (Km)'}
               </label>
               <div className="relative group">
                 <input 
+                  id="fresnel-distance"
                   type="number" 
                   value={distance}
                   onChange={(e) => setDistance(Number(e.target.value))}

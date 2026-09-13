@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { 
-  X, Upload, Loader2, Tag, MapPin, 
-  DollarSign, Package, Phone, Image as ImageIcon,
+  Upload, Loader2, Tag, MapPin, 
+  DollarSign, Package, Phone,
   CheckCircle2, Box
 } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import Modal from './Modal';
 import { apiService } from '../services/apiService';
 import { compressImageFile } from '../services/storageService';
 import type { ProcessedImage } from '../services/storageService';
@@ -30,6 +32,7 @@ const CONDITIONS = [
 ];
 
 const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, onItemCreated, currentUser }) => {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   
   // Form State
@@ -79,30 +82,28 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
       onClose();
     } catch (error) {
       console.error("Error creating market item:", error);
-      alert("შეცდომა განცხადების დამატებისას");
+      showToast('შეცდომა განცხადების დამატებისას', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/5 bg-slate-950/50">
-          <div className="flex items-center gap-2">
-            <Package className="text-emerald-500" />
-            <h2 className="text-lg font-black uppercase tracking-wide text-white">განცხადების დამატება</h2>
-          </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto p-6 custom-scrollbar">
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="განცხადების დამატება"
+      size="max-w-2xl"
+      busy={loading}
+    >
+        <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
+            <div className="flex items-center gap-2 text-slate-400">
+              <Package className="text-emerald-500" aria-hidden="true" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">მარკეტი</span>
+            </div>
+
             {/* 1. IMAGE UPLOAD (Big Area) */}
             <div 
               onClick={() => fileInputRef.current?.click()}
@@ -121,6 +122,8 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
                 </div>
               )}
               <input 
+                id="market-image"
+                aria-label="ნივთის სურათის ატვირთვა"
                 type="file" 
                 ref={fileInputRef} 
                 onChange={handleImageChange} 
@@ -133,8 +136,9 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {/* Title */}
                <div className="md:col-span-2 space-y-1">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">სათაური</label>
+                 <label htmlFor="market-title" className="text-[10px] font-bold text-slate-400 uppercase ml-1">სათაური</label>
                  <input 
+                   id="market-title"
                    required 
                    type="text" 
                    value={title} 
@@ -146,10 +150,11 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
                {/* Price */}
                <div className="space-y-1">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">ფასი (GEL)</label>
+                 <label htmlFor="market-price" className="text-[10px] font-bold text-slate-400 uppercase ml-1">ფასი (GEL)</label>
                  <div className="relative">
                    <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" />
                    <input 
+                     id="market-price"
                      required 
                      type="number" 
                      value={price} 
@@ -162,9 +167,10 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
                {/* Category */}
                <div className="space-y-1">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">კატეგორია</label>
+                 <label htmlFor="market-category" className="text-[10px] font-bold text-slate-400 uppercase ml-1">კატეგორია</label>
                  <div className="relative">
                    <select 
+                     id="market-category"
                      value={category} 
                      onChange={(e) => setCategory(e.target.value)}
                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none appearance-none cursor-pointer"
@@ -185,10 +191,11 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Brand */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">ბრენდი / მოდელი</label>
+                    <label htmlFor="market-brand" className="text-[10px] font-bold text-slate-400 uppercase ml-1">ბრენდი / მოდელი</label>
                     <div className="relative">
                       <Box size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input 
+                        id="market-brand"
                         type="text" 
                         value={brand} 
                         onChange={(e) => setBrand(e.target.value)} 
@@ -200,10 +207,11 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
                   {/* Location */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">ლოკაცია</label>
+                    <label htmlFor="market-location" className="text-[10px] font-bold text-slate-400 uppercase ml-1">ლოკაცია</label>
                     <div className="relative">
                       <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input 
+                        id="market-location"
                         type="text" 
                         value={location} 
                         onChange={(e) => setLocation(e.target.value)} 
@@ -216,8 +224,8 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
                {/* Condition Selector */}
                <div className="space-y-1">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">მდგომარეობა</label>
-                 <div className="grid grid-cols-3 gap-2">
+                 <span id="market-condition-label" className="block text-[10px] font-bold text-slate-400 uppercase ml-1">მდგომარეობა</span>
+                 <div role="group" aria-labelledby="market-condition-label" className="grid grid-cols-3 gap-2">
                     {CONDITIONS.map(cond => (
                       <button
                         key={cond.id}
@@ -240,10 +248,11 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
             <div className="space-y-4">
                {/* Phone */}
                <div className="space-y-1">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">საკონტაქტო ნომერი</label>
+                 <label htmlFor="market-phone" className="text-[10px] font-bold text-slate-400 uppercase ml-1">საკონტაქტო ნომერი</label>
                  <div className="relative">
                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                    <input 
+                     id="market-phone"
                      required 
                      type="tel" 
                      value={phone} 
@@ -256,8 +265,9 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
                {/* Description */}
                <div className="space-y-1">
-                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">აღწერა</label>
+                 <label htmlFor="market-description" className="text-[10px] font-bold text-slate-400 uppercase ml-1">აღწერა</label>
                  <textarea 
+                   id="market-description"
                    required 
                    value={description} 
                    onChange={(e) => setDescription(e.target.value)} 
@@ -281,8 +291,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
           </form>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

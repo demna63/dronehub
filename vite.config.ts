@@ -30,12 +30,24 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: (id) => {
             if (!id.includes('node_modules')) return;
+            // `firebase/performance` is loaded with a true dynamic import() at
+            // idle (src/lib/firebase/index.ts) because it was blocking LCP;
+            // folding it into the eager `firebase` chunk shipped it anyway and
+            // silently undid that. Letting Rollup split it restores the intent.
+            //
+            // NOT firebase/functions: telemetryService imports it statically and
+            // apiService imports telemetryService, so it is in the eager graph.
+            // Excluding it would only move it out of the stable vendor chunk and
+            // into the entry chunk that changes on every deploy — worse caching.
+            if (id.includes('@firebase/performance') || id.includes('firebase/performance')) return;
             // Firebase — large SDK, changes infrequently
             if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
             // Animation library — large, isolate for better caching
             if (id.includes('framer-motion')) return 'framer-motion';
-            // Maps — leaflet + react-leaflet
-            if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps';
+            // Maps — the Google Maps React wrapper. The Maps JS API itself is
+            // loaded at runtime from maps.googleapis.com, so only the thin
+            // wrapper is bundled (leaflet, which was 155 KB, is gone).
+            if (id.includes('@vis.gl/react-google-maps')) return 'maps';
             // Router — separate for better caching
             if (id.includes('react-router-dom')) return 'router';
             // Search and realtime utilities

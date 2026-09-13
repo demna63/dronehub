@@ -115,6 +115,76 @@ export const compressImageFile = (file: File): Promise<ProcessedImage> => {
   });
 };
 
+/**
+ * Square side an avatar is normalised to. Rendered at 128px at most, so 512
+ * covers retina and future larger surfaces without storing a wallpaper.
+ */
+export const AVATAR_SIZE = 512;
+const AVATAR_QUALITY = 0.9;
+
+/**
+ * Centre-crop a picked file to a square and re-encode it at AVATAR_SIZE.
+ *
+ * Avatars are drawn in a circle with `object-cover`, which crops whatever it is
+ * given at render time. A 1175x65 screenshot strip therefore became a circle
+ * containing a slice of somebody's screen — the file was fine, the framing was
+ * decided by CSS. Cropping here means what a person sees in the preview is
+ * exactly the bytes that get stored, on every surface, forever.
+ *
+ * Unlike {@link compressImageFile} this rejects rather than falling back: an
+ * uncropped avatar is a broken avatar, so failing loudly beats storing one.
+ */
+export const prepareAvatarFile = async (file: File): Promise<ProcessedImage> => {
+  assertUploadable(file);
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const probe = new Image();
+      probe.onload = () => resolve(probe);
+      probe.onerror = () => reject(new Error('სურათის წაკითხვა ვერ მოხერხდა.'));
+      probe.src = objectUrl;
+    });
+
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    if (!side) throw new Error('სურათის წაკითხვა ვერ მოხერხდა.');
+
+    const canvas = document.createElement('canvas');
+    canvas.width = AVATAR_SIZE;
+    canvas.height = AVATAR_SIZE;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('ბრაუზერმა სურათის დამუშავება ვერ შეძლო.');
+
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(
+      img,
+      Math.round((img.naturalWidth - side) / 2),
+      Math.round((img.naturalHeight - side) / 2),
+      side,
+      side,
+      0,
+      0,
+      AVATAR_SIZE,
+      AVATAR_SIZE,
+    );
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', AVATAR_QUALITY);
+    });
+    if (!blob) throw new Error('სურათის დამუშავება ვერ მოხერხდა.');
+
+    const name = `${file.name.replace(/\.[^/.]+$/, '') || 'avatar'}.webp`;
+    return {
+      file: new File([blob], name, { type: 'image/webp' }),
+      width: AVATAR_SIZE,
+      height: AVATAR_SIZE,
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
 const assertUploadable = (file: File): void => {
   if (!(ALLOWED_TYPES as readonly string[]).includes(file.type)) {
     throw new Error(`Invalid file type: ${file.type}. Only JPEG, PNG, WebP, and GIF are allowed.`);

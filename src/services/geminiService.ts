@@ -27,6 +27,18 @@ const callGeminiProxy = async (action: GeminiAction, payload: Record<string, unk
   return response.data.result;
 };
 
+/**
+ * The proxy now requires a signed-in caller and enforces a daily budget per
+ * account, so those two rejections are ordinary states, not bugs — the caller
+ * shows this text instead of a generic "unavailable" fallback.
+ */
+export const describeGeminiError = (error: unknown): string | null => {
+  const code = (error as { code?: string })?.code;
+  if (code === 'functions/unauthenticated') return 'ამ ფუნქციისთვის გაიარე ავტორიზაცია.';
+  if (code === 'functions/resource-exhausted') return 'დღიური ლიმიტი ამოიწურა. სცადე ხვალ.';
+  return null;
+};
+
 const getDevGeminiApiKey = (): string | null => {
   if (!import.meta.env.DEV) return null;
 
@@ -101,7 +113,8 @@ export const geminiService = {
       return await callGeminiProxy('checkZoneWithAI', { lat, lng });
     } catch (error) {
       console.error('[Gemini] Zone check error:', error);
-      return fallback;
+      const reason = describeGeminiError(error);
+      return reason ? { status: 'CAUTION', message: reason } : fallback;
     }
   },
 
@@ -131,7 +144,9 @@ export const geminiService = {
 
       return await callGeminiProxy('checkRestrictedZone', { query });
     } catch (error) {
-      return fallback;
+      console.error('[Gemini] Restricted-zone check error:', error);
+      const reason = describeGeminiError(error);
+      return reason ? { status: 'CAUTION', message: reason } : fallback;
     }
   },
 };

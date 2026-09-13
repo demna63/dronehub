@@ -47,7 +47,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
     // 3. დავაბრუნოთ მხოლოდ მოთხოვნილი რაოდენობა
     return allChannels.slice(0, numResults);
 
-  }, [startFreq, endFreq, numResults, includeDigital]);
+  }, [startFreq, endFreq, centerFreq, numResults, includeDigital]);
 
   return (
     <div className="p-6 space-y-8 animate-in fade-in duration-500">
@@ -78,11 +78,12 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
 
             {/* Start Freq */}
             <div className="space-y-2">
-              <label className="text-[10px] text-slate-400 font-bold uppercase ml-1">
+              <label htmlFor="channel-start-freq" className="text-[10px] text-slate-400 font-bold uppercase ml-1">
                 {t('ant_start_freq') || 'Start (MHz)'}
               </label>
               <div className="relative group">
                 <input 
+                  id="channel-start-freq"
                   type="number" 
                   value={startFreq}
                   onChange={(e) => setStartFreq(Number(e.target.value))}
@@ -93,11 +94,12 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
 
             {/* End Freq */}
             <div className="space-y-2">
-              <label className="text-[10px] text-slate-400 font-bold uppercase ml-1">
+              <label htmlFor="channel-end-freq" className="text-[10px] text-slate-400 font-bold uppercase ml-1">
                 {t('ant_end_freq') || 'End (MHz)'}
               </label>
               <div className="relative group">
                 <input 
+                  id="channel-end-freq"
                   type="number" 
                   value={endFreq}
                   onChange={(e) => setEndFreq(Number(e.target.value))}
@@ -108,10 +110,11 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
 
             {/* Count Select */}
             <div className="space-y-2">
-              <label className="text-[10px] text-slate-400 font-bold uppercase ml-1">
+              <label htmlFor="channel-num-results" className="text-[10px] text-slate-400 font-bold uppercase ml-1">
                 {t('ant_num_channels') || 'Number of channels'}
               </label>
               <select 
+                id="channel-num-results"
                 value={numResults} 
                 onChange={(e) => setNumResults(Number(e.target.value))}
                 className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 cursor-pointer"
@@ -124,11 +127,12 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
 
             {/* Digital Toggle */}
             <div className="pt-2">
-              <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all">
+              <label htmlFor="channel-include-digital" className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all">
                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${includeDigital ? 'bg-orange-500 border-orange-500' : 'border-white/20 bg-slate-900'}`}>
                   {includeDigital && <CheckCircle2 size={12} className="text-white" />}
                 </div>
                 <input 
+                  id="channel-include-digital"
                   type="checkbox" 
                   className="hidden" 
                   checked={includeDigital} 

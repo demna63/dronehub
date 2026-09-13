@@ -17,7 +17,7 @@ const CHANNELS = [
   { id: 'offtopic', name: 'Off-Topic', icon: Hash, desc: 'სხვა თემები' }
 ];
 
-const GlobalChat: React.FC<GlobalChatProps> = ({ currentUser, onLoginClick, onUserClick }) => {
+const GlobalChat: React.FC<GlobalChatProps> = ({ currentUser, onLoginClick, onUserClick: _onUserClick }) => {
   const [activeChannel, setActiveChannel] = useState('general');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 

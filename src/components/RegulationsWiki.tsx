@@ -14,7 +14,7 @@ interface RegulationsWikiProps {
 type Category = 'OPEN' | 'SPECIFIC' | 'CERTIFIED';
 type WeightClass = '< 250G' | '250G - 2KG' | '> 2KG';
 
-const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser }) => {
+const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: _currentUser }) => {
   const [activeCategory, setActiveCategory] = useState<Category>('OPEN');
   const [activeWeight, setActiveWeight] = useState<WeightClass>('< 250G');
   const [zoneQuery, setZoneQuery] = useState('');
@@ -222,7 +222,7 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser }
         <div className="space-y-8 pt-10 border-t border-white/5">
           <div className="flex items-center gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></div>
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] typography-mtavruli">{t('restricted_zone_check')}</h3>
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] typography-mtavruli">{t('restricted_zone_check')}</h2>
           </div>
           <p className="text-[11px] text-amber-300/80">
             AI-შედეგები მხოლოდ საინფორმაციო მიზნებისთვისაა. ფრენამდე ყოველთვის შეამოწმეთ ოფიციალური წყაროები და NOTAM-ები.
