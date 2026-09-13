@@ -43,7 +43,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "vlogId",
+          "fieldPath": "roomId",
           "order": "ASCENDING"
         },
         {
@@ -62,7 +62,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "roomId",
+          "fieldPath": "vlogId",
           "order": "ASCENDING"
         },
         {
@@ -119,6 +119,29 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "facets",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "facets",
+          "arrayConfig": "CONTAINS"
+        },
+        {
           "fieldPath": "telemetryScore",
           "order": "DESCENDING"
         },
@@ -137,29 +160,6 @@
       "collectionGroup": "posts",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "facets",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "posts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "facets",
-          "arrayConfig": "CONTAINS"
-        },
         {
           "fieldPath": "telemetryScore",
           "order": "DESCENDING"
