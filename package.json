@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "node ./node_modules/typescript/bin/tsc && node ./node_modules/vite/bin/vite.js build && node scripts/audit-dist-secrets.mjs",
-    "lint": "node ./node_modules/eslint/bin/eslint.js . --ext ts,tsx --report-unused-disable-directives --max-warnings 25",
+    "lint": "node ./node_modules/eslint/bin/eslint.js . --ext ts,tsx,js --report-unused-disable-directives --max-warnings 25",
     "test": "vitest run",
     "preview": "vite preview",
     "deploy:hosting": "node scripts/deploy-hosting.mjs",
     "backup": "node scripts/backup-firestore.mjs && node scripts/backup-storage.mjs",
     "backup:all": "bash scripts/backup-all.sh",
-    "lint:strict": "node ./node_modules/eslint/bin/eslint.js . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint:strict": "node ./node_modules/eslint/bin/eslint.js . --ext ts,tsx,js --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
     "@google/genai": "^1.40.0",
