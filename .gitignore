@@ -1,7 +1,8 @@
 # Environment variables - never commit secrets
-.env
-.env.local
-.env.*.local
+# `.env*` catches every variant (.env, .env.local, .env.backup-*, .env.*.bak);
+# `env.example` is the committed template and is re-allowed below.
+.env*
+!env.example
 env.download
 
 # Dependencies
@@ -14,6 +15,8 @@ dist-ssr/
 # Vite / TypeScript cache
 *.local
 .vite/
+# esbuild scratch files Vite leaves behind when loading a TS config
+*.timestamp-*.mjs
 
 # Editor directories
 .vscode/
