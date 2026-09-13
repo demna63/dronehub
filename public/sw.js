@@ -7,9 +7,26 @@ self.addEventListener('install', (event) => {
   );
 });
 
+/** Hashed assets are immutable, so only the newest MAX_ASSET_ENTRIES are worth keeping. */
+const MAX_ASSET_ENTRIES = 80;
+
+const pruneAssetCache = async () => {
+  const cache = await caches.open(CACHE_NAME);
+  const keys = await cache.keys();
+  const assets = keys.filter((request) => new URL(request.url).pathname.startsWith('/assets/'));
+  // Oldest first: cache.keys() preserves insertion order.
+  const excess = assets.length - MAX_ASSET_ENTRIES;
+  if (excess > 0) await Promise.all(assets.slice(0, excess).map((request) => cache.delete(request)));
+};
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      // Within the current cache, hashed assets accumulated with no eviction at
+      // all — the cache grew forever until someone bumped CACHE_NAME by hand.
+      .then(pruneAssetCache)
+      .then(() => self.clients.claim())
   );
 });
 
@@ -24,8 +41,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+          // Only cache a GOOD shell. Firebase Hosting rewrites ** -> /index.html,
+          // so without this check a 500 or an error page returned during a bad
+          // deploy was written straight over the cached shell and then served
+          // as the offline fallback indefinitely.
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+          }
           return response;
         })
         .catch(() => caches.match('/index.html'))
@@ -44,7 +67,10 @@ self.addEventListener('fetch', (event) => {
             }
             return response;
           })
-          .catch(() => cached);
+          // On a cache miss AND a network failure this resolved to `undefined`,
+          // and respondWith(undefined) throws — the request hard-failed instead
+          // of falling through to the shell.
+          .catch(() => cached || caches.match('/index.html'));
 
         return cached || networkFetch;
       })

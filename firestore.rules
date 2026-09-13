@@ -33,13 +33,20 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedProfileFields());
     }
 
-    function onlyUpdatingTelemetryFields() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['telemetry', 'votes']);
+    // Client-side length caps are enforced by code an attacker is not running.
+    // Without a server-side bound, a script can write megabyte documents at will.
+    function withinSize(field, max) {
+      return !(field in request.resource.data)
+        || (request.resource.data[field] is string && request.resource.data[field].size() <= max);
     }
 
-    function voteExistsForCaller(postId) {
-      return existsAfter(/databases/$(database)/documents/posts/$(postId)/votes/$(request.auth.uid));
+    // An author edits their own content; they do not get to hand it to someone
+    // else, and they do not get to move server-owned counters under cover of an
+    // edit. `keys` is the allowlist of what an edit may touch.
+    function isOwnerEdit(ownerField, keys) {
+      return isOwner(resource.data[ownerField])
+        && request.resource.data[ownerField] == resource.data[ownerField]
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
 
     match /{document=**} {
@@ -47,7 +54,12 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      // `read` covers `list`, so one throwaway account plus a getDocs() on the
+      // collection dumped the entire membership — including the `email` field
+      // that used to be written into every profile. Single reads stay available
+      // because profile pages need them; enumeration does not.
+      allow get: if isAuthenticated();
+      allow list: if false;
       allow create: if isOwner(userId) && isValidProfileCreate();
       allow update: if isOwner(userId) && isValidProfileUpdate();
       allow delete: if false;
@@ -68,26 +80,63 @@ service cloud.firestore {
 
     match /posts/{postId} {
       allow read: if true;
+      // The same caps as `update`. Without them a document could be created
+      // oversized and then be permanently uneditable, because the update rule
+      // would reject every subsequent write to it.
       allow create: if isAuthenticated()
-        && request.resource.data.authorId == request.auth.uid;
-      allow update: if isOwner(resource.data.authorId)
-        || isAdmin()
-        || (isAuthenticated() && onlyUpdatingTelemetryFields() && voteExistsForCaller(postId));
+        && request.resource.data.authorId == request.auth.uid
+        && withinSize('title', 300)
+        && withinSize('content', 20000);
+      // `telemetry`/`telemetryScore` are written ONLY by the ratePost Cloud
+      // Function (admin credentials bypass these rules). Allowing clients to
+      // write them meant any signed-in user could set utility to 999999 with a
+      // single updateDoc — the delta was never constrained.
+      // Allowlisted rather than denylisted: the old rule blocked only
+      // `telemetry`/`telemetryScore`, so an author could still reassign
+      // `authorId` to another user or inflate `likes`/`views`/`commentsCount`.
+      // `commentsCount` is owned by the onCommentCreated/Deleted triggers.
+      allow update: if isAdmin()
+        || (isOwnerEdit('authorId', [
+              'title', 'content', 'image', 'imageWidth', 'imageHeight',
+              'tags', 'category', 'subCategory', 'brand', 'price',
+              'isEdited', 'updatedAt'
+            ])
+            && withinSize('title', 300)
+            && withinSize('content', 20000));
       allow delete: if isOwner(resource.data.authorId) || isAdmin();
 
       match /comments/{commentId} {
         allow read: if true;
         allow create: if isAuthenticated()
-          && request.resource.data.authorId == request.auth.uid;
-        allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+          && request.resource.data.authorId == request.auth.uid
+          && withinSize('text', 2000);
+
+        // Editing rewrites the body and nothing else: the author may not
+        // reassign the comment to someone else, nor inflate its own likes or
+        // votes under cover of an edit.
+        allow update: if isAdmin()
+          || (isOwner(resource.data.authorId)
+              && request.resource.data.authorId == resource.data.authorId
+              && request.resource.data.diff(resource.data).affectedKeys()
+                    .hasOnly(['text', 'editedAt'])
+              && withinSize('text', 2000));
+
+        allow delete: if isOwner(resource.data.authorId) || isAdmin();
       }
 
+      // A user may read their own vote (the UI hydrates the sliders from it) and
+      // anyone may read the collection for auditing/rebuilds. Writes belong to
+      // the ratePost Cloud Function only, so the aggregate on the post can
+      // never disagree with the votes that produced it.
       match /votes/{userId} {
         allow read: if true;
-        allow create: if isAuthenticated()
-          && request.auth.uid == userId
-          && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if false;
+        // Ratings are written only by the ratePost Cloud Function, so the
+        // aggregate on the post can never disagree with the votes behind it.
+        allow create, update: if false;
+        // Deletion is the one exception: an admin has to be able to remove the
+        // vote documents left by the retired one-click rating UI, which are a
+        // different shape and would otherwise corrupt every future average.
+        allow delete: if isAdmin();
       }
     }
 
@@ -99,58 +148,82 @@ service cloud.firestore {
     match /vlogs/{vlogId} {
       allow read: if true;
       allow create: if isAuthenticated()
-        && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+        && request.resource.data.authorId == request.auth.uid
+        && withinSize('title', 300);
+      allow update: if isAdmin()
+        || isOwnerEdit('authorId', ['title', 'description', 'thumbnail', 'videoUrl', 'url', 'content', 'updatedAt']);
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
     }
 
     match /global_messages/{messageId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid
+        && withinSize('text', 2000);
       allow update, delete: if false;
     }
 
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && request.auth.uid == resource.data.recipientId;
+      // Unvalidated before: a script could flood every uid with attacker-written
+      // text that renders straight into the notifications dropdown.
       allow create: if isAuthenticated()
         && request.resource.data.senderId == request.auth.uid
         && request.resource.data.recipientId is string
-        && request.resource.data.recipientId != request.auth.uid;
-      allow update: if isAuthenticated() && request.auth.uid == resource.data.recipientId;
+        && request.resource.data.recipientId != request.auth.uid
+        && request.resource.data.type in ['like', 'comment', 'reply', 'follow', 'system', 'mention', 'vote']
+        && withinSize('postTitle', 300)
+        && withinSize('senderName', 100);
+      // The recipient may only flip `read` — not rewrite the notification's text.
+      allow update: if isAuthenticated()
+        && request.auth.uid == resource.data.recipientId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if false;
     }
 
     match /droneBuilds/{buildId} {
       allow read: if true;
       allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+        && request.resource.data.userId == request.auth.uid
+        && withinSize('name', 200);
+      allow update: if isAdmin()
+        || isOwnerEdit('userId', ['name', 'frame', 'motors', 'fc_esc', 'vtx', 'camera', 'status', 'image', 'updatedAt']);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /spots/{spotId} {
       allow read: if true;
       allow create: if isAuthenticated()
-        && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+        && request.resource.data.authorId == request.auth.uid
+        && withinSize('name', 200)
+        && withinSize('description', 2000);
+      allow update: if isAdmin()
+        || isOwnerEdit('authorId', ['name', 'description', 'lat', 'lng', 'type', 'image', 'updatedAt']);
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
     }
 
     match /chatRooms/{roomId}/messages/{messageId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-        && request.resource.data.authorId == request.auth.uid;
+        && request.resource.data.authorId == request.auth.uid
+        && withinSize('text', 2000);
       allow update, delete: if false;
     }
 
     match /channels/{vlogId}/messages/{messageId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-        && request.resource.data.authorId == request.auth.uid;
+        && request.resource.data.authorId == request.auth.uid
+        && withinSize('text', 2000);
       allow update, delete: if false;
     }
 
     match /stlFiles/{fileId} {
       allow read: if true;
-      allow create: if isAuthenticated();
+      // The only write UI is the admin panel, but the rule did not say so: any
+      // signed-in user could insert a catalog entry whose `downloadUrl` the
+      // public catalog then opens in a new tab for every visitor.
+      allow create: if isAdmin();
       allow update, delete: if isAdmin();
     }
 
@@ -158,12 +231,21 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated()
         && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+      allow update: if isAdmin()
+        || isOwnerEdit('authorId', ['title', 'description', 'data', 'updatedAt']);
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
     }
 
     match /meetRooms/{roomId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Per-user daily AI budget, written only by the geminiProxy Cloud Function
+    // (admin credentials bypass these rules). A client that could write here
+    // could reset its own quota.
+    match /aiUsage/{usageId} {
+      allow read, write: if false;
     }
 
     match /system_diagnostics/{docId} {

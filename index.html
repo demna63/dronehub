@@ -24,15 +24,18 @@
     <link rel="canonical" href="https://dronehub.ge/" />
     <meta name="robots" content="index, follow" />
     
+    <!-- Fallback only. The authoritative policy is served as a real
+         Content-Security-Policy response header from firebase.json — a meta CSP
+         silently ignores frame-ancestors, so it cannot stop clickjacking. -->
     <meta 
       http-equiv="Content-Security-Policy" 
       content="
         default-src 'self'; 
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com https://*.firebaseio.com https://*.firebase.com; 
+        script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com https://apis.google.com https://static.cloudflareinsights.com https://*.firebaseio.com https://*.firebase.com; 
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
-        font-src 'self' https://fonts.gstatic.com; 
+        font-src 'self' https://fonts.gstatic.com https://maps.gstatic.com; 
         img-src 'self' data: blob: https:; 
-        connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com https://www.gstatic.com https://cloudflareinsights.com https://generativelanguage.googleapis.com https://api.open-meteo.com; 
+        connect-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com wss://*.firebaseio.com https://www.gstatic.com https://cloudflareinsights.com https://generativelanguage.googleapis.com https://api.open-meteo.com https://*.cloudfunctions.net https://*.run.app; 
         frame-src 'self' https://www.youtube.com https://youtube.com https://*.firebaseapp.com https://*.firebase.com; 
         worker-src 'self' blob:;
       " 
@@ -68,13 +71,55 @@
           const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/posts?orderBy=createdAt%20desc&pageSize=1`;
           const response = await fetch(url);
           const data = await response.json();
-          const imageUrl = data.documents[0]?.fields?.image?.stringValue;
+          const document0 = data.documents && data.documents[0];
+          if (!document0) return;
 
-          if (imageUrl) {
+          // Decode a Firestore REST value into the same native shape the client
+          // SDK's document.data() would produce, so the handed-off post is
+          // structurally identical to what apiService.getPosts() returns.
+          const decode = (v) => {
+            if (v == null) return null;
+            if ('stringValue' in v) return v.stringValue;
+            if ('integerValue' in v) return Number(v.integerValue);
+            if ('doubleValue' in v) return Number(v.doubleValue);
+            if ('booleanValue' in v) return v.booleanValue;
+            if ('nullValue' in v) return null;
+            if ('timestampValue' in v) {
+              return { seconds: Math.floor(Date.parse(v.timestampValue) / 1000), nanoseconds: 0 };
+            }
+            if ('mapValue' in v) {
+              const out = {};
+              const fields = (v.mapValue && v.mapValue.fields) || {};
+              for (const key in fields) out[key] = decode(fields[key]);
+              return out;
+            }
+            if ('arrayValue' in v) {
+              return ((v.arrayValue && v.arrayValue.values) || []).map(decode);
+            }
+            return null;
+          };
+
+          const fields = document0.fields || {};
+          const post = { id: document0.name.split('/').pop() };
+          for (const key in fields) post[key] = decode(fields[key]);
+
+          // Hand the newest post to the app so the first feed card and its LCP
+          // image can paint on React's first render, instead of waiting for the
+          // Firestore SDK query. Best-effort: if this resolves after hydration,
+          // the app falls back to its normal fetch with no regression.
+          window.__DHG_LCP_POST__ = post;
+
+          const imageUrl = post.image;
+          // Attacker-controlled otherwise: `image` is written by the client and
+          // never validated, and every visitor's browser would fetch it.
+          const isOwnStorage = typeof imageUrl === 'string'
+            && imageUrl.startsWith('https://firebasestorage.googleapis.com/');
+          if (isOwnStorage) {
             const link = document.createElement('link');
             link.rel = 'preload';
             link.as = 'image';
-            link.fetchpriority = 'high';
+            link.fetchPriority = 'high';
+            link.setAttribute('fetchpriority', 'high');
             link.href = imageUrl;
             document.head.appendChild(link);
           }
