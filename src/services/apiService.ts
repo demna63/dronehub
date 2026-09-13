@@ -44,6 +44,7 @@ import type {
 import { ratePost } from './telemetryService';
 import { MARKET_CATEGORY } from '../constants/market';
 import { PRIOR_MEAN } from '../utils/telemetry';
+import { buildFacets } from '../utils/facets';
 
 export const apiService = {
   
@@ -83,6 +84,14 @@ export const apiService = {
         category: data.category,
         subCategory: data.subCategory || '',
         tags: data.tags,
+        // Flattened copy of category + subCategory + tags, lowercased. This is
+        // what the feed filters on: Firestore cannot OR across three fields in
+        // a query that also orders and paginates.
+        facets: buildFacets({
+          category: data.category,
+          subCategory: data.subCategory,
+          tags: data.tags,
+        }),
         image: uploaded?.url ?? '',
         ...(uploaded && uploaded.width > 0 && uploaded.height > 0
           ? { imageWidth: uploaded.width, imageHeight: uploaded.height }
@@ -225,6 +234,7 @@ try {
     try {
       const uploaded = data.image ? await apiService.uploadImageWithMeta(data.image, 'market') : null;
       const imageUrl = uploaded?.url ?? '';
+      const marketTags = ['market', data.subCategory, data.brand].filter(Boolean);
 
       const newItem = {
         title: data.title,
@@ -256,7 +266,12 @@ try {
         telemetryScore: PRIOR_MEAN,
 
         createdAt: serverTimestamp(),
-        tags: ['market', data.subCategory, data.brand].filter(Boolean)
+        tags: marketTags,
+        facets: buildFacets({
+          category: MARKET_CATEGORY,
+          subCategory: data.subCategory,
+          tags: marketTags,
+        }),
       };
 
       await addPostToFirestore(newItem);

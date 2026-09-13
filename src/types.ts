@@ -120,6 +120,15 @@ export interface Post {
   imageHeight?: number;
   category: string;
   tags: string[];
+  /**
+   * Lowercased union of `category`, `subCategory` and `tags`, written by
+   * {@link buildFacets} at creation. The feed queries this with
+   * `array-contains`; nothing should read it for display.
+   *
+   * Optional because documents created before the field existed may not carry
+   * it until the backfill has run over them.
+   */
+  facets?: string[];
   votes: number; 
   userVote?: 'up' | 'down' | null;
   commentsCount: number;

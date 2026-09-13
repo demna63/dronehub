@@ -324,3 +324,84 @@ exports.onCommentCreated = onDocumentCreated(commentCountOptions, (event) =>
 
 exports.onCommentDeleted = onDocumentDeleted(commentCountOptions, (event) =>
   adjustCommentCount(event.params.postId, -1));
+
+// =============================================================================
+// BACKFILL — one-off maintenance, admin only
+// =============================================================================
+//
+// Temporary. Delete this export and redeploy once the dry run reports nothing
+// left to write. It exists because the two jobs below are impossible from a
+// browser by design: `facets` is not in the posts update allowlist, and
+// `telemetryScore` is refused outright.
+//
+// FACETS — mirrors buildFacets() in src/utils/facets.ts. Change one, change the
+// other; src/utils/facets.mirror.test.ts fails the build if they drift.
+const buildFacets = ({ category, subCategory, tags }) => {
+  const seen = new Set();
+  for (const part of [category, subCategory, ...(Array.isArray(tags) ? tags : [])]) {
+    if (typeof part !== 'string') continue;
+    const normalised = part.trim().toLowerCase();
+    if (normalised) seen.add(normalised);
+  }
+  return [...seen];
+};
+
+const sameFacets = (a, b) =>
+  Array.isArray(a) && a.length === b.length && a.every((value, index) => value === b[index]);
+
+/**
+ * Adds `facets` and a neutral `telemetryScore` to posts written before either
+ * existed.
+ *
+ * Idempotent: a second run reports zero writes. Always `dryRun` first — the
+ * counts it returns are what the real run will do.
+ */
+exports.backfillPosts = onCall({ region: 'us-central1', cors: true }, async (request) => {
+  const uid = request.auth && request.auth.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
+
+  const caller = await db.doc(`users/${uid}`).get();
+  const profile = caller.exists ? caller.data() : null;
+  if (!profile || (profile.isAdmin !== true && profile.role !== 'admin')) {
+    throw new HttpsError('permission-denied', 'Admins only.');
+  }
+
+  const dryRun = request.data && request.data.dryRun !== false;
+  const snapshot = await db.collection('posts').get();
+
+  const pending = [];
+  for (const document of snapshot.docs) {
+    const post = document.data();
+    const update = {};
+
+    const facets = buildFacets(post);
+    if (!sameFacets(post.facets, facets)) update.facets = facets;
+
+    // Only seed a score where there is none. A post that has been rated owns a
+    // real score, and overwriting it with the prior would discard every vote.
+    if (typeof post.telemetryScore !== 'number') {
+      update.telemetryScore = TELEMETRY.PRIOR_MEAN;
+    }
+
+    if (Object.keys(update).length > 0) pending.push({ ref: document.ref, update });
+  }
+
+  if (!dryRun) {
+    // Firestore caps a batch at 500 writes.
+    for (let index = 0; index < pending.length; index += 400) {
+      const batch = db.batch();
+      for (const { ref, update } of pending.slice(index, index + 400)) {
+        batch.update(ref, update);
+      }
+      await batch.commit();
+    }
+  }
+
+  return {
+    dryRun,
+    scanned: snapshot.size,
+    toWrite: pending.length,
+    facetsAdded: pending.filter((item) => item.update.facets !== undefined).length,
+    scoresSeeded: pending.filter((item) => item.update.telemetryScore !== undefined).length,
+  };
+});
