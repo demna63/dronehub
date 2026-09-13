@@ -1,0 +1,22 @@
+# DroneHub Georgia
+
+> DroneHub Georgia (dronehub.ge) — ქართული FPV/დრონების საზოგადოების პლატფორმა: პოსტების ფიდი, ინტერაქტიული რუკა, მარკეტი, ვლოგები და ხელსაწყოები პილოტებისთვის.
+
+DroneHub Georgia is a community platform for Georgian FPV and drone pilots. The site is a Firebase-backed single-page application (React/Vite) offering a social feed, a pilot/zone map, a marketplace, vlogs, and regulatory reference material. Content is primarily in Georgian.
+
+## Site
+
+- [Feed](https://www.dronehub.ge/): Main community feed — posts, news, and build logs from pilots.
+- [Map](https://www.dronehub.ge/map): Interactive map of drone zones, FPV pilot locations, and flight areas in Georgia.
+- [Market](https://www.dronehub.ge/market): Marketplace for drone and FPV equipment listings.
+- [Vlogs](https://www.dronehub.ge/vlogs): Video content from the community.
+- [Regulations (Wiki)](https://www.dronehub.ge/regulations): Reference wiki on Georgian drone regulations.
+
+## Ecosystem
+
+- [PID Calculator](https://pid-dronehub.ge/): Betaflight & INAV PID/filter/rate calculator with blackbox log diagnostics.
+- [VTX Generator](https://vtx-dronehub.web.app/): Betaflight VTX table and control generator.
+
+## Optional
+
+- [robots.txt](https://www.dronehub.ge/robots.txt): Crawler access rules.
