@@ -59,6 +59,15 @@ describe('input limits mirror firestore.rules', () => {
     expect(caps.has('content')).toBe(true);
   });
 
+  it('pins the neutral prior the create rule requires to PRIOR_MEAN', () => {
+    // A post is created with `telemetryScore: PRIOR_MEAN` and the rule demands
+    // that exact literal. Change PRIOR_MEAN without changing the rule and every
+    // post creation in the app starts failing with a permission error.
+    const match = rules.match(/telemetryScore\s*==\s*(\d+)/);
+    expect(match, 'the posts create rule no longer pins telemetryScore').not.toBeNull();
+    expect(Number(match![1])).toBe(PRIOR_MEAN);
+  });
+
   it('never lets a compose box accept more than the rules allow', () => {
     for (const size of caps.get('text') ?? []) {
       expect(MESSAGE_MAX_LENGTH).toBeLessThanOrEqual(size);

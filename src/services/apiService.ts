@@ -43,6 +43,7 @@ import type {
 } from '../types';
 import { ratePost } from './telemetryService';
 import { MARKET_CATEGORY } from '../constants/market';
+import { PRIOR_MEAN } from '../utils/telemetry';
 
 export const apiService = {
   
@@ -97,13 +98,25 @@ export const apiService = {
         likes: 0,
         votes: 0,
         
-        // ✅ ტელემეტრია გადავიდა ერთ ობიექტში, რასაც Frontend ითხოვს
         telemetry: {
           utility: 0,
           skill: 0,
           vision: 0,
           count: 0
         },
+        // The neutral prior, written at creation and never by the client again.
+        //
+        // Firestore's `orderBy` omits documents that lack the field entirely, so
+        // a post created without `telemetryScore` was invisible to the ranked
+        // feed — and therefore unratable, which meant it could never acquire the
+        // field either. It only appeared at all because the repository merged in
+        // a second query whenever the ranked one came up short of the page size;
+        // past 50 rated posts that merge stops firing and new posts disappear.
+        //
+        // `PRIOR_MEAN` is the same value `telemetryScore()` returns for an
+        // unrated post, so this is the score the post already had implicitly.
+        // firestore.rules pins it to exactly this constant on create.
+        telemetryScore: PRIOR_MEAN,
 
         createdAt: serverTimestamp()
       };
@@ -236,7 +249,12 @@ try {
         commentsCount: 0,
         comments: [],
         likes: 0,
-        
+
+        // Listings live in the same `posts` collection, so they must satisfy the
+        // same create rule. Without these a market listing is rejected outright.
+        telemetry: { utility: 0, skill: 0, vision: 0, count: 0 },
+        telemetryScore: PRIOR_MEAN,
+
         createdAt: serverTimestamp(),
         tags: ['market', data.subCategory, data.brand].filter(Boolean)
       };

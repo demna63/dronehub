@@ -83,10 +83,25 @@ service cloud.firestore {
       // The same caps as `update`. Without them a document could be created
       // oversized and then be permanently uneditable, because the update rule
       // would reject every subsequent write to it.
+      // `update` has always refused to touch telemetry, but `create` did not
+      // constrain it at all: a post could be created with telemetryScore 999999
+      // and sit permanently at the top of the ranked feed, uneditable and
+      // therefore uncorrectable by anything short of an admin.
+      //
+      // Both fields are pinned to their neutral values instead of being
+      // forbidden, because the score has to exist from the start — Firestore's
+      // orderBy skips documents that lack the field, so a post created without
+      // it never appears in the ranked feed at all. 50 is PRIOR_MEAN, the same
+      // value the scoring function returns for an unrated post.
       allow create: if isAuthenticated()
         && request.resource.data.authorId == request.auth.uid
         && withinSize('title', 300)
-        && withinSize('content', 20000);
+        && withinSize('content', 20000)
+        && request.resource.data.telemetryScore == 50
+        && request.resource.data.telemetry.utility == 0
+        && request.resource.data.telemetry.skill == 0
+        && request.resource.data.telemetry.vision == 0
+        && request.resource.data.telemetry.count == 0;
       // `telemetry`/`telemetryScore` are written ONLY by the ratePost Cloud
       // Function (admin credentials bypass these rules). Allowing clients to
       // write them meant any signed-in user could set utility to 999999 with a
