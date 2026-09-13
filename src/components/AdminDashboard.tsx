@@ -20,8 +20,13 @@ type AdminTabId = 'overview' | 'posts' | 'market' | 'stl' | 'users';
 
 interface AdminDashboardProps {
   currentUser: User | null;
+  /** First render only — the dashboard then loads its own, wider set. */
   posts: Post[];
 }
+
+/** How many posts the dashboard counts over. The feed pages at 12; this is a
+ *  site-wide report, so it deliberately reads a much larger slice. */
+const ADMIN_POST_LIMIT = 200;
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: initialPosts }) => {
   const { showToast } = useToast();
@@ -47,10 +52,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   const stlFileInputRef = useRef<HTMLInputElement>(null);
   const stlImageInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync posts when parent re-fetches
+  /**
+   * The dashboard loads its own posts.
+   *
+   * It reports totals across the whole site, and the array it used to receive
+   * is now one page of the feed — so every count here would have read 12. The
+   * feed's page is still used as the initial value so the tiles are not empty
+   * while this request is in flight.
+   */
   useEffect(() => {
-    setPosts(initialPosts || []);
-  }, [initialPosts]);
+    let cancelled = false;
+    apiService
+      .getAllPosts(ADMIN_POST_LIMIT, 'new')
+      .then((allPosts) => { if (!cancelled) setPosts(allPosts); })
+      .catch((error) => {
+        console.error('Error fetching posts for the dashboard:', error);
+        if (!cancelled) showToast('პოსტების სია ვერ ჩაიტვირთა.', 'error');
+      });
+    return () => { cancelled = true; };
+  }, [showToast]);
 
   // Sync author name if currentUser loads after mount
   useEffect(() => {

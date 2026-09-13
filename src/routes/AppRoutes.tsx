@@ -184,10 +184,11 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/tools/rates" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
           <Route path="/tools/*" element={<ToolsHub />} />
           <Route path="/vlogs/*" element={<OnRouteMount run={fetchVlogs}><VlogSection vlogs={vlogs} currentUser={currentUser} onLoginClick={onLoginRequest} onOpenRoom={(id) => navigate(`/vlogs/${id}`)} onAddVlog={onAddVlog} onUpdateVlog={onUpdateVlog} onDeleteVlog={onDeleteVlog} /></OnRouteMount>} />
-          {/* `posts` was never passed here, so the marketplace rendered its empty
-              state on every visit no matter how many listings existed. */}
-          <Route path="/market" element={<MarketplaceList posts={posts} currentUser={currentUser} isFetching={_loading} onLoginRequest={onLoginRequest} />} />
-          <Route path="/market/category/:categoryId" element={<MarketplaceList posts={posts} currentUser={currentUser} isFetching={_loading} onLoginRequest={onLoginRequest} />} />
+          {/* The marketplace runs its own paged query — see useMarketItems.
+              It used to filter the shared feed array, which showed only the
+              listings that happened to be in the currently loaded posts. */}
+          <Route path="/market" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
+          <Route path="/market/category/:categoryId" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
           <Route path="/map" element={<SpotMap currentUser={currentUser} onLoginClick={onLoginRequest} />} />
           <Route path="/chat" element={currentUser ? <GlobalChat currentUser={currentUser} onUserClick={(id) => navigate(`/u/${id}`)} onLoginClick={onLoginRequest} /> : <Navigate to="/" replace />} />
           <Route path="/meet" element={<OnRouteMount run={fetchMeetRooms}><MeetSection rooms={meetRooms} user={currentUser} onOpenRoom={(id) => navigate(`/meet/${id}`)} onLoginClick={onLoginRequest} /></OnRouteMount>} />

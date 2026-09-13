@@ -2,18 +2,25 @@ import React, { useEffect, useMemo, useState } from 'react';
 import MarketplaceCard from './MarketplaceCard';
 import MarketplaceFilters from './MarketplaceFilters';
 import MarketplaceEmptyState from './MarketplaceEmptyState';
-import { Post, User } from '../types';
+import { User } from '../types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { isMarketItem } from '../constants/market';
+import { useMarketItems } from '../hooks/useMarketItems';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
 interface MarketplaceListProps {
-  posts: Post[];
   currentUser?: User | null;
-  isFetching?: boolean;
   onLoginRequest?: () => void;
 }
 
-const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts, isFetching = false }) => {
+/**
+ * The marketplace owns its query.
+ *
+ * It used to filter the app's shared feed array, which meant it showed only the
+ * listings that happened to be among the newest 50 posts site-wide — and once
+ * the feed was paged, only those inside one 12-post page.
+ */
+const MarketplaceList: React.FC<MarketplaceListProps> = () => {
+  const { items: marketItems, isLoading, isLoadingMore, hasMore, error, loadMore, retry } = useMarketItems();
   const { categoryId } = useParams<{ categoryId: string }>();
   // The /market/category/:id route existed but its param was never read, so the
   // filter always started at "all" no matter which link brought you here.
@@ -22,10 +29,11 @@ const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts, isFetching = f
 
   useEffect(() => { setActiveFilter(categoryId ?? 'all'); }, [categoryId]);
 
-  const marketItems = useMemo(
-    () => posts.filter((post) => isMarketItem(post.category)),
-    [posts],
-  );
+  const sentinelRef = useInfiniteScroll<HTMLDivElement>({
+    hasMore,
+    isLoading: isLoading || isLoadingMore,
+    onLoadMore: loadMore,
+  });
 
   const filteredItems = useMemo(
     () => (activeFilter === 'all'
@@ -44,8 +52,21 @@ const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts, isFetching = f
 
       <MarketplaceFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
+      {error && (
+        <div className="mb-6 text-center py-10 border-2 border-dashed border-rose-500/20 rounded-3xl">
+          <p className="text-sm text-rose-400 font-bold mb-4">{error}</p>
+          <button
+            type="button"
+            onClick={retry}
+            className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
+          >
+            ხელახლა ცდა
+          </button>
+        </div>
+      )}
+
       {/* Items Grid */}
-      {isFetching && marketItems.length === 0 ? (
+      {isLoading && marketItems.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-hidden="true">
           {[0, 1, 2].map((index) => (
             <div key={index} className="h-56 rounded-2xl bg-slate-900 border border-white/5 animate-pulse" />
@@ -61,8 +82,23 @@ const MarketplaceList: React.FC<MarketplaceListProps> = ({ posts, isFetching = f
             />
           ))}
         </div>
-      ) : (
+      ) : !error ? (
         <MarketplaceEmptyState activeFilter={activeFilter} onResetFilter={() => setActiveFilter('all')} />
+      ) : null}
+
+      {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
+
+      {hasMore && (
+        <div className="pt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={isLoadingMore}
+            className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors disabled:opacity-50"
+          >
+            {isLoadingMore ? 'იტვირთება…' : 'მეტის ჩვენება'}
+          </button>
+        </div>
       )}
     </div>
   );

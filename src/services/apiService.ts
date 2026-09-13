@@ -15,6 +15,9 @@ import {
   getPostsBySearchFromFirestore,
   getPostsByIdsFromFirestore,
   getPostsFromFirestore,
+  getPostPageFromFirestore,
+  type PostCursor,
+  type PostPage,
   type PostSort,
   getUserTelemetryVote,
   getPresetsFromFirestore,
@@ -52,8 +55,29 @@ export const apiService = {
   // 1. POSTS & FEED
   // ---------------------------------------------------------
   
-  async getPosts(sort: PostSort = 'rated'): Promise<Post[]> {
-    return getPostsFromFirestore(50, sort);
+  /**
+   * One page of the feed.
+   *
+   * `facet` is a lowercased category, sub-category or tag; the filter runs in
+   * the query rather than on the returned page, so the result does not depend
+   * on how much of the feed is currently loaded.
+   */
+  async getPostPage(options: {
+    sort?: PostSort;
+    facet?: string | null;
+    cursor?: PostCursor | null;
+  } = {}): Promise<PostPage> {
+    return getPostPageFromFirestore(options);
+  },
+
+  /**
+   * The whole feed in one list, capped.
+   *
+   * Admin dashboard only — it reports totals across the site. Every
+   * user-facing surface should page through `getPostPage`.
+   */
+  async getAllPosts(limitCount = 200, sort: PostSort = 'new'): Promise<Post[]> {
+    return getPostsFromFirestore(limitCount, sort);
   },
 
   /** Fetch specific posts by id — one query per 30 ids, not a feed scan. */

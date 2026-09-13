@@ -57,6 +57,10 @@ const App: React.FC = () => {
     fetchMeetRooms,
     postSort,
     setPostSort,
+    setPostFacet,
+    loadMorePosts,
+    hasMorePosts,
+    isLoadingMorePosts,
   } = useAppData();
 
   // --- Handlers ---
@@ -188,6 +192,10 @@ const App: React.FC = () => {
     savedPostIds: currentUser?.savedPosts || [],
     postSort,
     onChangeSort: setPostSort,
+    onFacetChange: setPostFacet,
+    onLoadMore: () => { void loadMorePosts(); },
+    hasMore: hasMorePosts,
+    isLoadingMore: isLoadingMorePosts,
   };
 
   const appRoutesProps = {

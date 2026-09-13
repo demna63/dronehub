@@ -10,10 +10,12 @@ import {
   query,
   documentId,
   serverTimestamp,
+  startAfter,
   updateDoc,
   where,
   setDoc,
   type DocumentData,
+  type QueryDocumentSnapshot,
   type QuerySnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -71,8 +73,34 @@ const chunk = <T,>(items: T[], size: number): T[][] => {
 /** How the feed is ordered. */
 export type PostSort = 'rated' | 'new';
 
+/** How many posts one page of the feed holds. */
+export const FEED_PAGE_SIZE = 12;
+
 /**
- * Fetch the feed.
+ * An opaque position in the feed. Holding the Firestore snapshot rather than a
+ * field value keeps the cursor correct for the two-field `rated` ordering,
+ * where reconstructing it by hand would need both the score and the timestamp
+ * and would tie-break differently.
+ */
+export type PostCursor = QueryDocumentSnapshot<DocumentData>;
+
+export interface PostPage {
+  posts: Post[];
+  /** Pass to the next call. Null once the end of the feed is reached. */
+  cursor: PostCursor | null;
+  hasMore: boolean;
+}
+
+export interface PostPageOptions {
+  sort?: PostSort;
+  /** A value from `facets` — lowercased category, sub-category or tag. */
+  facet?: string | null;
+  cursor?: PostCursor | null;
+  pageSize?: number;
+}
+
+/**
+ * Fetch one page of the feed.
  *
  * `rated` orders by the stored Bayesian score, then by recency. The secondary
  * sort matters more than it looks: every post below the vote threshold carries
@@ -80,10 +108,48 @@ export type PostSort = 'rated' | 'new';
  * order — with it, unrated posts stay in newest-first order among themselves
  * while genuinely well-rated posts rise above them.
  *
- * Posts written before ratings existed have no `telemetryScore` field at all,
- * and Firestore omits documents missing the sort field from an orderBy query.
- * They are fetched separately and appended, so nothing silently vanishes from
- * the feed.
+ * The category filter runs here rather than on the client. Filtering a fetched
+ * page in the browser means the number of results depends on how much of the
+ * feed happens to be loaded, which with pagination is a guarantee that
+ * categories look emptier than they are.
+ *
+ * There is no longer a second query merging in posts that lack
+ * `telemetryScore`: every post is now created with the neutral prior and the
+ * backfill added it to the rest. That merge could not have been paginated
+ * anyway — two independently ordered result sets have no single cursor.
+ */
+export const getPostPageFromFirestore = async ({
+  sort = 'rated',
+  facet = null,
+  cursor = null,
+  pageSize = FEED_PAGE_SIZE,
+}: PostPageOptions = {}): Promise<PostPage> => {
+  const constraints = [
+    ...(facet ? [where('facets', 'array-contains', facet)] : []),
+    ...(sort === 'rated' ? [orderBy('telemetryScore', 'desc')] : []),
+    orderBy('createdAt', 'desc'),
+    ...(cursor ? [startAfter(cursor)] : []),
+    // One extra document is requested purely to answer "is there more?" without
+    // a second round trip; it is dropped before the page is returned.
+    limit(pageSize + 1),
+  ];
+
+  const snapshot = await getDocs(query(collection(db, 'posts'), ...constraints));
+  const hasMore = snapshot.docs.length > pageSize;
+  const docs = hasMore ? snapshot.docs.slice(0, pageSize) : snapshot.docs;
+
+  return {
+    posts: docs.map((document) => ({ id: document.id, ...document.data() }) as Post),
+    cursor: docs.length > 0 ? docs[docs.length - 1] : null,
+    hasMore,
+  };
+};
+
+/**
+ * Fetch the feed as a single list.
+ *
+ * Kept for the admin dashboard, which needs a broad view rather than a page.
+ * Everything user-facing should page through {@link getPostPageFromFirestore}.
  */
 export const getPostsFromFirestore = async (
   limitCount = 50,
@@ -92,27 +158,13 @@ export const getPostsFromFirestore = async (
   const toPosts = (snapshot: QuerySnapshot<DocumentData>): Post[] =>
     snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) as Post[];
 
-  if (sort === 'new') {
-    return toPosts(await getDocs(
-      query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(limitCount)),
-    ));
-  }
+  const ordering = sort === 'rated'
+    ? [orderBy('telemetryScore', 'desc'), orderBy('createdAt', 'desc')]
+    : [orderBy('createdAt', 'desc')];
 
-  const ranked = toPosts(await getDocs(query(
-    collection(db, 'posts'),
-    orderBy('telemetryScore', 'desc'),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount),
-  )));
-
-  if (ranked.length >= limitCount) return ranked;
-
-  // Backfill with legacy posts the ranked query cannot see.
-  const recent = toPosts(await getDocs(
-    query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(limitCount)),
+  return toPosts(await getDocs(
+    query(collection(db, 'posts'), ...ordering, limit(limitCount)),
   ));
-  const seen = new Set(ranked.map((post) => post.id));
-  return [...ranked, ...recent.filter((post) => !seen.has(post.id))].slice(0, limitCount);
 };
 
 /**

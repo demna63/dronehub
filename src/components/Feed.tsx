@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   MessageSquare, Share2, Tag,
   Gamepad2
@@ -15,6 +15,8 @@ import PostCommentsSection from './PostCommentsSection';
 import OptimizedImage from './OptimizedImage';
 import PostTelemetryBar from './PostTelemetryBar';
 import { useToast } from '../contexts/useToast';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { toFacet } from '../utils/facets';
 
 
 export interface FeedProps {
@@ -32,6 +34,11 @@ export interface FeedProps {
   /** Set when the last fetch failed; distinct from an empty feed. */
   error?: string | null;
   onRetry?: () => void;
+  /** Tells the data layer which category to query. Null means the whole feed. */
+  onFacetChange?: (facet: string | null) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 const SORT_OPTIONS: { value: PostSort; label: string; hint: string }[] = [
@@ -41,7 +48,8 @@ const SORT_OPTIONS: { value: PostSort; label: string; hint: string }[] = [
 
 const Feed: React.FC<FeedProps> = ({
   user, isFetching, onLoginClick, onToggleSave, posts, savedPostIds = [], onDeletePost, onEditPost, onAddComment, error, onRetry,
-  postSort = 'rated', onChangeSort
+  postSort = 'rated', onChangeSort,
+  onFacetChange, onLoadMore, hasMore = false, isLoadingMore = false,
 }) => {
   const { showToast } = useToast();
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -55,6 +63,22 @@ const Feed: React.FC<FeedProps> = ({
 
   const navigate = useNavigate();
   const { categoryId } = useParams();
+
+  /**
+   * The route owns the category; the data layer owns the query. This is the
+   * one line joining them. Previously the category was applied by filtering the
+   * already-fetched page in the browser, so a category whose posts fell outside
+   * that window rendered as "no posts in this category yet".
+   */
+  useEffect(() => {
+    onFacetChange?.(categoryId ? toFacet(categoryId) : null);
+  }, [categoryId, onFacetChange]);
+
+  const sentinelRef = useInfiniteScroll<HTMLDivElement>({
+    hasMore,
+    isLoading: Boolean(isFetching) || isLoadingMore,
+    onLoadMore: () => onLoadMore?.(),
+  });
 
   // Stable identities for everything handed to the React.memo'd row
   // components. Inline arrows here made the shallow compare fail on every
@@ -142,15 +166,8 @@ const Feed: React.FC<FeedProps> = ({
     );
   }
 
-  const displayedPosts = posts?.filter(post => {
-    if (!categoryId) return true;
-    const currentCat = categoryId.toLowerCase();
-    return (
-      post.category?.toLowerCase() === currentCat || 
-      post.subCategory?.toLowerCase() === currentCat ||
-      post.tags?.some(tag => tag.toLowerCase() === currentCat)
-    );
-  }) || [];
+  // The query is already filtered by facet, so this is the whole page.
+  const displayedPosts = posts ?? [];
 
   if (!isFetching && displayedPosts.length === 0) {
     return (
@@ -320,6 +337,40 @@ const Feed: React.FC<FeedProps> = ({
           </article>
         );
       })}
+
+      {/*
+        Both a sentinel and a button, deliberately.
+
+        The sentinel is the automatic path. The button is not a fallback for
+        old browsers alone: an infinite list with no control is unreachable by
+        keyboard past the first page, gives no way to stop loading, and does
+        nothing at all where IntersectionObserver is missing. The sentinel sits
+        above the button so it trips before the button is in view.
+      */}
+      {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
+
+      {hasMore && (
+        <div className="pt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => onLoadMore?.()}
+            disabled={isLoadingMore}
+            className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors disabled:opacity-50"
+          >
+            {isLoadingMore ? 'იტვირთება…' : 'მეტის ჩვენება'}
+          </button>
+        </div>
+      )}
+
+      {isLoadingMore && (
+        <div className="space-y-6" aria-live="polite" aria-label="იტვირთება">
+          <PostCardSkeleton />
+        </div>
+      )}
+
+      {!hasMore && displayedPosts.length > 0 && (
+        <p className="pt-6 text-center text-xs text-slate-500">ეს იყო ყველაფერი.</p>
+      )}
     </div>
   );
 };

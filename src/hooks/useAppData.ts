@@ -6,7 +6,7 @@ import { auth, db, doc, getDoc, collection, query, where, orderBy, limit, onSnap
 const NOTIFICATION_LIMIT = 40;
 import { apiService } from '../services/apiService';
 import type { MeetRoomData, Notification as NotificationType, Post, User, VlogEntry } from '../types';
-import type { PostSort } from '../services/firestoreRepository';
+import type { PostCursor, PostSort } from '../services/firestoreRepository';
 import { readCachedData, writeCachedData } from '../utils/offlineCache';
 
 const readStaleCache = <T,>(key: 'posts' | 'vlogs' | 'meetRooms') =>
@@ -22,6 +22,25 @@ export const useAppData = () => {
   const postSortRef = useRef<PostSort>('rated');
   const [postSort, setPostSortState] = useState<PostSort>('rated');
 
+  /**
+   * Active category filter, as a lowercased facet. Held in a ref for the same
+   * reason as the sort: `fetchPosts` must keep a stable identity.
+   */
+  const postFacetRef = useRef<string | null>(null);
+
+  /**
+   * Cursor for the next page, and whether one exists.
+   *
+   * The cursor is a Firestore document snapshot rather than a field value: the
+   * `rated` ordering sorts on two fields, and a hand-built cursor would have to
+   * carry both and would tie-break differently at equal scores.
+   */
+  const postCursorRef = useRef<PostCursor | null>(null);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
+  /** Guards against a scroll sentinel firing twice before the first page lands. */
+  const loadingMoreRef = useRef(false);
+
   // fetchPosts is defined below; the ref lets setPostSort call it without
   // forcing either callback to depend on the other.
   const fetchPostsRef = useRef<((sort?: PostSort) => Promise<void>) | null>(null);
@@ -29,6 +48,19 @@ export const useAppData = () => {
   const setPostSort = useCallback((sort: PostSort) => {
     setPostSortState(sort);
     void fetchPostsRef.current?.(sort);
+  }, []);
+
+  /**
+   * Switch the category filter and reload from the first page.
+   *
+   * No-ops when the facet has not actually changed, because the caller is a
+   * route effect that re-runs on every navigation.
+   */
+  const setPostFacet = useCallback((facet: string | null) => {
+    const next = facet ? facet.trim().toLowerCase() : null;
+    if (next === postFacetRef.current) return;
+    postFacetRef.current = next;
+    void fetchPostsRef.current?.();
   }, []);
 
   const [posts, setPosts] = useState<Post[]>(() => {
@@ -78,17 +110,27 @@ export const useAppData = () => {
     if (cachedMeetRooms) setMeetRooms(cachedMeetRooms);
   }, []);
 
+  /** Load the first page, replacing whatever is on screen. */
   const fetchPosts = useCallback(async (sort: PostSort = postSortRef.current) => {
     postSortRef.current = sort;
+    postCursorRef.current = null;
     setPostsLoading(true);
     setPostsError(null);
     try {
-      const nextPosts = await apiService.getPosts(sort);
+      const page = await apiService.getPostPage({ sort, facet: postFacetRef.current });
+      const nextPosts = page.posts;
+      postCursorRef.current = page.cursor;
+      setHasMorePosts(page.hasMore);
+
       if (nextPosts.length > 0) {
         setPosts(nextPosts);
-        writeCachedData('posts', nextPosts);
+        // Only the first page is cached. Caching an accumulated feed would
+        // grow without bound and restore a scroll position nobody asked for.
+        if (!postFacetRef.current) writeCachedData('posts', nextPosts);
       } else {
-        const cachedPosts = readCachedData<Post[]>('posts') || readStaleCache<Post[]>('posts');
+        const cachedPosts = postFacetRef.current
+          ? null
+          : readCachedData<Post[]>('posts') || readStaleCache<Post[]>('posts');
         if (cachedPosts && cachedPosts.length > 0) {
           setPosts(cachedPosts);
         } else {
@@ -112,6 +154,41 @@ export const useAppData = () => {
   }, []);
 
   fetchPostsRef.current = fetchPosts;
+
+  /**
+   * Append the next page.
+   *
+   * Ignored while a page is already in flight or the end has been reached, so
+   * a scroll sentinel that fires repeatedly cannot queue duplicate requests.
+   * A failure leaves the loaded pages alone and re-arms the button rather than
+   * replacing the feed with an error.
+   */
+  const loadMorePosts = useCallback(async () => {
+    if (loadingMoreRef.current || !postCursorRef.current) return;
+    loadingMoreRef.current = true;
+    setIsLoadingMorePosts(true);
+    try {
+      const page = await apiService.getPostPage({
+        sort: postSortRef.current,
+        facet: postFacetRef.current,
+        cursor: postCursorRef.current,
+      });
+      postCursorRef.current = page.cursor;
+      setHasMorePosts(page.hasMore);
+      // De-duplicated on id: a post created between two page requests shifts
+      // every later document by one, which would otherwise repeat a row.
+      setPosts((previous) => {
+        const seen = new Set(previous.map((post) => post.id));
+        return [...previous, ...page.posts.filter((post) => !seen.has(post.id))];
+      });
+    } catch (error) {
+      console.error('Failed to load more posts:', error);
+      setPostsError('შემდეგი გვერდი ვერ ჩაიტვირთა.');
+    } finally {
+      loadingMoreRef.current = false;
+      setIsLoadingMorePosts(false);
+    }
+  }, []);
 
   const fetchVlogs = useCallback(async () => {
     try {
@@ -269,6 +346,10 @@ export const useAppData = () => {
     fetchPosts,
     postSort,
     setPostSort,
+    setPostFacet,
+    loadMorePosts,
+    hasMorePosts,
+    isLoadingMorePosts,
     fetchVlogs,
     fetchMeetRooms,
   };
