@@ -38,6 +38,12 @@ const SearchPage: React.FC<SearchPageProps> = ({
   const [results, setResults] = useState<Post[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [failed, setFailed] = useState(false);
+  /**
+   * Bumped by the retry button. Retrying used to re-write the same `q` into the
+   * URL, which leaves `query` identical, so the effect never re-ran and the
+   * button did nothing at all.
+   */
+  const [retryToken, setRetryToken] = useState(0);
 
   // The URL is the source of truth; a back/forward navigation must move the
   // input too, not just the results.
@@ -67,7 +73,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
       .finally(() => { if (!cancelled) setIsSearching(false); });
 
     return () => { cancelled = true; };
-  }, [query]);
+  }, [query, retryToken]);
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -131,7 +137,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
           <p className="text-sm text-rose-400 font-bold mb-4">ძებნა ვერ შესრულდა.</p>
           <button
             type="button"
-            onClick={() => setSearchParams({ q: query }, { replace: true })}
+            onClick={() => setRetryToken((token) => token + 1)}
             className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
           >
             ხელახლა ცდა
