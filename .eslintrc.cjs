@@ -34,7 +34,12 @@ module.exports = {
   plugins: ['@typescript-eslint', 'react-refresh'],
   rules: {
     '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      // `ignoreRestSiblings` allows the omit-a-key idiom:
+      //   const { secret: _secret, ...rest } = doc;
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+    ],
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
   },
   overrides: [

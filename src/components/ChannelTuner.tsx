@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Signal, Target, Settings, ListFilter, CheckCircle2 } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 import { VTX_ALL_BANDS } from '../constants/toolsData';
 
 const ChannelTuner: React.FC = () => {  // <-- AntennaTuner-ის ნაცვლად  const { t } = useLanguage();

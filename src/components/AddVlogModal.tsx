@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Youtube, Loader2, Link as LinkIcon } from 'lucide-react';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
 import Modal from './Modal';
 
 interface AddVlogModalProps {

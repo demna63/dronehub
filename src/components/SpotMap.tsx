@@ -5,8 +5,8 @@ import {
   Filter, Plus, Wind, Camera, X, Save, MousePointerClick, Loader2
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
-import { useToast } from '../contexts/ToastContext';
-import type { User } from '../types';
+import { useToast } from '../contexts/useToast';
+import type { Spot, User } from '../types';
 
 /**
  * Google Maps configuration.
@@ -41,13 +41,13 @@ interface SpotMapProps {
 
 const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) => {
   const { showToast } = useToast();
-  const [spots, setSpots] = useState<any[]>([]);
+  const [spots, setSpots] = useState<Spot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [activeFilter, setActiveFilter] = useState('all');
-  const [selectedSpot, setSelectedSpot] = useState<any>(null);
+  const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   /** The spot whose small InfoWindow bubble is open on the map. */
-  const [activeInfo, setActiveInfo] = useState<any>(null);
+  const [activeInfo, setActiveInfo] = useState<Spot | null>(null);
   
   // დამატების სთეითები
   const [isPickingLocation, setIsPickingLocation] = useState(false);
@@ -209,7 +209,7 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
               onClick={handleMapClick}
               className="w-full h-full"
             >
-              {!isLoading && filteredSpots.map((spot: any) => (
+              {!isLoading && filteredSpots.map((spot) => (
                 <AdvancedMarker
                   key={spot.id}
                   position={{ lat: Number(spot.lat), lng: Number(spot.lng) }}

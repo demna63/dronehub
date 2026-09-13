@@ -13,7 +13,30 @@ import {
   Box,
   Eye
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { formatShortDate } from '../utils/dates';
+
+interface SpecRowProps {
+  label: string;
+  /** Rendered as '-' when empty, so a missing spec still occupies its row. */
+  value?: string | number;
+  icon: LucideIcon;
+}
+
+/**
+ * Declared at module scope on purpose. Defined inside `MarketItemView` it was a
+ * new component type on every render, so React unmounted and remounted all four
+ * rows each time the parent re-rendered.
+ */
+const SpecRow: React.FC<SpecRowProps> = ({ label, value, icon: Icon }) => (
+  <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+    <div className="flex items-center gap-2 text-slate-400 text-sm">
+      <Icon size={16} />
+      <span>{label}</span>
+    </div>
+    <div className="font-medium text-slate-200 text-sm">{value || '-'}</div>
+  </div>
+);
 
 interface MarketItemViewProps {
   item: Post;
@@ -27,17 +50,6 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
   item, currentUser, onLoginClick, onToggleSave, isSaved 
 }) => {
   const [showPhone, setShowPhone] = useState(false);
-
-  // სპეციფიკაციების რიგი (Table Row)
-  const SpecRow = ({ label, value, icon: Icon }: any) => (
-    <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
-      <div className="flex items-center gap-2 text-slate-400 text-sm">
-        <Icon size={16} />
-        <span>{label}</span>
-      </div>
-      <div className="font-medium text-slate-200 text-sm">{value || '-'}</div>
-    </div>
-  );
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">

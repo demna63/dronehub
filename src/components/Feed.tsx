@@ -14,7 +14,7 @@ import PostContentBlock from './PostContentBlock';
 import PostCommentsSection from './PostCommentsSection';
 import OptimizedImage from './OptimizedImage';
 import PostTelemetryBar from './PostTelemetryBar';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
 
 
 export interface FeedProps {

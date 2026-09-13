@@ -1,6 +1,6 @@
 import React from 'react';
 import { Unlock, Info, CheckCircle2, Move, MousePointerClick } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 
 const FrequencyUnlocker: React.FC = () => {
   const { t } = useLanguage();

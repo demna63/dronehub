@@ -4,7 +4,7 @@ import {
   Menu, X, Bell, Search, LogOut, 
   ChevronDown, Plus, Globe, Settings, UserCircle, ArrowRight
 } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 import { User, Notification } from '../types';
 import Logo from './Logo';
 import Avatar from './Avatar';

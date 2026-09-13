@@ -7,7 +7,7 @@ import {
   Bookmark, LayoutGrid, MapPin, ShoppingBag, Wifi, Video
 } from 'lucide-react';
 import { User } from '../types';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 import { isUserAdmin } from '../utils/authUtils';
 import Logo from './Logo';
 import SidebarNavSection, { SidebarNavItem } from './SidebarNavSection';

@@ -5,7 +5,7 @@ import { db, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimest
 import { Send, Loader2, Lock, MessageSquare } from 'lucide-react';
 import Avatar from './Avatar';
 import { MESSAGE_MAX_LENGTH } from '../constants/limits';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
 import { formatClockTime } from '../utils/dates';
 
 interface ChatRoomProps {

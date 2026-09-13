@@ -1,6 +1,6 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 import {
   ECOSYSTEM_LINKS,
   EcosystemSiteId,

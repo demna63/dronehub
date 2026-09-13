@@ -4,16 +4,17 @@ import {
   DollarSign, Package, Phone,
   CheckCircle2, Box
 } from 'lucide-react';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
 import Modal from './Modal';
 import { apiService } from '../services/apiService';
 import { compressImageFile } from '../services/storageService';
 import type { ProcessedImage } from '../services/storageService';
+import type { User } from '../types';
 
 interface CreateMarketItemModalProps {
   onClose: () => void;
   onItemCreated: () => void;
-  currentUser: any;
+  currentUser: User;
 }
 
 const MARKET_CATEGORIES = [

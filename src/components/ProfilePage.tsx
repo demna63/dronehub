@@ -265,7 +265,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                       p.id === post.id ? { ...p, content: newContent } : p
                     ));
                   }}
-                  isSaved={currentUser ? !!((currentUser as any).savedPosts?.includes(post.id)) : false}
+                  isSaved={!!currentUser?.savedPosts?.includes(post.id)}
                   onToggleSave={onToggleSave ? () => onToggleSave(post.id) : undefined}
                   onLoginClick={onLoginClick || (() => {})} 
                 />

@@ -5,6 +5,21 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import PageMeta from '../components/PageMeta';
 import type { FeedProps } from '../components/Feed';
 
+/**
+ * `React.lazy` with one recovery attempt.
+ *
+ * A chunk that 404s after a deploy means the client is holding a stale index;
+ * one reload fixes it. The `sessionStorage` flag bounds that to a single retry
+ * so a genuinely missing chunk surfaces as an error instead of a reload loop.
+ *
+ * The `any` in the constraint is React's, not ours: `React.lazy` is declared as
+ * `lazy<T extends ComponentType<any>>`, and a narrower constraint here (`never`,
+ * `unknown`, a props record) no longer satisfies it — class components put their
+ * props type in invariant positions such as `getDerivedStateFromProps`. The
+ * inferred `T` at each call site is still the component's exact type, so props
+ * remain fully checked where these components are used.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mirrors React.lazy's own constraint
 const lazyWithRetry = <T extends React.ComponentType<any>>(importer: () => Promise<{ default: T }>) => {
   return lazy(async () => {
     try {

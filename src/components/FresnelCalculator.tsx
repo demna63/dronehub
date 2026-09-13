@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Wifi, Mountain, Signal, Info, Activity } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext'; // <--- იმპორტი
+import { useLanguage } from '../contexts/useLanguage'; // <--- იმპორტი
 
 const FresnelCalculator: React.FC = () => {
   const { t } = useLanguage(); // <--- ჰუკის გამოყენება

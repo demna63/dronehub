@@ -1,16 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Box, Download, Search, User, Cuboid, Loader2 } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 // ⚠️ ამოვიღეთ STL_ITEMS_DATA, მაგრამ დავტოვეთ კატეგორიები ფილტრებისთვის:
 import { STL_TYPES, STL_FRAMES, STL_AUTHORS } from '../constants/toolsData';
 import { apiService } from '../services/apiService';
 import { formatShortDate } from '../utils/dates';
+import type { StlFile } from '../types';
 
 const STLCatalog: React.FC = () => {
   const { t } = useLanguage();
 
   // --- STATE ---
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<StlFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [filterType, setFilterType] = useState('All');

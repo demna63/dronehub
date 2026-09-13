@@ -29,7 +29,18 @@ import {
 } from './firestoreRepository';
 import { uploadImageToStorage, uploadProcessedImage } from './storageService';
 import type { ProcessedImage, UploadedImage } from './storageService';
-import type { User, Post, PostTelemetryVote, VlogEntry, MeetRoomData } from '../types';
+import type {
+  User,
+  Post,
+  PostTelemetryVote,
+  VlogEntry,
+  MeetRoomData,
+  DroneBuild,
+  Spot,
+  SpotDraft,
+  StlFile,
+  StlFileDraft,
+} from '../types';
 import { ratePost } from './telemetryService';
 import { MARKET_CATEGORY } from '../constants/market';
 
@@ -59,7 +70,8 @@ export const apiService = {
     subCategory?: string;
     tags: string[];
     image: File | ProcessedImage | null;
-    author: User; 
+    /** Only these three fields are persisted; the rest of `User` is not stored on a post. */
+    author: Pick<User, 'id' | 'name' | 'avatar'>;
   }) {
     try {
       const uploaded = data.image ? await apiService.uploadImageWithMeta(data.image, 'posts') : null;
@@ -194,7 +206,8 @@ try {
     phone: string;
     content: string;
     image: File | ProcessedImage | null;
-    author: User;
+    /** Only these three fields are persisted; the rest of `User` is not stored on a listing. */
+    author: Pick<User, 'id' | 'name' | 'avatar'>;
   }) {
     try {
       const uploaded = data.image ? await apiService.uploadImageWithMeta(data.image, 'market') : null;
@@ -387,18 +400,18 @@ try {
     return [];
   },
   
-  async getSpots() {
-    return await getSpotsFromFirestore();
+  async getSpots(): Promise<Spot[]> {
+    return (await getSpotsFromFirestore()) as Spot[];
   },
 
-  async addSpot(spotData: Record<string, unknown>, user: User) {
+  async addSpot(spotData: SpotDraft, user: User) {
     try {
       const newSpot = {
         ...spotData,
         // The rule pins ownership to the caller. Without this the write was
         // rejected outright, and the UI only said "შეცდომა".
         authorId: user.id,
-        author: (spotData.author as string)?.trim() || user.name,
+        author: spotData.author?.trim() || user.name,
         createdAt: serverTimestamp()
       };
       const createdSpot = await addSpotToFirestore(newSpot);
@@ -426,7 +439,11 @@ try {
     await deleteDroneBuildFromFirestore(buildId);
   },
 
-  async updateDroneBuild(buildId: string, buildData: any, imageFile?: File): Promise<void> {
+  async updateDroneBuild(
+    buildId: string,
+    buildData: Partial<DroneBuild>,
+    imageFile?: File,
+  ): Promise<void> {
     // Only touch `image` when a new file was actually picked. ProfilePage's
     // edit payload carries no `image` key, so defaulting to '' silently
     // discarded the existing photo on every save.
@@ -440,11 +457,11 @@ try {
     await updateDroneBuildInFirestore(buildId, { ...buildData, image: imageUrl });
   },
   // STL ფაილების წამოღება
-  async getSTLFiles(): Promise<any[]> {
-    return await getSTLFilesFromFirestore();
+  async getSTLFiles(): Promise<StlFile[]> {
+    return (await getSTLFilesFromFirestore()) as StlFile[];
   },
   // STL ფაილის და სურათის ატვირთვა
-  async uploadSTLItem(data: any, imageFile: File, stlFile: File): Promise<void> {
+  async uploadSTLItem(data: StlFileDraft, imageFile: File, stlFile: File): Promise<void> {
     try {
       const imageRef = ref(storage, `stl_images/${Date.now()}_${imageFile.name}`);
       const imageUploadResult = await uploadBytes(imageRef, imageFile);
@@ -469,7 +486,14 @@ try {
     }
   },
 
-  async addDroneBuild(buildData: any, imageFile: File | null) {
+  async addDroneBuild(
+    buildData: Omit<DroneBuild, 'id' | 'image' | 'createdAt' | 'likes'>,
+    imageFile: File | null,
+    // `createdAt` is excluded from the return type on purpose: the value written
+    // is a `serverTimestamp()` sentinel, which only resolves to a real time once
+    // the document is read back. Handing it to the caller as if it were a
+    // timestamp is how sentinels end up formatted as "Invalid Date".
+  ): Promise<Omit<DroneBuild, 'createdAt'>> {
     try {
       let imageUrl = '';
       if (imageFile) {
@@ -484,7 +508,8 @@ try {
       };
 
       const createdBuild = await addDroneBuildToFirestore(newBuild);
-      return { id: createdBuild.id, ...newBuild };
+      const { createdAt: _createdAt, ...persisted } = newBuild;
+      return { id: createdBuild.id, ...persisted };
     } catch (error) {
       console.error("Error adding build:", error);
       throw error;

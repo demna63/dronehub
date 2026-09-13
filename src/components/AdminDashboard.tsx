@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Post } from '../types';
+import { User, Post, StlFile } from '../types';
 import { apiService } from '../services/apiService';
 import { collection, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -7,11 +7,16 @@ import {
   FileText, Activity, Trash2, Shield, Box, Upload,
   Loader2, Users, ShoppingBag
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isUserAdmin } from '../utils/authUtils';
 import { STL_TYPES, STL_FRAMES } from '../constants/toolsData';
 import { isMarketItem } from '../constants/market';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
+
+/** The dashboard's panels. `ADMIN_TABS` is typed against this, so adding a tab
+ *  without adding a panel is a compile error rather than a blank screen. */
+type AdminTabId = 'overview' | 'posts' | 'market' | 'stl' | 'users';
 
 interface AdminDashboardProps {
   currentUser: User | null;
@@ -22,9 +27,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'posts' | 'market' | 'stl' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<AdminTabId>('overview');
   const [posts, setPosts] = useState<Post[]>(initialPosts || []);
-  const [stls, setStls] = useState<any[]>([]);
+  const [stls, setStls] = useState<StlFile[]>([]);
 
   const [isUploadingStl, setIsUploadingStl] = useState(false);
   const [stlForm, setStlForm] = useState({
@@ -58,7 +63,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   const fetchStls = async () => {
     try {
       const snap = await getDocs(query(collection(db, 'stlFiles')));
-      setStls(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setStls(snap.docs.map(d => ({ id: d.id, ...d.data() }) as StlFile));
     } catch (error) {
       console.error('Error fetching STLs:', error);
     }
@@ -180,7 +185,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     );
   }
 
-  const ADMIN_TABS = [
+  const ADMIN_TABS: ReadonlyArray<{ id: AdminTabId; label: string; icon: LucideIcon }> = [
     { id: 'overview', label: 'მთავარი',       icon: Activity    },
     { id: 'posts',    label: 'პოსტები',        icon: FileText    },
     { id: 'market',   label: 'მარკეტი',        icon: ShoppingBag },
@@ -214,7 +219,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {ADMIN_TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 px-5 py-3.5 rounded-xl font-bold transition-all text-sm w-full text-left ${
                 activeTab === tab.id
                   ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'

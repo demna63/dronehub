@@ -1,8 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { User, Category } from '../types';
+import { User, Category, FlightWeather } from '../types';
 import { Satellite, Activity, CheckCircle2, ExternalLink, AlertTriangle } from 'lucide-react';
 import RightSidebarWeatherCard from './RightSidebarWeatherCard';
 import RightSidebarSection from './RightSidebarSection';
+
+/** The shape of the Open-Meteo fields this component requests. */
+interface OpenMeteoForecast {
+  current: {
+    temperature_2m: number;
+    wind_speed_10m: number;
+    wind_gusts_10m: number;
+    wind_direction_10m: number;
+    precipitation_probability: number | null;
+  };
+  daily: {
+    sunrise: string[];
+    sunset: string[];
+  };
+}
+
+/** Go/no-go verdict plus the Tailwind classes that colour the badge. */
+interface FlightStatus {
+  status: string;
+  color: string;
+  text: string;
+}
 
 interface RightSidebarProps {
   currentUser: User | null;
@@ -17,7 +39,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   trendingCommunities, 
   onCommunityClick 
 }) => {
-  const [weather, setWeather] = useState<any>(null);
+  const [weather, setWeather] = useState<FlightWeather | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,8 +48,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         const response = await fetch(
           'https://api.open-meteo.com/v1/forecast?latitude=41.7151&longitude=44.8271&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability&daily=sunrise,sunset&timezone=auto&wind_speed_unit=kmh'
         );
-        const data = await response.json();
-        
+        if (!response.ok) throw new Error(`Open-Meteo responded ${response.status}`);
+        const data: OpenMeteoForecast = await response.json();
+
         const now = new Date();
         const sunsetTime = new Date(data.daily.sunset[0]);
         const isNight = now > sunsetTime;
@@ -44,7 +67,12 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           isNight
         });
       } catch (error) {
-        setWeather({ temp: 20, wind: 5, gusts: 8, direction: 0, rain: 0, sunTime: '20:00', isNight: false });
+        // Deliberately left null rather than substituting plausible-looking
+        // numbers. The previous fallback (20C, 5 km/h, no rain) evaluates to a
+        // green "FLY" verdict, so an outage told pilots conditions were safe
+        // when nothing had actually been measured.
+        console.error('Weather fetch failed:', error);
+        setWeather(null);
       } finally {
         setLoading(false);
       }
@@ -52,8 +80,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     fetchWeather();
   }, []);
 
-  const getFlightStatus = () => {
-    if (!weather) return { status: '...', color: 'bg-slate-500', text: 'text-slate-200' };
+  const getFlightStatus = (): FlightStatus => {
+    if (!weather) return { status: 'N/A', color: 'bg-slate-500', text: 'text-slate-200' };
     if (weather.wind > 35 || weather.gusts > 45 || weather.rain > 40) 
       return { status: 'NO FLY', color: 'bg-rose-500', text: 'text-rose-100' };
     if (weather.wind > 20 || weather.rain > 15) 

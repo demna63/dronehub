@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { geminiService } from '../services/geminiService';
 import { MapPin, Navigation, AlertTriangle, CheckCircle, Ban, Loader2 } from 'lucide-react';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
 
 const ZoneChecker = () => {
   const { showToast } = useToast();

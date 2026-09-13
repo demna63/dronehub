@@ -9,6 +9,7 @@ import {
   updateProfile,
   signOut,
 } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
 import {
   getFirestore,
   collection,
@@ -75,13 +76,27 @@ const initPerformanceMonitoring = (): void => {
 initPerformanceMonitoring();
 export const googleProvider = new GoogleAuthProvider();
 
-export const initializeUserProfile = async (user: any) => {
-  if (!user) return;
+/**
+ * Creates the Firestore profile document for a newly authenticated account.
+ * No-ops when the document already exists, so it is safe on every sign-in.
+ *
+ * `displayNameOverride` exists because email and demo sign-up set the name
+ * immediately after account creation, and the `FirebaseUser` instance in hand
+ * still carries the pre-update value. The callers used to spread the user into
+ * a plain object to patch the name, which silently depended on `uid` surviving
+ * the spread — one SDK change away from writing to `users/undefined`.
+ */
+export const initializeUserProfile = async (
+  user: FirebaseUser,
+  displayNameOverride?: string,
+): Promise<void> => {
+  if (!user?.uid) return;
   const userRef = doc(db, 'users', user.uid);
   const userSnap = await getDoc(userRef);
 
   if (!userSnap.exists()) {
-    const { uid, displayName, photoURL } = user;
+    const { uid, photoURL } = user;
+    const displayName = displayNameOverride ?? user.displayName;
     // `email` is deliberately NOT stored here. It already lives in Firebase
     // Auth, nothing in the UI reads it from the profile, and while it was on
     // the document any signed-in account could read another member's address.
@@ -119,7 +134,7 @@ export const registerWithEmail = async (name: string, email: string, pass: strin
   try {
     const res = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(res.user, { displayName: name });
-    await initializeUserProfile({ ...res.user, displayName: name });
+    await initializeUserProfile(res.user, name);
     return res.user;
   } catch (error) {
     console.error('Registration Error', error);
@@ -142,7 +157,7 @@ export const signInWithDemo = async () => {
     const res = await signInAnonymously(auth);
     const demoName = `Demo Pilot ${Math.floor(Math.random() * 1000)}`;
     await updateProfile(res.user, { displayName: demoName });
-    await initializeUserProfile({ ...res.user, displayName: demoName });
+    await initializeUserProfile(res.user, demoName);
     return res.user;
   } catch (error) {
     console.error('Demo Sign In Error', error);

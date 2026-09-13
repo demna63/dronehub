@@ -311,3 +311,85 @@ export interface MeetRoomData {
   tags: string[];
   hostId?: string;
 }
+
+// =====================
+// 9. STL კატალოგი (STL Catalog)
+// =====================
+
+/** A 3D-printable model published to the /stlFiles collection by an admin. */
+export interface StlFile {
+  id: string;
+  title: string;
+  type: string;
+  frame: string;
+  author: string;
+  /** Preview image URL in Cloud Storage. */
+  image: string;
+  /** Direct download URL for the .stl binary in Cloud Storage. */
+  downloadUrl: string;
+  createdAt?: TimestampLike;
+  /**
+   * Legacy documents stored a pre-formatted date string instead of a
+   * timestamp. Read-only: nothing writes this field any more.
+   */
+  date?: string;
+}
+
+/** The admin-supplied half of an STL upload; the URLs are filled in server-side. */
+export type StlFileDraft = Pick<StlFile, 'title' | 'type' | 'frame' | 'author'>;
+
+/** The half of a DroneBuild a user fills in; ids and timestamps are assigned on write. */
+export type DroneBuildDraft = Omit<DroneBuild, 'id' | 'userId' | 'createdAt'>;
+
+// =====================
+// 10. რუკის ლოკაციები (Map spots)
+// =====================
+
+/** Spot categories the map knows how to colour; anything else falls back to the default pin. */
+export type SpotType = 'bando' | 'cinematic' | 'racing' | 'open';
+
+/** A flying location pinned on the community map. */
+export interface Spot {
+  id: string;
+  name: string;
+  type: SpotType | string;
+  /** Current field name. */
+  description?: string;
+  /** Legacy field name kept for documents written before the rename. */
+  desc?: string;
+  warnings?: string;
+  /** Display name of the submitter. */
+  author?: string;
+  /** Firestore uid of the submitter; the security rules pin this to the caller. */
+  authorId?: string;
+  lat: number;
+  lng: number;
+  createdAt?: TimestampLike;
+}
+
+/** The user-supplied half of a spot; ownership and timestamp are set server-side. */
+export type SpotDraft = Pick<Spot, 'name' | 'type' | 'description' | 'warnings' | 'author' | 'lat' | 'lng'>;
+
+// =====================
+// 11. ამინდი (Flight weather)
+// =====================
+
+/**
+ * Flight-relevant weather for Tbilisi, normalised from the Open-Meteo
+ * response. Every field is already rounded for display.
+ */
+export interface FlightWeather {
+  /** Celsius. */
+  temp: number;
+  /** km/h sustained. */
+  wind: number;
+  /** km/h gusting. */
+  gusts: number;
+  /** Degrees, meteorological convention (0 = from the north). */
+  direction: number;
+  /** Percent chance of precipitation. */
+  rain: number;
+  /** `HH:MM:SS` — today's sunset, or tomorrow's sunrise once the sun is down. */
+  sunTime: string;
+  isNight: boolean;
+}

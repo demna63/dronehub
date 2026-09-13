@@ -3,17 +3,18 @@ import {
   Image as ImageIcon, Loader2, Gamepad2, 
   Camera, Zap, Flag, Mountain, Newspaper, Upload 
 } from 'lucide-react';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../contexts/useToast';
 import Modal from './Modal';
 import { apiService } from '../services/apiService';
 import { compressImageFile } from '../services/storageService';
 import type { ProcessedImage } from '../services/storageService';
 import { POST_CONTENT_MAX_LENGTH, POST_TITLE_MAX_LENGTH } from '../constants/limits';
+import type { User } from '../types';
 
 interface CreatePostModalProps {
   onClose: () => void;
   onPostCreated: () => void;
-  currentUser: any;
+  currentUser: User;
 }
 
 // მთავარი ტიპები
@@ -71,7 +72,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
         finalCategory = subCategory; 
       }
 
-      // ✅ სურათს პირდაპირ ფაილად ვაწვდით, ავტორს კი - ობიექტად. ტიპების ერორს "as any"-ით ვხსნით.
+      // The author is passed through as-is: `addPost` persists only id, name and
+      // avatar. The previous literal also probed `uid`/`displayName`/`photoURL`,
+      // which are Firebase auth fields and never present on the app's `User`,
+      // so those branches were dead and the `as any` was hiding it.
       await apiService.addPost({
         title,
         content,
@@ -79,13 +83,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
         subCategory: mainType === 'fpv' ? 'fpv' : '', 
         tags: [mainType, subCategory].filter(Boolean),
         image: image || null, 
-        author: {
-          id: currentUser?.uid || currentUser?.id || 'unknown',
-          name: currentUser?.displayName || currentUser?.name || 'Pilot',
-          avatar: currentUser?.photoURL || currentUser?.avatar || '',
-          email: currentUser?.email || '',
-          reputation: currentUser?.reputation || 0
-        } as any 
+        author: currentUser,
       });
 
       onPostCreated();

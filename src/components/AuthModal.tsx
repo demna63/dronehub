@@ -4,13 +4,23 @@ import { isDemoAuthEnabled } from '../utils/authUtils';
 import { Mail, Lock, User as UserIcon, LogIn, Chrome } from 'lucide-react';
 import Modal from './Modal';
 
+/**
+ * Firebase surfaces its auth failures as `FirebaseError`, whose `message` is
+ * prefixed with "Firebase:". Narrow through `Error` rather than reaching into
+ * an `any` — a rejection is not guaranteed to be an Error at all, and the old
+ * `err.message.replace(...)` threw a second time when it was not.
+ */
+const authErrorMessage = (err: unknown, fallback = 'ავტორიზაცია ვერ მოხერხდა.'): string => {
+  if (!(err instanceof Error) || !err.message) return fallback;
+  return err.message.replace('Firebase:', '').trim() || fallback;
+};
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogin?: (user: any) => void; // ✅ Optional
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,16 +35,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
     setError('');
 
     try {
-      let user;
       if (isLogin) {
-        user = await loginWithEmail(email, password);
+        await loginWithEmail(email, password);
       } else {
-        user = await registerWithEmail(name, email, password);
+        await registerWithEmail(name, email, password);
       }
-      if (onLogin) onLogin(user);
       onClose();
-    } catch (err: any) {
-      setError(err.message.replace('Firebase:', '').trim());
+    } catch (err) {
+      setError(authErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -44,12 +52,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
     setGoogleError('');
     setLoading(true);
     try {
-      const user = await signInWithGoogle();
-      if (onLogin) onLogin(user);
+      await signInWithGoogle();
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Google sign-in failed';
-      setGoogleError(message);
+      setGoogleError(authErrorMessage(err, 'Google sign-in failed'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -62,10 +68,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
       return;
     }
     try {
-      const user = await signInWithDemo();
-      if (onLogin) onLogin(user);
+      await signInWithDemo();
       onClose();
     } catch (err) {
+      // Previously logged only to the console, so a failed demo sign-in looked
+      // to the user like a button that does nothing.
+      setError(authErrorMessage(err));
       console.error(err);
     }
   };

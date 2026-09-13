@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import BackButton from './BackButton';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/useLanguage';
 import { geminiService } from '../services/geminiService';
 import { User } from '../types'; // ✅ დაამატე ეს ხაზი
 
