@@ -395,7 +395,13 @@ exports.backfillPosts = onCall({ region: 'us-central1', cors: true }, async (req
     const isUnresolvedSentinel =
       createdAt && typeof createdAt === 'object' && !createdAt.toDate &&
       createdAt._methodName === 'serverTimestamp';
-    if (isUnresolvedSentinel || createdAt === undefined) {
+    //
+    // Deliberately NOT repairing a document that has no `createdAt` at all.
+    // Firestore's orderBy skips those, so they are invisible to every feed
+    // query — and the only two in this collection are empty January leftovers
+    // with no title, content or author. Giving them a date would put two blank
+    // cards on the front page, which is a defect this does not currently have.
+    if (isUnresolvedSentinel) {
       update.createdAt = document.createTime;
     }
 
