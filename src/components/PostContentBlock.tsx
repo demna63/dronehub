@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Post } from '../types';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface PostContentBlockProps {
   post: Post;
@@ -29,6 +30,7 @@ const PostContentBlock: React.FC<PostContentBlockProps> = ({
   onCancelEdit,
   onSaveEdit,
 }) => {
+  const { t } = useLanguage();
   const content = post.content || '';
   const isEditing = editingPostId === post.id;
 
@@ -84,7 +86,7 @@ const PostContentBlock: React.FC<PostContentBlockProps> = ({
               className="px-4 py-1.5 text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors flex items-center gap-2"
               disabled={isSavingEdit}
             >
-              {isSavingEdit ? 'ინახება...' : 'შენახვა'}
+              {isSavingEdit ? t('action_saving') : t('action_save')}
             </button>
           </div>
         </div>
@@ -99,7 +101,7 @@ const PostContentBlock: React.FC<PostContentBlockProps> = ({
               }}
               className="mt-2 text-xs font-black text-sky-500 uppercase tracking-tighter hover:underline"
             >
-              {isExpanded ? '[ ნაკლები ]' : '[ მეტის ნახვა ]'}
+              {isExpanded ? t('action_show_less') : t('action_show_more')}
             </button>
           )}
         </>

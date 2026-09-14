@@ -14,6 +14,7 @@ import { isUserAdmin } from '../utils/authUtils';
 import CommentBody from './CommentBody';
 import Avatar from './Avatar';
 import { COMMENT_MAX_LENGTH } from '../constants/limits';
+import { useLanguage } from '../contexts/useLanguage';
 
 // --- MAIN POST CARD COMPONENT ---
 interface PostCardProps {
@@ -39,6 +40,7 @@ const PostCard: React.FC<PostCardProps> = ({
   onAddComment,
   defaultExpanded = false
 }) => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [isCopied, setIsCopied] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -129,7 +131,7 @@ const PostCard: React.FC<PostCardProps> = ({
     }
     catch (error) {
       console.error("Comment failed", error);
-      setCommentError('კომენტარი ვერ გაიგზავნა. სცადე ხელახლა.');
+      setCommentError(t('comment_send_failed'));
     }
     finally { setIsSubmitting(false); }
   };
@@ -186,7 +188,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <button
                 type="button"
                 onClick={handleAuthorClick}
-                aria-label={`ავტორის პროფილი: ${post.author}`}
+                aria-label={t('author_profile_aria', { name: post.author })}
                 className="text-left relative hover:opacity-60 transition-opacity"
               >
                 {post.avatar ? (
@@ -202,7 +204,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <span className="hidden sm:inline text-slate-400 text-xs">•</span>
                 <div className="flex items-center gap-1 text-xs text-slate-400">
                   <Clock size={12} />
-                  <span>{post.timestamp ?? 'ახლახანს'}</span>
+                  <span>{post.timestamp ?? t('time_just_now')}</span>
                 </div>
               </div>
             </div>
@@ -244,7 +246,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     className="px-4 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center gap-2"
                     disabled={isSaving}
                   >
-                    {isSaving ? "ინახება..." : "შენახვა"}
+                    {isSaving ? t('action_saving') : t('action_save')}
                   </button>
                 </div>
               </div>
@@ -266,7 +268,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="flex items-start justify-between pt-3 border-t border-white/5 mb-2 gap-2" onClick={(e) => isEditing && e.stopPropagation()}>
             <div className="flex items-center gap-2 mt-1">
               <button 
-                aria-label="კომენტარები"
+                aria-label={t('comments_title')}
                 onClick={handleToggleComments}
                 className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all text-sm group/btn ${
                   showComments ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -275,7 +277,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <MessageCircle size={18} className={showComments ? "fill-current" : "group-hover/btn:text-indigo-400"} />
                 <span className="font-medium">{post.commentsCount || displayComments.length || 0}</span>
               </button>
-              <button aria-label="გაზიარება" onClick={handleShare} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+              <button aria-label={t('action_share')} onClick={handleShare} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
                  {isCopied ? <Check size={18} className="text-emerald-400" /> : <Share2 size={18} />}
               </button>
             </div>
@@ -292,12 +294,12 @@ const PostCard: React.FC<PostCardProps> = ({
             </div>
 
             <div className="flex items-center gap-2 relative mt-1" ref={menuRef}>
-              <button aria-label="შენახვა" onClick={handleSave} className={`p-2 rounded-lg transition-all ${isSaved ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+              <button aria-label={t('action_save')} onClick={handleSave} className={`p-2 rounded-lg transition-all ${isSaved ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
                 <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
               </button>
               
               {/* ✅ მენიუს გახსნის ღილაკი */}
-              <button aria-label="პოსტის მენიუ" aria-expanded={showMenu} onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className={`p-2 rounded-lg transition-all ${showMenu ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+              <button aria-label={t('post_menu')} aria-expanded={showMenu} onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className={`p-2 rounded-lg transition-all ${showMenu ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
                 <MoreHorizontal size={18} />
               </button>
 
@@ -341,7 +343,7 @@ const PostCard: React.FC<PostCardProps> = ({
               size={32}
             />
             <div className="flex-1 relative">
-              <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="კომენტარი..." aria-label="კომენტარი" maxLength={COMMENT_MAX_LENGTH} className="w-full bg-slate-900 border border-white/10 rounded-xl py-2 px-4 text-sm text-white focus:outline-none focus:border-indigo-500 pr-10" disabled={!currentUser || isSubmitting} />
+              <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t('comment_placeholder_short')} aria-label={t('comment_singular')} maxLength={COMMENT_MAX_LENGTH} className="w-full bg-slate-900 border border-white/10 rounded-xl py-2 px-4 text-sm text-white focus:outline-none focus:border-indigo-500 pr-10" disabled={!currentUser || isSubmitting} />
               <button type="submit" disabled={!commentText.trim() || isSubmitting} className="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-500 hover:text-indigo-400 disabled:opacity-50"><Send size={16} /></button>
             </div>
           </form>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check, ChevronDown, Eye, Loader2, Wrench, Zap } from 'lucide-react';
 import type { PostRatings, PostTelemetryVote } from '../types';
 import StarRating from './StarRating';
+import { useLanguage } from '../contexts/useLanguage';
 import {
   MIN_VOTES_FOR_VERDICT,
   percentToStars,
@@ -26,10 +27,11 @@ export interface PostTelemetryProps {
   defaultOpen?: boolean;
 }
 
+/** Translation keys, resolved at render time — see the note on Feed's SORT_OPTIONS. */
 const AXES = [
-  { key: 'utility', label: 'სარგებელი', icon: Wrench },
-  { key: 'skill', label: 'ოსტატობა', icon: Zap },
-  { key: 'vision', label: 'ხედვა', icon: Eye },
+  { key: 'utility', labelKey: 'rating_axis_utility', icon: Wrench },
+  { key: 'skill', labelKey: 'rating_axis_skill', icon: Zap },
+  { key: 'vision', labelKey: 'rating_axis_vision', icon: Eye },
 ] as const;
 
 const NOT_RATED: PostTelemetryVote = { utility: 0, skill: 0, vision: 0 };
@@ -59,6 +61,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
   onRequireLogin,
   defaultOpen = false,
 }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +99,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
     } catch (err) {
       // Keep the panel open so the choices are not lost, and say what actually
       // failed instead of silently showing a rating the server rejected.
-      setError(err instanceof Error && err.message ? err.message : 'ვერ შევინახე. სცადე ხელახლა.');
+      setError(err instanceof Error && err.message ? err.message : t('rating_save_failed'));
     } finally {
       setIsSaving(false);
     }
@@ -110,8 +113,11 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
         aria-expanded={isOpen}
         aria-label={
           hasAny
-            ? `შეფასება ${overallStars.toFixed(1)} ხუთიდან, ${count} შეფასება${isConfirmed ? '' : ' — წინასწარი'}`
-            : 'ჯერ არავის შეუფასებია'
+            ? t(isConfirmed ? 'rating_aria_confirmed' : 'rating_aria_provisional', {
+                stars: overallStars.toFixed(1),
+                count,
+              })
+            : t('rating_none_yet')
         }
         className={`w-full h-10 px-3 rounded-xl border flex items-center gap-2 transition-all ${
           isOpen
@@ -121,7 +127,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
       >
         <StarRating
           value={overallStars}
-          label="საშუალო შეფასება"
+          label={t('rating_average')}
           size={14}
           tone={isConfirmed ? 'gold' : 'muted'}
         />
@@ -135,10 +141,10 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
             drawn in a muted tone so it is never mistaken for a consensus. */}
         <span className="text-[10px] text-slate-400 truncate">
           {!hasAny
-            ? 'ჯერ არავის შეუფასებია'
+            ? t('rating_none_yet')
             : isConfirmed
-              ? `${count} შეფასება`
-              : `წინასწარი · ${count}/${MIN_VOTES_FOR_VERDICT}`}
+              ? t('rating_count', { count })
+              : t('rating_provisional_count', { count, min: MIN_VOTES_FOR_VERDICT })}
         </span>
 
         <span className="flex-1" />
@@ -162,7 +168,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
           className="mt-2 bg-slate-950 border border-white/10 rounded-xl p-3 animate-in slide-in-from-top-1 fade-in duration-200"
         >
           {isLoadingVote ? (
-            <p className="text-[11px] text-slate-500 py-6 text-center">იტვირთება…</p>
+            <p className="text-[11px] text-slate-500 py-6 text-center">{t('state_loading')}</p>
           ) : (
             <>
               <div className="space-y-2.5">
@@ -170,7 +176,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
                   <div key={axis.key} className="flex items-center gap-2">
                     <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 w-[86px] shrink-0">
                       <axis.icon size={12} className="text-slate-500" aria-hidden="true" />
-                      {axis.label}
+                      {t(axis.labelKey)}
                     </span>
 
                     <StarRating
@@ -179,7 +185,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
                         setInputs((prev) => ({ ...prev, [axis.key]: starsToPercent(starValue) }))
                       }
                       disabled={isSaving}
-                      label={axis.label}
+                      label={t(axis.labelKey)}
                       size={18}
                     />
 
@@ -189,7 +195,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
                         see where they sit without leaving the panel. */}
                     {hasAny && (
                       <span
-                        title={isConfirmed ? 'საზოგადოების საშუალო' : 'წინასწარი საშუალო'}
+                        title={t(isConfirmed ? 'rating_community_average' : 'rating_provisional_average')}
                         className={`text-[10px] tabular-nums shrink-0 ${isConfirmed ? 'text-slate-400' : 'text-slate-600'}`}
                       >
                         {percentToStars(averages[axis.key]).toFixed(1)}
@@ -210,10 +216,10 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
                 className="w-full mt-3 h-8 rounded-lg bg-amber-400 text-black text-[11px] font-bold flex items-center justify-center gap-2 hover:bg-amber-300 transition-colors disabled:bg-slate-800 disabled:text-slate-500"
               >
                 {isSaving
-                  ? <><Loader2 size={12} className="animate-spin" /> ინახება…</>
+                  ? <><Loader2 size={12} className="animate-spin" /> {t('action_saving')}</>
                   : isComplete
-                    ? <><Check size={12} /> {hasVoted ? 'განახლება' : 'შენახვა'}</>
-                    : 'შეაფასე სამივე კრიტერიუმი'}
+                    ? <><Check size={12} /> {t(hasVoted ? 'action_update' : 'action_save')}</>
+                    : t('rating_rate_all_three')}
               </button>
             </>
           )}

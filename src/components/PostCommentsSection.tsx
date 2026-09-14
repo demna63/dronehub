@@ -5,6 +5,7 @@ import { usePostComments } from '../hooks/usePostComments';
 import CommentBody from './CommentBody';
 import Avatar from './Avatar';
 import { COMMENT_MAX_LENGTH } from '../constants/limits';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface PostCommentsSectionProps {
   post: Post;
@@ -27,6 +28,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
   onLoginClick,
   onCommentSubmit,
 }) => {
+  const { t } = useLanguage();
   const [commentText, setCommentText] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const {
@@ -76,7 +78,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
     <div className="bg-black/30 border-t border-white/5 p-4 animate-in slide-in-from-top-2">
       <div className="space-y-4 mb-4 max-h-80 overflow-y-auto custom-scrollbar pr-2">
         {loading && comments.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-xs uppercase tracking-widest">იტვირთება...</div>
+          <div className="text-center py-6 text-slate-500 text-xs uppercase tracking-widest">{t('state_loading_dots')}</div>
         ) : comments.length > 0 ? (
           comments.map((comment: Comment) => (
             <div key={comment.id} className="flex gap-3 animate-in fade-in slide-in-from-left-2">
@@ -98,7 +100,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
                   />
 
                   <div className="flex gap-4 mt-2">
-                    <button aria-label="კომენტარის მოწონება" className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-rose-400 transition-colors">
+                    <button aria-label={t('comment_like_label')} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-rose-400 transition-colors">
                       <Heart size={12} /> {comment.likes || 0}
                     </button>
                     <button
@@ -108,7 +110,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
                       }}
                       className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-sky-400 transition-colors"
                     >
-                      <Reply size={12} /> პასუხი
+                      <Reply size={12} /> {t('action_reply')}
                     </button>
                   </div>
                 </div>
@@ -118,7 +120,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
         ) : (
           <div className="text-center py-6">
             <MessageSquare size={24} className="mx-auto text-slate-700 mb-2" />
-            <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">კომენტარები ჯერ არ არის</p>
+            <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">{t('comments_empty')}</p>
           </div>
         )}
       </div>
@@ -133,7 +135,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
             <span className="text-[10px] text-sky-400 font-bold flex items-center gap-2">
               <Reply size={10} /> პასუხი: @{replyTo.name}
             </span>
-            <button aria-label="პასუხის გაუქმება" onClick={() => setReplyTo(null)} className="text-slate-400 hover:text-white transition-colors">
+            <button aria-label={t('reply_cancel_label')} onClick={() => setReplyTo(null)} className="text-slate-400 hover:text-white transition-colors">
               <Plus size={14} className="rotate-45" />
             </button>
           </div>
@@ -149,10 +151,10 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
             <input
               id={`input-${post.id}`}
               type="text"
-              placeholder={user ? 'დაწერე კომენტარი...' : 'ავტორიზაცია აუცილებელია...'}
+              placeholder={user ? t('comment_placeholder') : t('comment_needs_auth')}
               value={commentText}
               maxLength={COMMENT_MAX_LENGTH}
-              aria-label="კომენტარი"
+              aria-label={t('comment_singular')}
               disabled={!user}
               onClick={!user ? onLoginClick : undefined}
               onChange={(event) => setCommentText(event.target.value)}
@@ -165,7 +167,7 @@ const PostCommentsSection: React.FC<PostCommentsSectionProps> = ({
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500/50 transition-all placeholder:text-slate-400 pr-12"
             />
             <button
-              aria-label="გაგზავნა"
+              aria-label={t('action_send')}
               onClick={() => void handleSubmit()}
               disabled={!user || !commentText.trim()}
               className="absolute right-2 top-1.5 p-2 text-sky-500 hover:text-sky-400 disabled:text-slate-700 transition-all"

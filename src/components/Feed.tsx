@@ -17,6 +17,7 @@ import PostTelemetryBar from './PostTelemetryBar';
 import { useToast } from '../contexts/useToast';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { toFacet } from '../utils/facets';
+import { useLanguage } from '../contexts/useLanguage';
 
 
 export interface FeedProps {
@@ -41,9 +42,14 @@ export interface FeedProps {
   isLoadingMore?: boolean;
 }
 
-const SORT_OPTIONS: { value: PostSort; label: string; hint: string }[] = [
-  { value: 'rated', label: 'რეიტინგით', hint: 'მაღალშეფასებული პოსტები წინ' },
-  { value: 'new', label: 'ახალი', hint: 'უახლესი პოსტები წინ' },
+/**
+ * Translation KEYS, not labels. The table is at module scope, where `t` does
+ * not exist; resolving the keys at render time is what lets the sort control
+ * follow the language switch.
+ */
+const SORT_OPTIONS: { value: PostSort; labelKey: string; hintKey: string }[] = [
+  { value: 'rated', labelKey: 'feed_sort_rated', hintKey: 'feed_sort_rated_hint' },
+  { value: 'new', labelKey: 'feed_sort_new', hintKey: 'feed_sort_new_hint' },
 ];
 
 const Feed: React.FC<FeedProps> = ({
@@ -51,6 +57,7 @@ const Feed: React.FC<FeedProps> = ({
   postSort = 'rated', onChangeSort,
   onFacetChange, onLoadMore, hasMore = false, isLoadingMore = false,
 }) => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
@@ -121,8 +128,8 @@ const Feed: React.FC<FeedProps> = ({
     // old code announced success unconditionally and left the rejection
     // unhandled, so the user pasted whatever was on the clipboard before.
     navigator.clipboard.writeText(url)
-      .then(() => showToast('ბმული დაკოპირებულია', 'success'))
-      .catch(() => showToast('ბმული ვერ დაკოპირდა', 'error'));
+      .then(() => showToast(t('share_link_copied'), 'success'))
+      .catch(() => showToast(t('share_link_failed'), 'error'));
   };
 
   const handleCommentSubmit = async (postId: string, text: string) => {
@@ -131,7 +138,7 @@ const Feed: React.FC<FeedProps> = ({
       await onAddComment(postId, text);
     } catch (error) {
       console.error('Comment failed', error);
-      showToast('კომენტარი ვერ გაიგზავნა. სცადე ხელახლა.', 'error');
+      showToast(t('comment_send_failed'), 'error');
       // Rethrown so the composer keeps the draft instead of clearing it.
       throw error;
     }
@@ -159,7 +166,7 @@ const Feed: React.FC<FeedProps> = ({
             onClick={onRetry}
             className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
           >
-            ხელახლა ცდა
+            {t('action_retry')}
           </button>
         )}
       </div>
@@ -173,20 +180,20 @@ const Feed: React.FC<FeedProps> = ({
     return (
       <div className="text-center py-20 text-slate-400 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-white/5 shadow-xl">
         <Gamepad2 size={40} className="mx-auto mb-4 opacity-50" />
-        <p className="text-lg font-bold">ამ კატეგორიაში პოსტები ჯერ არ არის.</p>
-        <p className="text-sm mt-2">იყავი პირველი, ვინც დაამატებს პოსტს!</p>
+        <p className="text-lg font-bold">{t('feed_empty_title')}</p>
+        <p className="text-sm mt-2">{t('feed_empty_hint')}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 pb-20">
-      <h1 className="sr-only">DroneHub Georgia — ქართული FPV და დრონების საზოგადოების ფიდი</h1>
+      <h1 className="sr-only">{t('feed_heading')}</h1>
 
       {onChangeSort && (
         <div
           role="group"
-          aria-label="ფიდის დალაგება"
+          aria-label={t('feed_sort_label')}
           className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/60 border border-white/5 w-fit"
         >
           {SORT_OPTIONS.map((option) => {
@@ -197,14 +204,14 @@ const Feed: React.FC<FeedProps> = ({
                 type="button"
                 onClick={() => onChangeSort(option.value)}
                 aria-pressed={isActive}
-                title={option.hint}
+                title={t(option.hintKey)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
                   isActive
                     ? 'bg-white/10 text-white'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                {option.label}
+                {t(option.labelKey)}
               </button>
             );
           })}
@@ -238,7 +245,7 @@ const Feed: React.FC<FeedProps> = ({
                 whole page and cannot be styled or dismissed with Escape. */}
             {pendingDeleteId === post.id && (
               <div role="alert" className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-rose-500/10 border-b border-rose-500/20">
-                <span className="text-xs font-bold text-rose-300">ნამდვილად წავშალო ეს პოსტი?</span>
+                <span className="text-xs font-bold text-rose-300">{t('post_delete_question')}</span>
                 <span className="flex items-center gap-2">
                   <button
                     type="button"
@@ -306,7 +313,7 @@ const Feed: React.FC<FeedProps> = ({
 
               <div className="flex items-center shrink-0">
                 <button
-                  aria-label="კომენტარები"
+                  aria-label={t('comments_title')}
                   onClick={() => {
                     // Each panel owns its own draft now, so nothing to clear.
                     setShowComments(isCommentsOpen ? null : post.id);
@@ -319,7 +326,7 @@ const Feed: React.FC<FeedProps> = ({
                 <button aria-label="შენახვა" onClick={(e) => { e.stopPropagation(); onToggleSave?.(post.id); }} className={`p-2 rounded-xl transition-all ${savedPostIds?.includes(post.id) ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}>
                   <Tag size={18} className={savedPostIds?.includes(post.id) ? "fill-current" : ""} />
                 </button>
-                <button aria-label="გაზიარება" onClick={(e) => { e.stopPropagation(); handleShare(post.id); }} className="p-2 text-slate-400 hover:text-white transition-all">
+                <button aria-label={t('action_share')} onClick={(e) => { e.stopPropagation(); handleShare(post.id); }} className="p-2 text-slate-400 hover:text-white transition-all">
                   <Share2 size={18} />
                 </button>
               </div>
@@ -357,19 +364,19 @@ const Feed: React.FC<FeedProps> = ({
             disabled={isLoadingMore}
             className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors disabled:opacity-50"
           >
-            {isLoadingMore ? 'იტვირთება…' : 'მეტის ჩვენება'}
+            {isLoadingMore ? t('state_loading') : t('action_load_more')}
           </button>
         </div>
       )}
 
       {isLoadingMore && (
-        <div className="space-y-6" aria-live="polite" aria-label="იტვირთება">
+        <div className="space-y-6" aria-live="polite" aria-label={t('state_loading_short')}>
           <PostCardSkeleton />
         </div>
       )}
 
       {!hasMore && displayedPosts.length > 0 && (
-        <p className="pt-6 text-center text-xs text-slate-500">ეს იყო ყველაფერი.</p>
+        <p className="pt-6 text-center text-xs text-slate-500">{t('feed_end')}</p>
       )}
     </div>
   );

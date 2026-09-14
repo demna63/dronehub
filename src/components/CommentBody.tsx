@@ -3,6 +3,7 @@ import { Check, Pencil, Trash2, X } from 'lucide-react';
 import type { Comment, User } from '../types';
 import { canManageComment } from '../utils/authUtils';
 import { MAX_COMMENT_LENGTH } from '../services/firestoreRepository';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface CommentBodyProps {
   comment: Comment;
@@ -27,6 +28,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(comment.text);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -85,7 +87,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
             disabled={isPending}
             className="text-[10px] font-bold text-slate-400 uppercase tracking-wide hover:text-white transition-colors disabled:opacity-40"
           >
-            გაუქმება
+            {t('action_cancel')}
           </button>
           <button
             type="button"
@@ -93,7 +95,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
             disabled={isPending || !draft.trim()}
             className="text-[10px] font-bold text-sky-400 uppercase tracking-wide hover:text-sky-300 transition-colors disabled:opacity-40"
           >
-            {isPending ? 'ინახება...' : 'შენახვა'}
+            {isPending ? t('action_saving') : t('action_save')}
           </button>
         </div>
       </div>
@@ -106,18 +108,18 @@ const CommentBody: React.FC<CommentBodyProps> = ({
         {comment.text}
       </p>
       {Boolean(comment.editedAt) && (
-        <span className="text-[9px] text-slate-500 uppercase tracking-wide">რედაქტირებული</span>
+        <span className="text-[9px] text-slate-500 uppercase tracking-wide">{t('comment_edited')}</span>
       )}
 
       {canManage && (
         <div className="absolute top-1.5 right-2 flex items-center gap-1.5">
           {isConfirmingDelete ? (
             <>
-              <span className="text-[9px] font-bold text-rose-300 uppercase tracking-wide">წავშალო?</span>
+              <span className="text-[9px] font-bold text-rose-300 uppercase tracking-wide">{t('delete_question')}</span>
               <button
                 type="button"
-                aria-label="წაშლის დადასტურება"
-                title="დიახ, წაშალე"
+                aria-label={t('delete_confirm_label')}
+                title={t('delete_confirm_yes')}
                 disabled={isPending}
                 onClick={async () => {
                   const deleted = await onDelete(comment.id);
@@ -129,8 +131,8 @@ const CommentBody: React.FC<CommentBodyProps> = ({
               </button>
               <button
                 type="button"
-                aria-label="წაშლის გაუქმება"
-                title="გაუქმება"
+                aria-label={t('delete_confirm_no_label')}
+                title={t('action_cancel')}
                 disabled={isPending}
                 onClick={() => setIsConfirmingDelete(false)}
                 className="p-1 text-slate-400 hover:text-white transition-colors disabled:opacity-40"
@@ -142,8 +144,8 @@ const CommentBody: React.FC<CommentBodyProps> = ({
             <div className="flex items-center gap-1.5 opacity-0 focus-within:opacity-100 group-hover/comm:opacity-100 transition-opacity">
               <button
                 type="button"
-                aria-label="კომენტარის რედაქტირება"
-                title="რედაქტირება"
+                aria-label={t('comment_edit_label')}
+                title={t('action_edit')}
                 disabled={isPending}
                 onClick={() => setIsEditing(true)}
                 className="p-1 text-slate-400 hover:text-white transition-colors disabled:opacity-40"
@@ -152,8 +154,8 @@ const CommentBody: React.FC<CommentBodyProps> = ({
               </button>
               <button
                 type="button"
-                aria-label="კომენტარის წაშლა"
-                title="წაშლა"
+                aria-label={t('comment_delete_label')}
+                title={t('action_delete')}
                 disabled={isPending}
                 onClick={() => setIsConfirmingDelete(true)}
                 className="p-1 text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-40"

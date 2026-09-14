@@ -1,51 +1,62 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface PageMetaProps {
   title?: string;
 }
 
+/**
+ * Keeps `document.title` in step with the route.
+ *
+ * The route names are translation keys rather than Georgian literals, and `t`
+ * is an effect dependency: the browser tab is part of the UI, so switching the
+ * language has to retitle it too.
+ */
+const ROUTE_TITLE_KEYS: Record<string, string> = {
+  '': 'route_home',
+  'popular': 'route_popular',
+  'saved': 'route_saved',
+  'u': 'route_user',
+  'vlogs': 'route_vlogs',
+  'chat': 'route_chat',
+  'regulations': 'route_regulations',
+  'marketplace': 'route_market',
+  'market': 'route_market',
+  'community': 'route_community',
+  'tools': 'route_tools',
+  'search': 'route_search',
+  'map': 'route_map',
+  'c': 'route_category',
+  'category': 'route_category',
+};
+
+const BASE_TITLE = 'Dronehub';
+
 const PageMeta: React.FC<PageMetaProps> = ({ title }) => {
   const location = useLocation();
+  const { t } = useLanguage();
 
   useEffect(() => {
-    // 1. მთავარი სათაური (იგივე რაც index.html-ში)
-    const baseTitle = 'Dronehub';
-    
-    // 2. მარშრუტების (Routes) თარგმნა ქართულად
-    const routeNames: Record<string, string> = {
-      '': 'მთავარი',
-      'popular': 'პოპულარული',
-      'saved': 'შენახული',
-      'u': 'მომხმარებელი', // ან "პროფილი"
-      'vlogs': 'ვლოგები',
-      'chat': 'საერთო ჩატი',
-      'regulations': 'რეგულაციები',
-      'marketplace': 'მარკეტი',
-      'community': 'საზოგადოება',
-      'tools': 'ინსტრუმენტები',
-      'c': 'კატეგორია'
-    };
-
     if (title) {
-      // თუ კონკრეტული სათაური გადმოეცა (მაგ: პოსტის სათაური)
-      document.title = `${title} | ${baseTitle}`;
-    } else {
-      // თუ არ გადმოეცა, ვიღებთ URL-დან
-      const pathSegments = location.pathname.split('/');
-      const firstSegment = pathSegments[1] || ''; // მაგ: 'vlogs' ან ''
-      
-      // ვეძებთ შესაბამის ქართულ სახელს, თუ ვერ ვიპოვეთ - ვტოვებთ ინგლისურს (დიდი ასოებით)
-      const pageName = routeNames[firstSegment] || 
-        (firstSegment ? firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1) : '');
-
-      if (pageName) {
-        document.title = `${pageName} | ${baseTitle}`;
-      } else {
-        document.title = `${baseTitle} - საქართველოს დრონების საზოგადოება`; // მთავარი გვერდის სრული სათაური
-      }
+      document.title = `${title} | ${BASE_TITLE}`;
+      return;
     }
-  }, [title, location]);
+
+    const firstSegment = location.pathname.split('/')[1] || '';
+    const key = ROUTE_TITLE_KEYS[firstSegment];
+    // An unmapped segment is still better than nothing: capitalise it rather
+    // than falling back to the bare site name.
+    const pageName = key
+      ? t(key)
+      : firstSegment
+        ? firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1)
+        : '';
+
+    document.title = pageName
+      ? `${pageName} | ${BASE_TITLE}`
+      : `${BASE_TITLE} — ${t('site_tagline')}`;
+  }, [title, location, t]);
 
   return null;
 };

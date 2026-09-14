@@ -46,7 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   
-  const { language, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -117,16 +117,16 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
           
           <div className="flex items-center gap-8">
-            <Link to="/" onClick={onLogoClick} aria-label="მთავარი გვერდი">
+            <Link to="/" onClick={onLogoClick} aria-label={t('nav_home_aria')}>
               <Logo />
             </Link>
 
             <div className="hidden lg:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
-              <NavLink to="/" active={location.pathname === '/'} label="მთავარი" />
-              <NavLink to="/market" active={location.pathname.startsWith('/market')} label="მარკეტი" />
-              <NavLink to="/vlogs" active={location.pathname.startsWith('/vlogs')} label="ვლოგები" />
-              <NavLink to="/tools" active={location.pathname.startsWith('/tools')} label="ხელსაწყოები" />
-              <NavLink to="/map" active={location.pathname.startsWith('/map')} label="რუკა" />
+              <NavLink to="/" active={location.pathname === '/'} label={t('route_home')} />
+              <NavLink to="/market" active={location.pathname.startsWith('/market')} label={t('route_market')} />
+              <NavLink to="/vlogs" active={location.pathname.startsWith('/vlogs')} label={t('route_vlogs')} />
+              <NavLink to="/tools" active={location.pathname.startsWith('/tools')} label={t('route_tools_short')} />
+              <NavLink to="/map" active={location.pathname.startsWith('/map')} label={t('route_map')} />
             </div>
           </div>
 
@@ -138,14 +138,14 @@ const Navbar: React.FC<NavbarProps> = ({
               id="search"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="ძებნა..."
+              placeholder={t('search_placeholder')}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-12 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500/50 transition-all text-white placeholder:text-slate-400"
             />
             {/* A form whose only trigger is the Enter key is unusable by touch
                 and by anyone who never guesses that Enter submits. */}
             <button
               type="submit"
-              aria-label="ძებნა"
+              aria-label={t('route_search')}
               disabled={!searchValue.trim()}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-sky-400 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
             >
@@ -169,13 +169,13 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={location.pathname.startsWith('/market') ? onCreateMarketItem : onAddPost}
                   className="hidden sm:flex items-center gap-2 bg-sky-700 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-sky-500/20 active:scale-95"
                 >
-                  <Plus size={18} /> <span className="uppercase tracking-widest text-[11px]">დამატება</span>
+                  <Plus size={18} /> <span className="uppercase tracking-widest text-[11px]">{t('action_add')}</span>
                 </button>
 
                 {/* Notifications */}
                 <div className="relative" ref={notificationsRef}>
                   <button 
-                    aria-label="შეტყობინებები"
+                    aria-label={t('notifications_title')}
                     onClick={() => setShowNotifications(!showNotifications)}
                     className={`p-2.5 rounded-xl border transition-all relative ${
                       showNotifications ? 'bg-sky-500/10 border-sky-500/50 text-sky-500' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
@@ -201,7 +201,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 {/* Profile Dropdown */}
                 <div className="relative" ref={profileRef}>
                   <button 
-                    aria-label="მომხმარებლის მენიუ"
+                    aria-label={t('user_menu')}
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all"
                   >
@@ -229,7 +229,7 @@ const Navbar: React.FC<NavbarProps> = ({
                           setIsProfileOpen(false); 
                         }} 
                         icon={<UserCircle size={16}/>} 
-                        label="პროფილი" 
+                        label={t('nav_profile')} 
                       />
                       
                       <ProfileMenuItem
@@ -239,7 +239,7 @@ const Navbar: React.FC<NavbarProps> = ({
                           setIsProfileOpen(false);
                         }}
                         icon={<Settings size={16}/>}
-                        label="პარამეტრები"
+                        label={t('nav_settings')}
                       />
                       
                       <div className="h-px bg-slate-800 my-1 mx-2"></div>
@@ -263,7 +263,7 @@ const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            <button aria-label="მობილური მენიუ" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2.5 bg-white/5 text-slate-400 rounded-xl hover:text-white transition-colors">
+            <button aria-label={t('mobile_menu')} onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2.5 bg-white/5 text-slate-400 rounded-xl hover:text-white transition-colors">
               <Menu size={20} />
             </button>
           </div>
@@ -275,7 +275,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="fixed inset-0 z-[60] bg-slate-950 lg:hidden p-6 animate-in slide-in-from-right duration-300 overflow-y-auto">
           <div className="flex justify-between items-center mb-12">
             <Logo />
-            <button aria-label="მენიუს დახურვა" onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 bg-white/5 text-slate-400 rounded-xl hover:text-white transition-colors">
+            <button aria-label={t('mobile_menu_close')} onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 bg-white/5 text-slate-400 rounded-xl hover:text-white transition-colors">
               <X size={24} />
             </button>
           </div>
@@ -290,13 +290,13 @@ const Navbar: React.FC<NavbarProps> = ({
               id="mobile-search"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="ძებნა..."
-              aria-label="ძებნა"
+              placeholder={t('search_placeholder')}
+              aria-label={t('route_search')}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-12 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500/50"
             />
             <button
               type="submit"
-              aria-label="ძებნა"
+              aria-label={t('route_search')}
               disabled={!searchValue.trim()}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-sky-400 disabled:opacity-30 transition-colors"
             >
@@ -305,11 +305,11 @@ const Navbar: React.FC<NavbarProps> = ({
           </form>
 
           <div className="space-y-4">
-            <MobileNavLink to="/" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname === '/'} label="მთავარი" />
-            <MobileNavLink to="/market" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/market')} label="მარკეტი" />
-            <MobileNavLink to="/vlogs" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/vlogs')} label="ვლოგები" />
-            <MobileNavLink to="/tools" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/tools')} label="ხელსაწყოები" />
-            <MobileNavLink to="/map" active={location.pathname.startsWith('/map')} label="რუკა" onClick={() => setIsMobileMenuOpen(false)} />
+            <MobileNavLink to="/" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname === '/'} label={t('route_home')} />
+            <MobileNavLink to="/market" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/market')} label={t('route_market')} />
+            <MobileNavLink to="/vlogs" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/vlogs')} label={t('route_vlogs')} />
+            <MobileNavLink to="/tools" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/tools')} label={t('route_tools_short')} />
+            <MobileNavLink to="/map" active={location.pathname.startsWith('/map')} label={t('route_map')} onClick={() => setIsMobileMenuOpen(false)} />
 
             <div className="pt-6 border-t border-white/5">
               <EcosystemLinksNav
@@ -324,8 +324,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => { toggleLanguage(); setIsMobileMenuOpen(false); }} 
                 className="flex items-center justify-between w-full px-4 py-4 bg-white/5 hover:bg-white/10 transition-colors rounded-xl text-slate-400 font-bold"
               >
-                <span className="flex items-center gap-2 text-lg"><Globe size={24}/> ენა</span>
-                <span className="text-sm uppercase font-black text-white">{language === 'ka' ? 'ქართული (GE)' : 'English (EN)'}</span>
+                <span className="flex items-center gap-2 text-lg"><Globe size={24}/> {t('language_label')}</span>
+                <span className="text-sm uppercase font-black text-white">{language === 'ka' ? t('language_ka') : 'English (EN)'}</span>
               </button>
               
               {!currentUser && (

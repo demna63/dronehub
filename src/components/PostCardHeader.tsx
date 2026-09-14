@@ -5,6 +5,7 @@ import { ka } from 'date-fns/locale';
 import type { Post } from '../types';
 import Avatar from './Avatar';
 import { toDate } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface PostCardHeaderProps {
   post: Post;
@@ -25,10 +26,11 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { t } = useLanguage();
   const createdAt = toDate(post.createdAt);
   const relativeTime = createdAt
     ? formatDistanceToNow(createdAt, { addSuffix: true, locale: ka })
-    : 'ახლახანს';
+    : t('time_just_now');
   const avatarUrl = (post as Post & { authorAvatar?: string }).authorAvatar || post.avatar || '';
 
   return (
@@ -61,7 +63,7 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
       {canManage && (
         <div className="relative">
           <button
-            aria-label="პოსტის მენიუ"
+            aria-label={t('post_menu')}
             onClick={(event) => {
               event.stopPropagation();
               onMenuToggle(post.id);

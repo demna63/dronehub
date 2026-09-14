@@ -5,6 +5,7 @@ import PostCard from './PostCard';
 import MarketItemView from './MarketItemView'; // ✅ ახალი იმპორტი
 import { CornerDownLeft, ArrowRight, Hash, AlertTriangle } from 'lucide-react';
 import { isMarketItem } from '../constants/market';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface SinglePostPageProps {
   post: Post;
@@ -22,6 +23,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
   post, currentUser, allPosts, onToggleSave, savedPostIds,
   onLoginClick, onDeletePost, onEditPost, onAddComment
 }) => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,7 +61,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
           <div className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
             <CornerDownLeft size={20} />
           </div>
-          <span className="text-xs font-bold uppercase tracking-widest">უკან დაბრუნება</span>
+          <span className="text-xs font-bold uppercase tracking-widest">{t('action_back')}</span>
         </button>
       </div>
 
