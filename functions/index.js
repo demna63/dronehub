@@ -383,6 +383,22 @@ exports.backfillPosts = onCall({ region: 'us-central1', cors: true }, async (req
       update.telemetryScore = TELEMETRY.PRIOR_MEAN;
     }
 
+    // A `serverTimestamp()` sentinel that was copied into a plain object before
+    // the write reached Firestore is stored as `{ _methodName: 'serverTimestamp' }`
+    // — a map, not a date. Such a post reads as "just now" forever, and because
+    // Firestore sorts a map after a timestamp it is pinned to the top of a
+    // `createdAt desc` feed.
+    //
+    // The document's own `createTime` is the real answer: the server recorded it
+    // at the moment of the write, so nothing has to be guessed.
+    const createdAt = post.createdAt;
+    const isUnresolvedSentinel =
+      createdAt && typeof createdAt === 'object' && !createdAt.toDate &&
+      createdAt._methodName === 'serverTimestamp';
+    if (isUnresolvedSentinel || createdAt === undefined) {
+      update.createdAt = document.createTime;
+    }
+
     if (Object.keys(update).length > 0) pending.push({ ref: document.ref, update });
   }
 
@@ -403,5 +419,6 @@ exports.backfillPosts = onCall({ region: 'us-central1', cors: true }, async (req
     toWrite: pending.length,
     facetsAdded: pending.filter((item) => item.update.facets !== undefined).length,
     scoresSeeded: pending.filter((item) => item.update.telemetryScore !== undefined).length,
+    datesRepaired: pending.filter((item) => item.update.createdAt !== undefined).length,
   };
 });

@@ -23,7 +23,37 @@ import type { Comment, MeetRoomData, Post, PostTelemetryVote, User, VlogEntry } 
 import { pickAllowedProfileFields } from '../utils/userProfileAllowlist';
 import { SEARCH_SCAN_LIMIT, searchPosts } from '../utils/search';
 
-const sanitizeFirestoreData = <T extends DocumentData>(data: T): T => {
+/**
+ * True only for `{}` literals — not for class instances.
+ *
+ * This distinction is the whole point of the sanitizer below.
+ */
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  if (typeof value !== 'object' || value === null) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
+
+/**
+ * Strip `undefined`, which Firestore rejects, without touching anything else.
+ *
+ * Only PLAIN objects are rebuilt. The previous version recursed into every
+ * object, which quietly destroyed the SDK's sentinel values: `serverTimestamp()`
+ * returns a `FieldValue` instance, and copying its enumerable properties into a
+ * fresh `{}` produces `{ _methodName: 'serverTimestamp' }` — an ordinary map as
+ * far as Firestore is concerned. It was stored verbatim instead of being
+ * resolved to the write time.
+ *
+ * The damage was not obvious. Such a post has a `createdAt` that is not a date,
+ * so every reader fell back to "just now" and it read as new forever; and
+ * because Firestore orders a map AFTER a timestamp, `orderBy('createdAt',
+ * 'desc')` parked it permanently at the top of the feed.
+ *
+ * The same applies to `Timestamp`, `GeoPoint`, `DocumentReference`, `Bytes` and
+ * `increment()` — every one of them is a class instance that must reach the SDK
+ * intact.
+ */
+export const sanitizeFirestoreData = <T extends DocumentData>(data: T): T => {
   if (data === null || data === undefined) return data;
 
   if (Array.isArray(data)) {
@@ -32,11 +62,7 @@ const sanitizeFirestoreData = <T extends DocumentData>(data: T): T => {
       .filter((item) => item !== undefined) as unknown as T;
   }
 
-  if (data instanceof Date) {
-    return data as T;
-  }
-
-  if (typeof data === 'object') {
+  if (isPlainObject(data)) {
     return Object.entries(data).reduce<Record<string, unknown>>((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = sanitizeFirestoreData(value as DocumentData);
