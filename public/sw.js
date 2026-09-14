@@ -1,4 +1,20 @@
-const CACHE_NAME = 'dronehub-shell-v4';
+// v5: v4's cache served the HTML shell cache-first, which pinned returning
+// visitors to whatever build they first loaded. Bumping the name drops those
+// poisoned entries on activate.
+const CACHE_NAME = 'dronehub-shell-v5';
+
+/**
+ * Paths that are precached for offline use but must NEVER be served from the
+ * cache while the network is reachable.
+ *
+ * The HTML names the hashed bundles, so a stale shell pins the whole app to an
+ * old build: every asset it references is still in the cache and still
+ * immutable, so nothing forces an update. That is exactly what happened — one
+ * browser was holding three different vintages of index.html and rendering the
+ * oldest of them after a fresh deploy.
+ */
+const NETWORK_FIRST = ['/', '/index.html'];
+
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/brand/dhg-logo.webp', '/brand/dhg-logo.avif', '/brand/dhg-logo.png', '/brand/favicon.ico', '/brand/icon.svg', '/brand/icon-192.png', '/brand/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -37,7 +53,12 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (request.mode === 'navigate' || request.destination === 'document') {
+  const isShellDocument =
+    request.mode === 'navigate' ||
+    request.destination === 'document' ||
+    NETWORK_FIRST.includes(url.pathname);
+
+  if (isShellDocument) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -56,6 +77,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Everything below is cache-first. `/assets/**` is content-hashed and served
+  // immutable, so a cached copy can never be wrong; images and the manifest
+  // change rarely and refresh in the background.
   if (APP_SHELL.some((path) => url.pathname === path) || url.pathname.startsWith('/assets/') || url.pathname.endsWith('.webp') || url.pathname.endsWith('.avif') || url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.jpeg') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.json')) {
     event.respondWith(
       caches.match(request).then((cached) => {
