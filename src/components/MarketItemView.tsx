@@ -14,8 +14,8 @@ import {
   Eye
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { formatShortDate } from '../utils/dates';
 import { useLanguage } from '../contexts/useLanguage';
+import { PostTime } from './PostTime';
 
 interface SpecRowProps {
   label: string;
@@ -85,7 +85,8 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                  <Eye size={14} className="text-sky-400" /> {item.views || 0} ნახვა
                </span>
                <span className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                 <Calendar size={14} className="text-sky-400" /> {formatShortDate(item.createdAt) || t('time_just_now')}
+                 <Calendar size={14} className="text-sky-400" aria-hidden="true" />
+                 <PostTime value={item.createdAt} withIcon={false} />
                </span>
             </div>
           </div>

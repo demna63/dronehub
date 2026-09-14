@@ -1,8 +1,8 @@
 import React from 'react';
 import { Post } from '../types';
-import { MapPin, Clock, Image as ImageIcon } from 'lucide-react';
-import { formatShortDate } from '../utils/dates';
+import { MapPin, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/useLanguage';
+import { PostTime } from './PostTime';
 
 interface MarketplaceCardProps {
   item: Post;
@@ -88,10 +88,7 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item, onClick }) => {
               <span className="truncate max-w-[80px]">{item.location || t('location_default')}</span>
            </div>
            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1">
-                <Clock size={12} className="text-slate-400" />
-                {formatShortDate(item.createdAt) || t('time_just_now')}
-              </span>
+              <PostTime value={item.createdAt} className="text-slate-400" />
            </div>
         </div>
       </div>

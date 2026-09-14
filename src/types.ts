@@ -139,7 +139,12 @@ export interface Post {
   sharesCount?: number;
   views?: number;
   createdAt: TimestampLike;
-  timestamp?: string;
+  /**
+   * `timestamp` used to be declared here as an optional pre-formatted string.
+   * Nothing ever wrote it — `addPost` does not — so every reader fell through
+   * to a "just now" default and old posts claimed to be new. Removed so the
+   * field cannot be reached for again; `createdAt` is the only source.
+   */
   /** Bayesian-shrunk 0-100 rating, written by the ratePost function. Sort key. */
   telemetryScore?: number;
   comments?: Comment[];

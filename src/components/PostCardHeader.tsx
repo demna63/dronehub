@@ -1,11 +1,9 @@
 import React from 'react';
-import { Clock, Edit2, MoreHorizontal, Trash2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ka } from 'date-fns/locale';
+import { Edit2, MoreHorizontal, Trash2 } from 'lucide-react';
 import type { Post } from '../types';
 import Avatar from './Avatar';
-import { toDate } from '../utils/dates';
 import { useLanguage } from '../contexts/useLanguage';
+import { PostTime } from './PostTime';
 
 interface PostCardHeaderProps {
   post: Post;
@@ -27,10 +25,6 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
   onDelete,
 }) => {
   const { t } = useLanguage();
-  const createdAt = toDate(post.createdAt);
-  const relativeTime = createdAt
-    ? formatDistanceToNow(createdAt, { addSuffix: true, locale: ka })
-    : t('time_just_now');
   const avatarUrl = (post as Post & { authorAvatar?: string }).authorAvatar || post.avatar || '';
 
   return (
@@ -53,10 +47,7 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Clock size={12} />
-            <span>{relativeTime}</span>
-          </div>
+          <PostTime value={post.createdAt} className="gap-1.5 text-[11px] text-slate-400" />
         </div>
       </div>
 

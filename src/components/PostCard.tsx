@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   MessageCircle, Share2, Bookmark, MoreHorizontal, 
-  Hash, Clock, Check, Trash2, Edit, Send, Star,
+  Hash, Check, Trash2, Edit, Send, Star,
 } from 'lucide-react';
 import { Post, User, PostTelemetryVote, Comment } from '../types';
 import PostTelemetry from './PostTelemetry';
@@ -15,6 +15,7 @@ import CommentBody from './CommentBody';
 import Avatar from './Avatar';
 import { COMMENT_MAX_LENGTH } from '../constants/limits';
 import { useLanguage } from '../contexts/useLanguage';
+import { PostTime } from './PostTime';
 
 // --- MAIN POST CARD COMPONENT ---
 interface PostCardProps {
@@ -202,10 +203,7 @@ const PostCard: React.FC<PostCardProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2">
                 <button type="button" onClick={handleAuthorClick} className="text-left text-sm font-bold text-slate-200 hover:underline">{post.author}</button>
                 <span className="hidden sm:inline text-slate-400 text-xs">•</span>
-                <div className="flex items-center gap-1 text-xs text-slate-400">
-                  <Clock size={12} />
-                  <span>{post.timestamp ?? t('time_just_now')}</span>
-                </div>
+                <PostTime value={post.createdAt} className="text-xs text-slate-400" />
               </div>
             </div>
             <button
