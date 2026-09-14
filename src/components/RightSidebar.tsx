@@ -3,6 +3,7 @@ import { User, Category, FlightWeather } from '../types';
 import { Satellite, Activity, CheckCircle2, ExternalLink, AlertTriangle } from 'lucide-react';
 import RightSidebarWeatherCard from './RightSidebarWeatherCard';
 import RightSidebarSection from './RightSidebarSection';
+import { useLanguage } from '../contexts/useLanguage';
 
 /** The shape of the Open-Meteo fields this component requests. */
 interface OpenMeteoForecast {
@@ -39,6 +40,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   trendingCommunities, 
   onCommunityClick 
 }) => {
+  const { t } = useLanguage();
   const [weather, setWeather] = useState<FlightWeather | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -96,7 +98,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       
       <RightSidebarWeatherCard weather={weather} loading={loading} status={status} />
 
-      <RightSidebarSection title="GPS სიგნალის სტატუსი" icon={<Satellite size={12} className="text-sky-500" />}>
+      <RightSidebarSection title={t('gps_status_title')} icon={<Satellite size={12} className="text-sky-500" />}>
         <div className="flex items-center justify-between p-3 bg-slate-950 border border-white/5 rounded-xl group hover:border-sky-500/30 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
@@ -104,7 +106,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             </div>
             <div>
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kp-Index: 2.3</div>
-              <div className="text-sm font-black text-white">სტაბილური</div>
+              <div className="text-sm font-black text-white">{t('gps_stable')}</div>
             </div>
           </div>
           <div className="text-right">
@@ -112,18 +114,18 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           </div>
         </div>
         <p className="text-[9px] text-slate-500 mt-2 px-1 leading-relaxed">
-          დაბალი Kp-ინდექსი ნიშნავს ძლიერ და სტაბილურ GPS კავშირს. (1-4 უსაფრთხოა, 5+ საშიშია)
+          {t('gps_kp_hint')}
         </p>
       </RightSidebarSection>
 
-      <RightSidebarSection title="ფრენის წინ" icon={<CheckCircle2 size={12} className="text-emerald-500" />}>
+      <RightSidebarSection title={t('preflight_title')} icon={<CheckCircle2 size={12} className="text-emerald-500" />}>
         <div className="space-y-1.5 text-xs text-slate-300">
           {[
-            'პროპელერები დამაგრებულია?',
-            'ბატარეები 100%-ზეა?',
-            'SD ბარათი ჩადებულია?',
-            'Vtx ანტენა შეერთებულია?',
-            'No-Fly Zone შემოწმებულია?'
+            t('preflight_props'),
+            t('preflight_batteries'),
+            t('preflight_sd'),
+            t('preflight_vtx'),
+            t('preflight_nfz')
           ].map((item, i) => (
             <label key={i} htmlFor={`preflight-check-${i}`} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg cursor-pointer transition-colors group">
               <input id={`preflight-check-${i}`} type="checkbox" className="accent-emerald-500 w-4 h-4 rounded border-white/10 bg-slate-950 cursor-pointer" />
@@ -133,7 +135,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       </RightSidebarSection>
 
-      <RightSidebarSection title="ტრენდული ზონები" icon={<Activity size={12} className="text-violet-400" />}>
+      <RightSidebarSection title={t('trending_zones')} icon={<Activity size={12} className="text-violet-400" />}>
         <div className="space-y-2">
           {trendingCommunities.map((community) => (
             <button
@@ -150,20 +152,20 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       </RightSidebarSection>
 
-      <RightSidebarSection title="რესურსები" icon={<ExternalLink size={12} className="text-indigo-400" />}>
+      <RightSidebarSection title={t('resources')} icon={<ExternalLink size={12} className="text-indigo-400" />}>
         <div className="space-y-2">
           <a href="/map" className="flex items-center justify-between p-2.5 bg-slate-950 hover:bg-white/5 border border-white/5 rounded-xl transition-colors group">
-            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">ლოკაციები & რუკა</span>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">{t('resource_spots_map')}</span>
             <ExternalLink size={12} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
           </a>
           <a href="/regulations" className="flex items-center justify-between p-2.5 bg-slate-950 hover:bg-white/5 border border-white/5 rounded-xl transition-colors group">
-            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">საქ. რეგულაციები</span>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">{t('resource_regulations')}</span>
             <ExternalLink size={12} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
           </a>
           <div className="flex items-start gap-2 p-3 mt-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
             <AlertTriangle size={14} className="text-rose-400 shrink-0 mt-0.5" />
             <p className="text-[9px] text-rose-300/80 leading-relaxed font-bold uppercase tracking-widest">
-              ყოველთვის შეამოწმეთ გარემო აფრენამდე!
+              {t('preflight_footer')}
             </p>
           </div>
         </div>

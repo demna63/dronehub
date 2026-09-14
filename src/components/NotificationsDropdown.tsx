@@ -3,6 +3,7 @@ import { Notification } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ka } from 'date-fns/locale';
 import { toDate } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface NotificationsDropdownProps {
   notifications: Notification[];
@@ -17,6 +18,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   onMarkAllAsRead,
   onClose 
 }) => {
+  const { t } = useLanguage();
   /**
    * date-fns throws a RangeError on an Invalid Date, and this dropdown renders
    * outside the route ErrorBoundary — so one notification whose `createdAt` was
@@ -32,7 +34,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   return (
     <div className="absolute top-full right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
-        <h3 className="text-sm font-bold text-white uppercase tracking-widest">შეტყობინებები</h3>
+        <h3 className="text-sm font-bold text-white uppercase tracking-widest">{t('notifications_title')}</h3>
         <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -61,9 +63,9 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-300 leading-relaxed">
                       <span className="font-bold text-white">u/{notification.senderName}</span>-მა 
-                      {notification.type === 'reply' ? ' გიპასუხათ კომენტარზე' : 
-                       notification.type === 'vote' ? ' შეაფასა თქვენი პოსტი' : 
-                       ' დააკომენტარა თქვენს პოსტზე'}:
+                      {notification.type === 'reply' ? t('notif_replied') : 
+                       notification.type === 'vote' ? t('notif_rated') : 
+                       t('notif_commented')}:
                     </p>
                     <p className="text-xs font-bold text-blue-400 mt-1 line-clamp-1">
                       {notification.postTitle}
@@ -79,7 +81,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         ) : (
           <div className="py-12 text-center">
             <div className="text-3xl mb-2">📭</div>
-            <p className="text-xs text-slate-400 font-medium">შეტყობინებები ჯერ არ არის</p>
+            <p className="text-xs text-slate-400 font-medium">{t('notifications_empty')}</p>
           </div>
         )}
       </div>
@@ -93,7 +95,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
             }}
             className="text-[10px] font-bold text-slate-400 hover:text-blue-400 uppercase tracking-widest transition-colors"
           >
-            ყველას წაკითხულად მონიშვნა
+            {t('notifications_mark_all')}
           </button>
         </div>
       )}

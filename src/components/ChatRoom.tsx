@@ -7,6 +7,7 @@ import Avatar from './Avatar';
 import { MESSAGE_MAX_LENGTH } from '../constants/limits';
 import { useToast } from '../contexts/useToast';
 import { formatClockTime } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface ChatRoomProps {
   user: User | null;
@@ -15,6 +16,7 @@ interface ChatRoomProps {
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [messages, setMessages] = useState<VlogChatMessage[]>([]);
   const [listenerError, setListenerError] = useState<string | null>(null);
@@ -49,11 +51,11 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
       // Without this a rules rejection or a dropped connection was silent: the
       // list simply stopped updating with no indication that anything failed.
       console.error('Message listener error:', snapshotError);
-      setListenerError('შეტყობინებები ვერ ჩაიტვირთა.');
+      setListenerError(t('messages_load_failed'));
     });
 
     return () => unsubscribe();
-  }, [channelId]);
+  }, [channelId, t]);
 
   // ავტომატური სქროლი
   useEffect(() => {
@@ -79,7 +81,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
       setInput('');
     } catch (error) {
       console.error("Error sending message:", error);
-      showToast('შეტყობინება ვერ გაიგზავნა.', 'error');
+      showToast(t('message_send_failed'), 'error');
     } finally {
       setIsSending(false);
     }
@@ -93,7 +95,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4 opacity-50 pt-20">
               <MessageSquare size={48} className="text-slate-600" />
-              <p className="text-sm font-medium">ჯერ არავის არაფერი დაუწერია.</p>
+              <p className="text-sm font-medium">{t('chat_empty')}</p>
             </div>
           ) : (
             messages.map((msg) => {
@@ -168,7 +170,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId }) =>
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            aria-label="შეტყობინება"
+            aria-label={t('message_label')}
             maxLength={MESSAGE_MAX_LENGTH}
             placeholder={`Message #${channelId}...`}
             className="flex-1 bg-slate-900/50 border border-white/10 hover:border-white/20 focus:border-sky-500/50 rounded-xl px-5 py-3 text-sm text-white focus:outline-none focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400"

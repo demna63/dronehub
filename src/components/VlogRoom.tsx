@@ -6,6 +6,7 @@ import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp,
 import { db } from '../lib/firebase';
 import { formatClockTime } from '../utils/dates';
 import { MESSAGE_MAX_LENGTH } from '../constants/limits';
+import { useLanguage } from '../contexts/useLanguage';
 
 /** Newest chat messages streamed for a vlog channel. */
 const VLOG_CHAT_LIMIT = 100;
@@ -19,6 +20,7 @@ interface VlogRoomProps {
 }
 
 const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick }) => {
+  const { t } = useLanguage();
   const { vlogId } = useParams();
   const navigate = useNavigate();
   
@@ -50,7 +52,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       try {
         // Vlogs live in the `vlogs` collection (see firestoreRepository), not in
         // `posts` — so opening /vlogs/<id> from a shared link or refreshing the
-        // page always missed and rendered "ვლოგი ვერ მოიძებნა".
+        // page always missed and rendered t('vlog_not_found').
         const docRef = doc(db, 'vlogs', vlogId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -99,11 +101,11 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       // Without this a rules rejection or a dropped connection was silent: the
       // list simply stopped updating with no indication that anything failed.
       console.error('Message listener error:', snapshotError);
-      setListenerError('შეტყობინებები ვერ ჩაიტვირთა.');
+      setListenerError(t('messages_load_failed'));
     });
 
     return () => unsubscribe();
-  }, [vlogId]);
+  }, [vlogId, t]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +128,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       setNewMessage('');
     } catch (error) {
       console.error("Error sending message:", error);
-      setSendError('შეტყობინება ვერ გაიგზავნა.');
+      setSendError(t('message_send_failed'));
     }
   };
 
@@ -146,13 +148,13 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
   if (loadingVlog) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white">
-        <Loader2 className="animate-spin mr-2" /> ვლოგი იტვირთება...
+        <Loader2 className="animate-spin mr-2" /> {t('vlog_loading')}
       </div>
     );
   }
 
   if (!activeVlog) {
-    return <div className="text-center text-white py-20">ვლოგი ვერ მოიძებნა</div>;
+    return <div className="text-center text-white py-20">{t('vlog_not_found')}</div>;
   }
 
   // ✅ Fix: აქ ვიყენებთ 'url'-ს (რაც VlogEntry-შია) და არა 'videoUrl'-ს
@@ -199,7 +201,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {messages.length === 0 ? (
              <div className="text-center text-slate-400 text-xs mt-10">
-               იყავი პირველი, ვინც კომენტარს დაწერს!
+               {t('chat_be_first')}
              </div>
           ) : (
             messages.map((msg) => (
@@ -236,8 +238,8 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="დაწერე..."
-                aria-label="შეტყობინება"
+                placeholder={t('message_placeholder')}
+                aria-label={t('message_label')}
                 maxLength={MESSAGE_MAX_LENGTH}
                 className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none"
               />
@@ -254,7 +256,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
               onClick={onLoginClick}
               className="w-full py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl hover:bg-slate-700 transition-colors"
             >
-              შედი ჩატში
+              {t('chat_join')}
             </button>
           )}
         </div>

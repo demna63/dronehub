@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import ChatRoom from './ChatRoom';
 import { Hash, Users, Menu, X, Radio, ShoppingBag, HelpCircle, MessageSquare } from 'lucide-react';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface GlobalChatProps {
   currentUser: User | null;
@@ -10,14 +11,15 @@ interface GlobalChatProps {
 }
 
 const CHANNELS = [
-  { id: 'general', name: 'ზოგადი', icon: MessageSquare, desc: 'საუბრები დრონებზე' },
-  { id: 'market', name: 'მარკეტი', icon: ShoppingBag, desc: 'ყიდვა-გაყიდვა' },
-  { id: 'help', name: 'დახმარება', icon: HelpCircle, desc: 'ტექნიკური კითხვები' },
-  { id: 'racing', name: 'რბოლები', icon: Radio, desc: 'შეჯიბრებები და ტრასები' },
-  { id: 'offtopic', name: 'Off-Topic', icon: Hash, desc: 'სხვა თემები' }
+  { id: 'general', nameKey: 'chan_general', icon: MessageSquare, descKey: 'chan_general_desc' },
+  { id: 'market', nameKey: 'route_market', icon: ShoppingBag, descKey: 'chan_market_desc' },
+  { id: 'help', nameKey: 'chan_help', icon: HelpCircle, descKey: 'chan_help_desc' },
+  { id: 'racing', nameKey: 'chan_racing', icon: Radio, descKey: 'chan_racing_desc' },
+  { id: 'offtopic', nameKey: 'chan_offtopic', icon: Hash, descKey: 'chan_offtopic_desc' }
 ];
 
 const GlobalChat: React.FC<GlobalChatProps> = ({ currentUser, onLoginClick, onUserClick: _onUserClick }) => {
+  const { t } = useLanguage();
   const [activeChannel, setActiveChannel] = useState('general');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -44,7 +46,7 @@ const GlobalChat: React.FC<GlobalChatProps> = ({ currentUser, onLoginClick, onUs
       `}>
         <div className="p-4 flex items-center justify-between md:hidden">
            <span className="font-black text-white uppercase tracking-widest flex items-center gap-2">
-             <Hash size={18} className="text-sky-500"/> არხები
+             <Hash size={18} className="text-sky-500"/> {t('chat_channels')}
            </span>
            <button onClick={() => setIsSidebarOpen(false)}><X size={20} className="text-slate-400"/></button>
         </div>
@@ -65,8 +67,8 @@ const GlobalChat: React.FC<GlobalChatProps> = ({ currentUser, onLoginClick, onUs
               >
                 <Icon size={18} className={isActive ? 'text-sky-500' : 'text-slate-400 group-hover:text-white'} />
                 <div>
-                  <div className="text-sm font-bold">{channel.name}</div>
-                  <div className="text-[10px] opacity-60 font-medium">{channel.desc}</div>
+                  <div className="text-sm font-bold">{t(channel.nameKey)}</div>
+                  <div className="text-[10px] opacity-60 font-medium">{t(channel.descKey)}</div>
                 </div>
               </button>
             );
@@ -100,8 +102,8 @@ const GlobalChat: React.FC<GlobalChatProps> = ({ currentUser, onLoginClick, onUs
                   <Hash size={20} />
                </div>
                <div>
-                 <h2 className="font-bold text-white text-sm">{currentChannelInfo.name}</h2>
-                 <p className="text-[10px] text-slate-400 font-medium">{currentChannelInfo.desc}</p>
+                 <h2 className="font-bold text-white text-sm">{t(currentChannelInfo.nameKey)}</h2>
+                 <p className="text-[10px] text-slate-400 font-medium">{t(currentChannelInfo.descKey)}</p>
                </div>
              </div>
            </div>

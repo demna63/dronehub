@@ -29,11 +29,11 @@ const EcosystemLinksNav: React.FC<EcosystemLinksNavProps> = ({
             isMobile ? 'text-xs' : 'text-[10px]'
           }`}
         >
-          {t('eco_section') || 'ხელსაწყოები'}
+          {t('eco_section') || t('route_tools_short')}
         </h3>
       </div>
 
-      <nav className={isMobile ? 'space-y-2' : 'space-y-1'} aria-label={t('eco_section') || 'ხელსაწყოები'}>
+      <nav className={isMobile ? 'space-y-2' : 'space-y-1'} aria-label={t('eco_section') || t('route_tools_short')}>
         {ECOSYSTEM_LINKS.map((link) => {
           const isCurrent = link.id === currentSiteId;
           const Icon = link.icon;
@@ -52,7 +52,7 @@ const EcosystemLinksNav: React.FC<EcosystemLinksNavProps> = ({
             <span className="flex items-center gap-2 shrink-0 ml-2">
               {isCurrent && (
                 <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-400/20">
-                  {t('eco_current') || 'მიმდინარე'}
+                  {t('eco_current') || t('eco_current_label')}
                 </span>
               )}
               {isExternal && (

@@ -5,6 +5,7 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff, MessageSquare } from 'lucide-re
 import { db, collection, query, where, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from '../lib/firebase';
 import { MESSAGE_MAX_LENGTH } from '../constants/limits';
 import { formatClockTime } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface MeetRoomProps {
   room: MeetRoomData;
@@ -14,6 +15,7 @@ interface MeetRoomProps {
 }
 
 const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest }) => {
+  const { t } = useLanguage();
   const [isMicOn, setIsMicOn] = useState(false);
   const [listenerError, setListenerError] = useState<string | null>(null);
   const [isVideoOn, setIsVideoOn] = useState(false);
@@ -53,11 +55,11 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
       // Without this a rules rejection or a dropped connection was silent: the
       // list simply stopped updating with no indication that anything failed.
       console.error('Message listener error:', snapshotError);
-      setListenerError('შეტყობინებები ვერ ჩაიტვირთა.');
+      setListenerError(t('messages_load_failed'));
     });
     
     return () => unsubscribe();
-  }, [room.id]);
+  }, [room.id, t]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,7 +108,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
         </div>
         
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowChat(!showChat)} aria-label="ჩატის ჩვენება/დამალვა" aria-expanded={showChat} className={`p-3 rounded-xl transition-colors ${showChat ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>
+          <button onClick={() => setShowChat(!showChat)} aria-label={t('chat_toggle')} aria-expanded={showChat} className={`p-3 rounded-xl transition-colors ${showChat ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>
             <MessageSquare className="w-5 h-5" />
           </button>
         </div>
@@ -127,10 +129,10 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
               )}
               {/* Controls Overlay */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-white/10">
-                 <button onClick={() => setIsMicOn(!isMicOn)} aria-label={isMicOn ? 'მიკროფონის გამორთვა' : 'მიკროფონის ჩართვა'} className={`p-4 rounded-xl transition-all ${isMicOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
+                 <button onClick={() => setIsMicOn(!isMicOn)} aria-label={isMicOn ? t('mic_off') : t('mic_on')} className={`p-4 rounded-xl transition-all ${isMicOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
                    {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                  </button>
-                 <button onClick={() => setIsVideoOn(!isVideoOn)} aria-label={isVideoOn ? 'კამერის გამორთვა' : 'კამერის ჩართვა'} className={`p-4 rounded-xl transition-all ${isVideoOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
+                 <button onClick={() => setIsVideoOn(!isVideoOn)} aria-label={isVideoOn ? t('camera_off') : t('camera_on')} className={`p-4 rounded-xl transition-all ${isVideoOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
                    {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                  </button>
                  <div className="w-px h-8 bg-white/10 mx-2"></div>
@@ -180,7 +182,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                id="meet-chat-input"
                value={chatInput}
                onChange={(e) => setChatInput(e.target.value)}
-               aria-label="შეტყობინება"
+               aria-label={t('message_label')}
                maxLength={MESSAGE_MAX_LENGTH}
                placeholder={user ? "Send a message..." : "Login to chat"}
                disabled={!user}

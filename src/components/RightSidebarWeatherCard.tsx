@@ -1,6 +1,7 @@
 import React from 'react';
 import { Wind, MapPin, Thermometer, Droplets, Compass, Sunrise, Sunset } from 'lucide-react';
 import type { FlightWeather } from '../types';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface RightSidebarWeatherCardProps {
   /** Null while loading, and also when the forecast could not be fetched. */
@@ -10,6 +11,7 @@ interface RightSidebarWeatherCardProps {
 }
 
 const RightSidebarWeatherCard: React.FC<RightSidebarWeatherCardProps> = ({ weather, loading, status }) => {
+  const { t } = useLanguage();
   /**
    * `weather` is null both while loading and after a failed fetch, and the two
    * must look the same: a stale or invented number here is a flight decision
@@ -25,7 +27,7 @@ const RightSidebarWeatherCard: React.FC<RightSidebarWeatherCardProps> = ({ weath
 
       <div className="flex items-center justify-between mb-4 relative z-10">
         <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-          <MapPin size={10} className="text-rose-500" /> თბილისი
+          <MapPin size={10} className="text-rose-500" /> {t('city_tbilisi')}
         </div>
         <div className={`text-[10px] font-black px-2.5 py-1 rounded-md shadow-lg ${status.color} ${status.text} animate-pulse`}>
           {status.status}
@@ -49,7 +51,7 @@ const RightSidebarWeatherCard: React.FC<RightSidebarWeatherCardProps> = ({ weath
         <div className="flex items-center gap-2">
           {weather?.isNight ? <Sunrise size={16} className="text-amber-400" /> : <Sunset size={16} className="text-orange-500" />}
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-            {weather?.isNight ? 'მზის ამოსვლა' : 'მზის ჩასვლა'}
+            {weather?.isNight ? t('weather_sunrise') : t('weather_sunset')}
           </span>
         </div>
         <span className="text-sm font-black text-orange-400 font-mono">
@@ -60,7 +62,7 @@ const RightSidebarWeatherCard: React.FC<RightSidebarWeatherCardProps> = ({ weath
       <div className="bg-slate-950/60 p-3 rounded-xl border border-white/5 relative z-10">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
-            <Wind size={12} /> ქარი
+            <Wind size={12} /> {t('weather_wind')}
           </div>
           <div className="flex items-center gap-1">
             <Compass size={12} className="text-emerald-400 transition-transform duration-1000" style={{ transform: `rotate(${weather?.direction || 0}deg)` }} />
@@ -69,7 +71,7 @@ const RightSidebarWeatherCard: React.FC<RightSidebarWeatherCardProps> = ({ weath
         </div>
         <div className="flex items-end gap-2">
           <span className="text-2xl font-black text-white leading-none">{reading(weather?.wind)}</span>
-          <span className="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-tighter">კმ/ს</span>
+          <span className="text-[10px] text-slate-400 font-bold mb-1 uppercase tracking-tighter">{t('unit_kmh')}</span>
           <div className="ml-auto text-[9px] font-black text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 uppercase">
             ბრიგვა: {reading(weather?.gusts)}
           </div>

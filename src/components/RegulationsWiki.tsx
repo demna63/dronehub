@@ -35,7 +35,7 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: 
       const result = await geminiService.checkRestrictedZone(zoneQuery);
       setZoneResult(result);
     } catch (error) {
-      setZoneResult({ status: 'IDLE', message: "ვერ მოხერხდა ინფორმაციის მოძიება." });
+      setZoneResult({ status: 'IDLE', message: t('wiki_lookup_failed') });
     } finally {
       setIsChecking(false);
     }
@@ -225,7 +225,7 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: 
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] typography-mtavruli">{t('restricted_zone_check')}</h2>
           </div>
           <p className="text-[11px] text-amber-300/80">
-            AI-შედეგები მხოლოდ საინფორმაციო მიზნებისთვისაა. ფრენამდე ყოველთვის შეამოწმეთ ოფიციალური წყაროები და NOTAM-ები.
+            {t('wiki_ai_disclaimer')}
           </p>
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <div className="w-full md:flex-1 relative flex items-center gap-4">

@@ -1,14 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { BatteryCharging, Zap, Info, Clock, Gauge, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { useLanguage } from '../contexts/useLanguage';
 
+/** Efficiency factors. The labels are translation keys, resolved at render. */
 const BATTERY_TYPES = [
-  { label: "Lithium-ion (LiPo/Li-ion) - 95%", value: 0.95 },
-  { label: "Lead Acid (მანქანის) - 80%", value: 0.80 },
-  { label: "NiMH / NiCd - 70%", value: 0.70 },
-  { label: "Custom (იდეალური) - 100%", value: 1.0 },
+  { labelKey: 'battery_lithium', value: 0.95 },
+  { labelKey: 'battery_lead_acid', value: 0.80 },
+  { labelKey: 'battery_nimh', value: 0.70 },
+  { labelKey: 'battery_custom', value: 1.0 },
 ];
 
 const BatteryCalculator: React.FC = () => {
+  const { t } = useLanguage();
   // --- STATE ---
   const [capacity, setCapacity] = useState<string>("5000"); // mAh default
   const [capacityUnit, setCapacityUnit] = useState<string>("mAh");
@@ -48,7 +51,7 @@ const BatteryCalculator: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-      <h1 className="sr-only">ბატარეის დატენვის დროის კალკულატორი</h1>
+      <h1 className="sr-only">{t('battery_title')}</h1>
       
       {/* Header */}
       <div className="flex items-center gap-4 border-b border-white/10 pb-4">
@@ -57,7 +60,7 @@ const BatteryCalculator: React.FC = () => {
         </div>
         <div>
            <h2 className="text-xl font-black text-white tracking-tight">Battery Charge Time</h2>
-           <p className="text-xs text-slate-400 mt-1">გამოთვალეთ ელემენტის დატენვის ზუსტი დრო</p>
+           <p className="text-xs text-slate-400 mt-1">{t('battery_subtitle')}</p>
         </div>
       </div>
 
@@ -83,7 +86,7 @@ const BatteryCalculator: React.FC = () => {
                             className="w-full bg-transparent text-white px-4 py-3 outline-none font-mono"
                         />
                         <select 
-                            aria-label="ტევადობის ერთეული"
+                            aria-label={t('unit_capacity')}
                             value={capacityUnit} 
                             onChange={(e) => setCapacityUnit(e.target.value)}
                             className="bg-white/5 text-slate-300 px-3 outline-none border-l border-white/10 cursor-pointer hover:bg-white/10"
@@ -109,7 +112,7 @@ const BatteryCalculator: React.FC = () => {
                             className="w-full bg-transparent text-white px-4 py-3 outline-none font-mono"
                         />
                         <select 
-                            aria-label="დამტენის დენის ერთეული"
+                            aria-label={t('unit_charge_current')}
                             value={currentUnit} 
                             onChange={(e) => setCurrentUnit(e.target.value)}
                             className="bg-white/5 text-slate-300 px-3 outline-none border-l border-white/10 cursor-pointer hover:bg-white/10"
@@ -153,7 +156,7 @@ const BatteryCalculator: React.FC = () => {
                         className="w-full bg-slate-950 border border-white/10 text-slate-300 px-4 h-[50px] rounded-xl outline-none focus:border-emerald-500/50 cursor-pointer hover:bg-white/[0.02]"
                     >
                         {BATTERY_TYPES.map(type => (
-                            <option key={type.label} value={type.value}>{type.label}</option>
+                            <option key={t(type.labelKey)} value={type.value}>{t(type.labelKey)}</option>
                         ))}
                     </select>
                 </div>
@@ -186,7 +189,7 @@ const BatteryCalculator: React.FC = () => {
          >
             <div className="flex items-center gap-3">
                <Info size={18} className="text-sky-400" />
-               <span className="font-bold text-slate-300 text-sm">როგორ მუშაობს გამომთვლელი და FAQ</span>
+               <span className="font-bold text-slate-300 text-sm">{t('battery_faq_title')}</span>
             </div>
             {showInfo ? <ChevronUp size={18} className="text-slate-500" /> : <ChevronDown size={18} className="text-slate-500" />}
          </button>
@@ -196,7 +199,7 @@ const BatteryCalculator: React.FC = () => {
               <div className="bg-slate-950 p-4 rounded-xl border border-white/5">
                  <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                     <Settings size={16} className="text-slate-500"/>
-                    გამოთვლის ფორმულა
+                    {t('battery_formula')}
                  </h3>
                  <div className="font-mono text-xs bg-slate-900 p-3 rounded-lg border border-white/5 text-emerald-400/80 break-all">
                     Time (h) = (Capacity_Ah * (1 - SoC)) / Charge_Current_A / Efficiency
@@ -206,12 +209,12 @@ const BatteryCalculator: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
-                    <p className="text-white font-bold mb-1">როგორ დავტენოთ Li-ion/LiPo სწორად?</p>
-                    <p className="text-xs">გამოიყენეთ სპეციალური ბალანს დამტენი. მოერიდეთ სრულ განმუხტვას (0%) და უმჯობესია შეინარჩუნოთ 20%-80% შუალედში, თუ დრონს არ იყენებთ (Storage mode).</p>
+                    <p className="text-white font-bold mb-1">{t('battery_q_howto')}</p>
+                    <p className="text-xs">{t('battery_a_howto')}</p>
                  </div>
                  <div className="bg-slate-900/50 p-4 rounded-xl border border-white/5">
-                    <p className="text-white font-bold mb-1">რა არის 1C დატენვა?</p>
-                    <p className="text-xs">1C ნიშნავს ელემენტის დატენვას მისივე ტევადობის ტოლი დენით. (მაგ: 5000mAh ელემენტისთვის 1C არის 5.0A). ეს ითვლება ყველაზე უსაფრთხო სიჩქარედ.</p>
+                    <p className="text-white font-bold mb-1">{t('battery_q_1c')}</p>
+                    <p className="text-xs">{t('battery_a_1c')}</p>
                  </div>
               </div>
             </div>

@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <SidebarNavSection title="MY SPACE">
           <SidebarNavItem to="/" icon={LayoutGrid} label="Feed" end={true} />
           {currentUser && (
-            <SidebarNavItem to="/saved" icon={Bookmark} label="შენახულები" />
+            <SidebarNavItem to="/saved" icon={Bookmark} label={t('route_saved')} />
           )}
         </SidebarNavSection>
 
@@ -89,19 +89,19 @@ const Sidebar: React.FC<SidebarProps> = ({
                   to="/category/freestyle" 
                   className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive ? 'text-white bg-white/5' : 'text-slate-400 hover:text-slate-300'}`}
                 >
-                  <Zap size={14} /> ფრისტაილი
+                  <Zap size={14} /> {t('discipline_freestyle')}
                 </NavLink>
                 <NavLink 
                   to="/category/racing" 
                   className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive ? 'text-white bg-white/5' : 'text-slate-400 hover:text-slate-300'}`}
                 >
-                  <Flag size={14} /> რეისინგი
+                  <Flag size={14} /> {t('discipline_racing')}
                 </NavLink>
                 <NavLink 
                   to="/category/longrange" 
                   className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive ? 'text-white bg-white/5' : 'text-slate-400 hover:text-slate-300'}`}
                 >
-                  <Mountain size={14} /> ლონგ რეინჯი
+                  <Mountain size={14} /> {t('discipline_longrange')}
                 </NavLink>
               </div>
             )}
@@ -113,8 +113,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* =========================== */}
         {/* 4. INFO & RULES */}
         {/* =========================== */}
-        <SidebarNavSection title="ინფორმაცია" titleClassName="text-slate-400">
-          <SidebarNavItem to="/regulations" icon={Scale} label="რეგულაციები (Wiki)" />
+        <SidebarNavSection title={t('sidebar_information')} titleClassName="text-slate-400">
+          <SidebarNavItem to="/regulations" icon={Scale} label={t('sidebar_regulations_wiki')} />
         </SidebarNavSection>
 
         {/* =========================== */}

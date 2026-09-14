@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useLanguage } from '../contexts/useLanguage';
 import { 
   Map, Signal, Unlock, Wifi, Activity, Box, 
   ArrowRight, ArrowLeft, Ruler, BatteryCharging, Radio, Loader2, ArrowRightLeft
@@ -17,18 +18,21 @@ const AntennaTuner = lazy(() => import('./AntennaTuner'));
 const UnitConverter = lazy(() => import('./RFTools').then((module) => ({ default: module.UnitConverter })));
 
 // დატვირთვის ინდიკატორი კომპონენტი
-const ToolLoader = () => (
-  <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-    <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
-    <p className="text-slate-400 text-sm font-medium animate-pulse">ინსტრუმენტი იტვირთება...</p>
-  </div>
-);
+const ToolLoader = () => {
+  const { t } = useLanguage();
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+      <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
+      <p className="text-slate-400 text-sm font-medium animate-pulse">{t('tool_loading')}</p>
+    </div>
+  );
+};
 
 const tools = [
   {
     id: 'battery-calc',
     title: 'Battery Calc',
-    desc: 'ფრენის დროის და ბატარეის მოხმარების გამომთვლელი.',
+    descKey: 'tool_desc_battery',
     icon: BatteryCharging,
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10'
@@ -36,7 +40,7 @@ const tools = [
   {
     id: 'channel-tuner',
     title: 'Channel Tuner',
-    desc: 'საუკეთესო სიხშირის შერჩევა ვიდეო გადაცემისთვის.',
+    descKey: 'tool_desc_channel',
     icon: Signal,
     color: 'text-indigo-400',
     bg: 'bg-indigo-500/10'
@@ -44,7 +48,7 @@ const tools = [
   {
     id: 'antenna-tuner',
     title: 'Antenna Calc',
-    desc: 'ანტენის ზომების გამომთვლელი სიხშირის მიხედვით.',
+    descKey: 'tool_desc_antenna',
     icon: Radio,
     color: 'text-pink-400',
     bg: 'bg-pink-500/10'
@@ -52,7 +56,7 @@ const tools = [
   {
     id: 'fresnel',
     title: 'Fresnel Zone',
-    desc: 'სიგნალის დაბრკოლებების და ზონების კალკულატორი.',
+    descKey: 'tool_desc_fresnel',
     icon: Ruler,
     color: 'text-orange-400',
     bg: 'bg-orange-500/10'
@@ -60,7 +64,7 @@ const tools = [
   {
     id: 'unlocker',
     title: 'VTX Unlocker',
-    desc: 'ინსტრუქციები VTX-ის სიხშირეების გასახსნელად.',
+    descKey: 'tool_desc_vtx',
     icon: Unlock,
     color: 'text-rose-400',
     bg: 'bg-rose-500/10'
@@ -68,7 +72,7 @@ const tools = [
   {
     id: 'harmonics',
     title: 'Harmonics',
-    desc: 'სიხშირეების ჰარმონიული ინტერფერენციის შემოწმება.',
+    descKey: 'tool_desc_harmonics',
     icon: Activity,
     color: 'text-violet-400',
     bg: 'bg-violet-500/10'
@@ -76,7 +80,7 @@ const tools = [
   {
     id: 'stl',
     title: 'STL Catalog',
-    desc: 'დრონის ნაწილების 3D მოდელები დასაბეჭდად.',
+    descKey: 'tool_desc_stl',
     icon: Box,
     color: 'text-blue-400',
     bg: 'bg-blue-500/10'
@@ -84,7 +88,7 @@ const tools = [
   {
     id: 'zone-check',
     title: 'Zone Checker',
-    desc: 'ფრენისთვის აკრძალული და ნებადართული ზონები.',
+    descKey: 'tool_desc_zone',
     icon: Map,
     color: 'text-red-400',
     bg: 'bg-red-500/10'
@@ -92,7 +96,7 @@ const tools = [
   {
     id: 'converter',
     title: 'RF Converter',
-    desc: 'mW/dBm, LiPo voltage და RF ერთეულების კონვერტერი.',
+    descKey: 'tool_desc_rf',
     icon: ArrowRightLeft,
     color: 'text-cyan-400',
     bg: 'bg-cyan-500/10'
@@ -100,6 +104,7 @@ const tools = [
 ] as const;
 
 const ToolsHub = () => {
+  const { t } = useLanguage();
   const location = useLocation();
   const isRoot = /^\/tools\/?$/.test(location.pathname);
 
@@ -124,7 +129,7 @@ const ToolsHub = () => {
               FPV Tools Hub
             </h1>
             <p className="text-slate-400 font-medium">
-              ყველა საჭირო ხელსაწყო FPV პილოტებისთვის ერთ სივრცეში.
+              {t('tools_subtitle')}
             </p>
           </div>
 
@@ -147,7 +152,7 @@ const ToolsHub = () => {
                 </div>
 
                 <h2 className="text-lg font-bold text-white mb-1">{tool.title}</h2>
-                <p className="text-xs text-slate-400 leading-relaxed">{tool.desc}</p>
+                <p className="text-xs text-slate-400 leading-relaxed">{t(tool.descKey)}</p>
               </Link>
             ))}
           </div>

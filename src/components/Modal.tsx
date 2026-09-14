@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useLanguage } from '../contexts/useLanguage';
 
 const FOCUSABLE = [
   'a[href]', 'button:not([disabled])', 'input:not([disabled])',
@@ -43,6 +44,7 @@ const Modal: React.FC<ModalProps> = ({
   busy = false,
   footer,
 }) => {
+  const { t } = useLanguage();
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   // Whatever had focus when the dialog opened, so it can be handed back.
@@ -153,7 +155,7 @@ const Modal: React.FC<ModalProps> = ({
             type="button"
             onClick={requestClose}
             disabled={busy}
-            aria-label="დახურვა"
+            aria-label={t('action_close')}
             className="ml-auto shrink-0 text-slate-400 hover:text-white transition-colors disabled:opacity-40"
           >
             <X size={20} aria-hidden="true" />

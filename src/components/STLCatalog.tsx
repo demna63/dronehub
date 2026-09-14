@@ -36,14 +36,14 @@ const STLCatalog: React.FC = () => {
         // Uncaught, this left `isLoading` true forever — the page rendered its
         // spinner indefinitely with no way to tell that the read had failed.
         console.error('Error fetching STL files:', error);
-        if (!cancelled) setLoadError('ფაილები ვერ ჩაიტვირთა.');
+        if (!cancelled) setLoadError(t('files_load_failed'));
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     };
     fetchItems();
     return () => { cancelled = true; };
-  }, [reloadToken]);
+  }, [reloadToken, t]);
 
   // --- FILTERING ---
   const filteredItems = useMemo(() => {
@@ -170,7 +170,7 @@ const STLCatalog: React.FC = () => {
             onClick={() => setReloadToken((token) => token + 1)}
             className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
           >
-            ხელახლა ცდა
+            {t('action_retry')}
           </button>
         </div>
       ) : (
@@ -213,7 +213,7 @@ const STLCatalog: React.FC = () => {
                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white text-xs font-bold transition-colors cursor-pointer"
                      >
                        <Download size={14} className={downloadingId === item.id ? "animate-bounce" : ""} />
-                       {downloadingId === item.id ? 'იწერება...' : (t('stl_download') || 'Download')}
+                       {downloadingId === item.id ? t('action_downloading') : (t('stl_download') || 'Download')}
                      </button>
                   </div>
                 </div>

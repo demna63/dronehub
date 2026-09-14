@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Ruler, Scissors, Check, Copy, AlertTriangle } from 'lucide-react';
+import { useLanguage } from '../contexts/useLanguage';
 
 const SPEED_OF_LIGHT = 299792458; 
 
@@ -12,6 +13,7 @@ const FREQ_PRESETS = [
 ];
 
 const AntennaTuner: React.FC = () => {
+  const { t } = useLanguage();
   // === DIPOLE CALCULATOR STATE ===
   const [frequency, setFrequency] = useState<string>("915");
   const [freqUnit, setFreqUnit] = useState<string>("MHz");
@@ -96,11 +98,11 @@ const AntennaTuner: React.FC = () => {
     setCutAmount(delta);
 
     if (fMeas > fTarget) {
-        setWarning("Measured > Target! ანტენა უკვე მოკლეა.");
+        setWarning(t('antenna_too_short'));
     } else {
         setWarning("");
     }
-  }, [targetFreq, measuredFreq, currentLength]);
+  }, [targetFreq, measuredFreq, currentLength, t]);
 
   const applyPreset = (preset: typeof FREQ_PRESETS[0]) => {
       setFrequency(preset.value);
@@ -126,7 +128,7 @@ const AntennaTuner: React.FC = () => {
            ANTENNA <span className="text-pink-400">BUILDER</span>
         </h1>
         <p className="text-slate-400 text-xs max-w-xl mx-auto">
-           ორი ინსტრუმენტი ერთში: გამოთვალეთ იდეალური ზომა და გაასწორეთ რეალური ანტენა.
+           {t('antenna_subtitle')}
         </p>
       </div>
 
@@ -153,7 +155,7 @@ const AntennaTuner: React.FC = () => {
                     <label htmlFor="antenna-frequency" className="text-[10px] font-bold text-slate-400 uppercase">Frequency</label>
                     <div className="flex gap-2">
                         <input id="antenna-frequency" type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)} className="flex-1 bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-pink-500"/>
-                        <select aria-label="სიხშირის ერთეული" value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-slate-950 border border-white/10 text-slate-300 text-xs rounded-lg px-2 outline-none">
+                        <select aria-label={t('unit_frequency')} value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-slate-950 border border-white/10 text-slate-300 text-xs rounded-lg px-2 outline-none">
                             <option value="MHz">MHz</option><option value="GHz">GHz</option>
                         </select>
                     </div>
@@ -161,7 +163,7 @@ const AntennaTuner: React.FC = () => {
 
                 {/* Visual Result */}
                 <div className="relative h-32 bg-slate-950 rounded-xl border border-white/5 flex flex-col items-center justify-center overflow-hidden group">
-                    <button onClick={copyResult} aria-label="შედეგის კოპირება" className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-pink-500 rounded text-white opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={copyResult} aria-label={t('action_copy_result')} className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-pink-500 rounded text-white opacity-0 group-hover:opacity-100 transition-all">
                         {copied ? <Check size={12}/> : <Copy size={12}/>}
                     </button>
                     
@@ -213,7 +215,7 @@ const AntennaTuner: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">უნდა მოაჭრათ</div>
+                            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t('antenna_trim_amount')}</div>
                             <div className="text-3xl font-black text-yellow-400 font-mono">
                                 -{cutAmount ? cutAmount.toFixed(2) : "0.00"} <span className="text-sm text-slate-400">mm</span>
                             </div>

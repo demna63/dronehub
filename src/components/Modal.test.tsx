@@ -5,11 +5,16 @@ import { cleanup, render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import Modal from './Modal';
+import { LanguageProvider } from '../contexts/LanguageContext';
 
 // Vitest runs without `globals`, so React Testing Library's automatic cleanup
 // hook is never registered. Without this each test leaves its tree mounted and
 // the next one queries a document containing several dialogs.
 afterEach(cleanup);
+
+/** Modal's close button takes its label from the language context. */
+const renderWithLanguage = (ui: React.ReactElement) =>
+  render(<LanguageProvider>{ui}</LanguageProvider>);
 
 /**
  * These cover the four defects that shipped in `Modal` and were each caught by
@@ -35,7 +40,7 @@ const StatefulHost: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
 describe('Modal', () => {
   it('keeps focus in the field while the parent re-renders on every keystroke', async () => {
     const user = userEvent.setup();
-    render(<StatefulHost />);
+    renderWithLanguage(<StatefulHost />);
 
     const input = screen.getByLabelText('name');
     await user.click(input);
@@ -62,7 +67,7 @@ describe('Modal', () => {
       );
     };
 
-    render(<Host />);
+    renderWithLanguage(<Host />);
     const opener = screen.getByRole('button', { name: 'Open' });
     await user.click(opener);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -73,7 +78,7 @@ describe('Modal', () => {
 
   it('closes on Escape, and refuses to while busy', async () => {
     const onClose = vi.fn();
-    const { rerender } = render(
+    const { rerender } = renderWithLanguage(
       <Modal isOpen onClose={onClose} title="Drone" busy>
         <button type="button">Inside</button>
       </Modal>,
@@ -85,9 +90,11 @@ describe('Modal', () => {
     expect(onClose).not.toHaveBeenCalled();
 
     rerender(
-      <Modal isOpen onClose={onClose} title="Drone">
-        <button type="button">Inside</button>
-      </Modal>,
+      <LanguageProvider>
+        <Modal isOpen onClose={onClose} title="Drone">
+          <button type="button">Inside</button>
+        </Modal>
+      </LanguageProvider>,
     );
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -96,7 +103,7 @@ describe('Modal', () => {
   });
 
   it('restores body scrolling when it unmounts', () => {
-    const { unmount } = render(
+    const { unmount } = renderWithLanguage(
       <Modal isOpen onClose={() => {}} title="Drone">
         <button type="button">Inside</button>
       </Modal>,
@@ -107,7 +114,7 @@ describe('Modal', () => {
   });
 
   it('exposes the title as the dialog accessible name even when hidden', () => {
-    render(
+    renderWithLanguage(
       <Modal isOpen onClose={() => {}} title="Drone" hideTitle>
         <button type="button">Inside</button>
       </Modal>,

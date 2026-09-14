@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface BackButtonProps {
   onClick: () => void;
@@ -7,7 +8,11 @@ interface BackButtonProps {
   className?: string;
 }
 
-const BackButton: React.FC<BackButtonProps> = ({ onClick, label = "უკან დაბრუნება", className = "" }) => {
+const BackButton: React.FC<BackButtonProps> = ({ onClick, label, className = "" }) => {
+  // Defaulted in the body, not in the parameter list: a default parameter is
+  // evaluated at module scope, where the hook does not exist.
+  const { t } = useLanguage();
+  const text = label ?? t('action_back');
   return (
     <button 
       onClick={onClick} 
@@ -18,7 +23,7 @@ const BackButton: React.FC<BackButtonProps> = ({ onClick, label = "უკან 
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </div>
-      {label}
+      {text}
     </button>
   );
 };

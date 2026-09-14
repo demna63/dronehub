@@ -13,6 +13,7 @@ import { isUserAdmin } from '../utils/authUtils';
 import { STL_TYPES, STL_FRAMES } from '../constants/toolsData';
 import { isMarketItem } from '../constants/market';
 import { useToast } from '../contexts/useToast';
+import { useLanguage } from '../contexts/useLanguage';
 
 /** The dashboard's panels. `ADMIN_TABS` is typed against this, so adding a tab
  *  without adding a panel is a compile error rather than a blank screen. */
@@ -29,6 +30,7 @@ interface AdminDashboardProps {
 const ADMIN_POST_LIMIT = 200;
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: initialPosts }) => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -67,10 +69,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
       .then((allPosts) => { if (!cancelled) setPosts(allPosts); })
       .catch((error) => {
         console.error('Error fetching posts for the dashboard:', error);
-        if (!cancelled) showToast('პოსტების სია ვერ ჩაიტვირთა.', 'error');
+        if (!cancelled) showToast(t('admin_posts_load_failed'), 'error');
       });
     return () => { cancelled = true; };
-  }, [showToast]);
+  }, [showToast, t]);
 
   // Sync author name if currentUser loads after mount
   useEffect(() => {
@@ -107,7 +109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
       setPosts(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       console.error('Error deleting post:', error);
-      showToast('წაშლა ვერ მოხერხდა.', 'error');
+      showToast(t('delete_failed'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -121,7 +123,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
       setStls(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error('Error deleting STL:', error);
-      showToast('წაშლა ვერ მოხერხდა.', 'error');
+      showToast(t('delete_failed'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -130,12 +132,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   // --- STL upload ---
   const handleStlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stlFile) { showToast('აირჩიე STL ფაილი.', 'error'); return; }
-    if (!stlImage) { showToast('აირჩიე სურათი.', 'error'); return; }
+    if (!stlFile) { showToast(t('admin_pick_stl'), 'error'); return; }
+    if (!stlImage) { showToast(t('admin_pick_image'), 'error'); return; }
     setIsUploadingStl(true);
     try {
       await apiService.uploadSTLItem(stlForm, stlImage, stlFile);
-      showToast('STL წარმატებით აიტვირთა.', 'success');
+      showToast(t('admin_stl_uploaded'), 'success');
       setStlForm(prev => ({ ...prev, title: '' }));
       setStlFile(null);
       setStlImage(null);
@@ -144,7 +146,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
       fetchStls();
     } catch (error) {
       console.error('Error uploading STL:', error);
-      showToast('ატვირთვა ვერ მოხერხდა.', 'error');
+      showToast(t('upload_failed_short'), 'error');
     } finally {
       setIsUploadingStl(false);
     }
@@ -157,22 +159,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     if (isConfirming) {
       return (
         <span role="alert" className="shrink-0 flex items-center gap-2">
-          <span className="text-[11px] font-bold text-rose-300 hidden sm:inline">წავშალო?</span>
+          <span className="text-[11px] font-bold text-rose-300 hidden sm:inline">{t('delete_question')}</span>
           <button
             type="button"
-            aria-label="წაშლის დადასტურება"
+            aria-label={t('delete_confirm_label')}
             onClick={() => (kind === 'post' ? handleDeletePost(id) : handleDeleteStl(id))}
             className="px-2.5 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors"
           >
-            დიახ
+            {t('action_yes')}
           </button>
           <button
             type="button"
-            aria-label="წაშლის გაუქმება"
+            aria-label={t('delete_confirm_no_label')}
             onClick={() => setPendingDelete(null)}
             className="px-2.5 py-1.5 rounded-lg bg-white/5 text-slate-300 text-[11px] font-bold hover:bg-white/10 transition-colors"
           >
-            არა
+            {t('action_no')}
           </button>
         </span>
       );
@@ -181,7 +183,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     return (
       <button
         type="button"
-        aria-label="წაშლა"
+        aria-label={t('action_delete')}
         onClick={() => setPendingDelete({ kind, id })}
         disabled={isDeleting}
         className="shrink-0 p-2.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
@@ -197,20 +199,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-rose-500">
         <Shield size={48} className="mb-4" />
-        <h1 className="text-2xl font-black uppercase">წვდომა შეზღუდულია</h1>
+        <h1 className="text-2xl font-black uppercase">{t('access_denied')}</h1>
         <button onClick={() => navigate('/')} className="mt-4 text-slate-400 hover:text-white">
-          მთავარზე დაბრუნება
+          {t('back_to_home')}
         </button>
       </div>
     );
   }
 
   const ADMIN_TABS: ReadonlyArray<{ id: AdminTabId; label: string; icon: LucideIcon }> = [
-    { id: 'overview', label: 'მთავარი',       icon: Activity    },
-    { id: 'posts',    label: 'პოსტები',        icon: FileText    },
-    { id: 'market',   label: 'მარკეტი',        icon: ShoppingBag },
-    { id: 'stl',      label: 'STL კატალოგი',   icon: Box         },
-    { id: 'users',    label: 'მომხმარებლები',  icon: Users       },
+    { id: 'overview', label: t('route_home'),       icon: Activity    },
+    { id: 'posts',    label: t('admin_tab_posts'),        icon: FileText    },
+    { id: 'market',   label: t('route_market'),        icon: ShoppingBag },
+    { id: 'stl',      label: t('admin_tab_stl'),   icon: Box         },
+    { id: 'users',    label: t('admin_tab_users'),  icon: Users       },
   ];
 
   // Classify by the stored category alone. The old `p.price ||` test treated a
@@ -228,7 +230,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
         </div>
         <div>
           <h1 className="text-2xl font-black text-white uppercase tracking-wider">Admin Panel</h1>
-          <p className="text-sm font-bold text-slate-400">სისტემის მართვა და მონიტორინგი</p>
+          <p className="text-sm font-bold text-slate-400">{t('admin_subtitle')}</p>
         </div>
       </div>
 
@@ -258,18 +260,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
             <div>
-              <h2 className="text-xl font-bold text-white mb-6">სტატისტიკა</h2>
+              <h2 className="text-xl font-bold text-white mb-6">{t('admin_stats')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-slate-800 p-6 rounded-xl border border-white/5">
-                  <p className="text-sm font-bold text-slate-400 mb-1">სულ პოსტები</p>
+                  <p className="text-sm font-bold text-slate-400 mb-1">{t('admin_total_posts')}</p>
                   <p className="text-3xl font-black text-white">{regularPosts.length}</p>
                 </div>
                 <div className="bg-slate-800 p-6 rounded-xl border border-white/5">
-                  <p className="text-sm font-bold text-slate-400 mb-1">მარკეტის ნივთები</p>
+                  <p className="text-sm font-bold text-slate-400 mb-1">{t('admin_market_items')}</p>
                   <p className="text-3xl font-black text-white">{marketItems.length}</p>
                 </div>
                 <div className="bg-slate-800 p-6 rounded-xl border border-white/5">
-                  <p className="text-sm font-bold text-slate-400 mb-1">STL მოდელები</p>
+                  <p className="text-sm font-bold text-slate-400 mb-1">{t('admin_stl_models')}</p>
                   <p className="text-3xl font-black text-white">{stls.length}</p>
                 </div>
               </div>
@@ -279,18 +281,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {/* POSTS */}
           {activeTab === 'posts' && (
             <div>
-              <h2 className="text-xl font-bold text-white mb-6">პოსტების მართვა</h2>
+              <h2 className="text-xl font-bold text-white mb-6">{t('admin_manage_posts')}</h2>
               <div className="space-y-3">
                 {regularPosts.map(post => (
                   <div key={post.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
                     <div className="min-w-0 mr-4">
                       <p className="text-sm font-bold text-white truncate max-w-xs md:max-w-md">{post.title || post.content}</p>
-                      <p className="text-xs text-slate-500">ავტორი: {post.author || 'უცნობი'}</p>
+                      <p className="text-xs text-slate-500">ავტორი: {post.author || t('unknown')}</p>
                     </div>
                     <DeleteControl kind="post" id={post.id} />
                   </div>
                 ))}
-                {regularPosts.length === 0 && <p className="text-slate-500 text-sm">პოსტები არ მოიძებნა.</p>}
+                {regularPosts.length === 0 && <p className="text-slate-500 text-sm">{t('admin_no_posts')}</p>}
               </div>
             </div>
           )}
@@ -298,7 +300,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {/* MARKET */}
           {activeTab === 'market' && (
             <div>
-              <h2 className="text-xl font-bold text-white mb-6">მარკეტის მართვა</h2>
+              <h2 className="text-xl font-bold text-white mb-6">{t('admin_manage_market')}</h2>
               <div className="space-y-3">
                 {marketItems.map(item => (
                   <div key={item.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
@@ -312,7 +314,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                     <DeleteControl kind="post" id={item.id} />
                   </div>
                 ))}
-                {marketItems.length === 0 && <p className="text-slate-500 text-sm">მარკეტში ნივთები არ არის.</p>}
+                {marketItems.length === 0 && <p className="text-slate-500 text-sm">{t('admin_no_market_items')}</p>}
               </div>
             </div>
           )}
@@ -323,22 +325,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
               {/* Upload form */}
               <div className="mb-10 bg-slate-800/30 p-6 rounded-2xl border border-white/5">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Upload size={20} className="text-sky-400" /> ახალი STL მოდელის დამატება
+                  <Upload size={20} className="text-sky-400" /> {t('admin_add_stl')}
                 </h2>
                 <form onSubmit={handleStlSubmit} className="space-y-4 max-w-2xl">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="stl-title" className="text-xs font-bold text-slate-400 mb-1 block">მოდელის სახელი</label>
+                      <label htmlFor="stl-title" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_model_name')}</label>
                       <input
                         id="stl-title"
-                        required type="text" placeholder="მაგ: GoPro Mount"
+                        required type="text" placeholder={t('admin_stl_name_placeholder')}
                         value={stlForm.title}
                         onChange={e => setStlForm(prev => ({ ...prev, title: e.target.value }))}
                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label htmlFor="stl-author" className="text-xs font-bold text-slate-400 mb-1 block">ავტორი</label>
+                      <label htmlFor="stl-author" className="text-xs font-bold text-slate-400 mb-1 block">{t('field_author')}</label>
                       <input
                         id="stl-author"
                         required type="text"
@@ -348,7 +350,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       />
                     </div>
                     <div>
-                      <label htmlFor="stl-type" className="text-xs font-bold text-slate-400 mb-1 block">ნაწილის ტიპი</label>
+                      <label htmlFor="stl-type" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_part_type')}</label>
                       <select
                         id="stl-type"
                         value={stlForm.type}
@@ -359,7 +361,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="stl-frame" className="text-xs font-bold text-slate-400 mb-1 block">თავსებადი ჩარჩო</label>
+                      <label htmlFor="stl-frame" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_compatible_frame')}</label>
                       <select
                         id="stl-frame"
                         value={stlForm.frame}
@@ -373,7 +375,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="stl-image" className="text-xs font-bold text-slate-400 mb-1 block">სურათი (PNG/JPG)</label>
+                      <label htmlFor="stl-image" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_image_png_jpg')}</label>
                       <input
                         id="stl-image"
                         required ref={stlImageInputRef} type="file" accept="image/*"
@@ -404,7 +406,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
 
               {/* STL list */}
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Box size={20} className="text-rose-400" /> ატვირთული მოდელები
+                <Box size={20} className="text-rose-400" /> {t('admin_uploaded_models')}
               </h2>
               <div className="space-y-3">
                 {stls.map(stl => (
@@ -416,7 +418,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                     <DeleteControl kind="stl" id={stl.id} />
                   </div>
                 ))}
-                {stls.length === 0 && <p className="text-slate-500 text-sm">STL მოდელები არ არის.</p>}
+                {stls.length === 0 && <p className="text-slate-500 text-sm">{t('admin_no_stl')}</p>}
               </div>
             </div>
           )}
@@ -424,8 +426,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {/* USERS */}
           {activeTab === 'users' && (
             <div>
-              <h2 className="text-xl font-bold text-white mb-6">მომხმარებლების მართვა</h2>
-              <p className="text-slate-500 text-sm">მომხმარებლების სია მალე დაემატება.</p>
+              <h2 className="text-xl font-bold text-white mb-6">{t('admin_manage_users')}</h2>
+              <p className="text-slate-500 text-sm">{t('admin_users_soon')}</p>
             </div>
           )}
 

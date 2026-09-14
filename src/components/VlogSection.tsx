@@ -5,6 +5,7 @@ import { Play, Clock, Eye, Plus} from 'lucide-react';
 import VlogRoom from './VlogRoom';
 import AddVlogModal from './AddVlogModal';
 import { apiService } from '../services/apiService';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface VlogSectionProps {
   vlogs: VlogEntry[];
@@ -20,6 +21,7 @@ interface VlogSectionProps {
 const VlogSection: React.FC<VlogSectionProps> = ({ 
   vlogs, user, currentUser, onOpenRoom, onLoginClick, onAddVlog 
 }) => {
+  const { t } = useLanguage();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const activeUser = user || currentUser; // ვიყენებთ რომელიც არის
 
@@ -45,7 +47,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
                 <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
                   <span className="text-red-500">LIVE</span> VLOGS
                 </h1>
-                <p className="text-slate-400 text-xs">იხილეთ საუკეთესო FPV კადრები</p>
+                <p className="text-slate-400 text-xs">{t('vlogs_subtitle')}</p>
               </div>
 
               <button 
@@ -53,7 +55,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20"
               >
                 <Plus size={18} />
-                <span className="hidden sm:inline">დამატება</span>
+                <span className="hidden sm:inline">{t('action_add')}</span>
               </button>
             </div>
 
@@ -107,7 +109,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
             
             {vlogs.length === 0 && (
               <div className="text-center py-20 text-slate-400">
-                ვიდეოები ჯერ არ არის. იყავი პირველი!
+                {t('vlogs_empty')}
               </div>
             )}
           </div>

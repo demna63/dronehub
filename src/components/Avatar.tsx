@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLanguage } from '../contexts/useLanguage';
 
 /**
  * The DroneHub "D" mark, inlined from public/brand/icon.svg.
@@ -47,6 +48,7 @@ const Avatar: React.FC<AvatarProps> = ({
   className = '',
   ringClassName = '',
 }) => {
+  const { t } = useLanguage();
   const [hasFailed, setHasFailed] = useState(false);
 
   // A new src deserves a fresh attempt; without this, one broken image would
@@ -72,7 +74,7 @@ const Avatar: React.FC<AvatarProps> = ({
           className="w-full h-full object-cover"
         />
       ) : (
-        <BrandMark title={name || 'მომხმარებელი'} />
+        <BrandMark title={name || t('route_user')} />
       )}
     </span>
   );

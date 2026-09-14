@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../contexts/useLanguage';
 import {
   RefreshCw,
   ArrowRightLeft,
@@ -13,6 +14,7 @@ import {
 // 1. UNIT CONVERTER COMPONENT
 // ============================================================================
 export const UnitConverter: React.FC = () => {
+  const { t } = useLanguage();
   // --- mW <-> dBm State ---
   const [mw, setMw] = useState<string>("25");
   const [dbm, setDbm] = useState<string>("14");
@@ -50,7 +52,7 @@ export const UnitConverter: React.FC = () => {
            UNIT <span className="text-orange-400">CONVERTER</span>
         </h1>
         <p className="text-slate-400 text-xs max-w-xl mx-auto">
-           სწრაფი კონვერტაცია სიმძლავრისა და ვოლტაჟისთვის.
+           {t('rf_convert_desc')}
         </p>
       </div>
 
@@ -148,6 +150,7 @@ export const UnitConverter: React.FC = () => {
 // 2. ANTENNA TUNER COMPONENT
 // ============================================================================
 export const AntennaTuner: React.FC = () => {
+  const { t } = useLanguage();
   const [targetFreq, setTargetFreq] = useState<string>("915");
   const [measuredFreq, setMeasuredFreq] = useState<string>("890");
   const [currentLength, setCurrentLength] = useState<string>("80");
@@ -173,11 +176,11 @@ export const AntennaTuner: React.FC = () => {
     setCutAmount(delta);
 
     if (fMeas > fTarget) {
-        setWarning("ანტენა უკვე მოკლეა! (Measured Frequency > Target). დაგრძელება შეუძლებელია.");
+        setWarning(t('rf_antenna_too_short'));
     } else {
         setWarning("");
     }
-  }, [targetFreq, measuredFreq, currentLength]);
+  }, [targetFreq, measuredFreq, currentLength, t]);
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
@@ -189,7 +192,7 @@ export const AntennaTuner: React.FC = () => {
            ANTENNA <span className="text-yellow-400">TUNER</span>
         </h1>
         <p className="text-slate-400 text-xs max-w-xl mx-auto">
-           ანტენის მორგება (Trimming) SWR გაზომვების მიხედვით.
+           {t('rf_trim_desc')}
         </p>
       </div>
 
@@ -238,7 +241,7 @@ export const AntennaTuner: React.FC = () => {
                 </div>
             ) : (
                 <div className="bg-slate-950 border border-white/5 rounded-xl p-6 flex flex-col items-center">
-                    <div className="text-slate-400 text-xs font-bold uppercase mb-2">უნდა მოაჭრათ (Trim)</div>
+                    <div className="text-slate-400 text-xs font-bold uppercase mb-2">{t('rf_trim_amount')}</div>
                     <div className="text-4xl font-black text-yellow-400 font-mono mb-1">
                         {cutAmount ? cutAmount.toFixed(2) : "0.00"} <span className="text-lg text-slate-400">mm</span>
                     </div>
@@ -251,7 +254,7 @@ export const AntennaTuner: React.FC = () => {
             )}
          </div>
          <div className="mt-6 text-[10px] text-slate-400 text-center leading-relaxed">
-            <p><strong>ინსტრუქცია:</strong> გაზომეთ ანტენა SWR მეტრით. შეიყვანეთ მიღებული რეზონანსული სიხშირე (სადაც SWR ყველაზე დაბალია) და ელემენტის ფიზიკური სიგრძე.</p>
+            <p><strong>{t('instructions_label')}</strong> {t('rf_trim_instructions')}</p>
          </div>
       </div>
     </div>

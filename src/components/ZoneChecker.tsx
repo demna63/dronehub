@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { geminiService } from '../services/geminiService';
 import { MapPin, Navigation, AlertTriangle, CheckCircle, Ban, Loader2 } from 'lucide-react';
 import { useToast } from '../contexts/useToast';
+import { useLanguage } from '../contexts/useLanguage';
 
 const ZoneChecker = () => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
@@ -12,7 +14,7 @@ const ZoneChecker = () => {
 
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
-      showToast('ბრაუზერი ლოკაციას არ უჭერს მხარს.', 'error');
+      showToast(t('geo_unsupported'), 'error');
       return;
     }
     setLoading(true);
@@ -24,7 +26,7 @@ const ZoneChecker = () => {
       },
       (geoError) => {
         console.error('Geolocation failed:', geoError);
-        showToast('ვერ მოხერხდა ლოკაციის გაგება.', 'error');
+        showToast(t('geo_failed'), 'error');
         setLoading(false);
       }
     );
@@ -50,9 +52,9 @@ const ZoneChecker = () => {
           <MapPin size={24} />
         </div>
         <h2 className="text-2xl font-black text-white uppercase italic">ZONE <span className="text-indigo-500">CHECKER</span></h2>
-        <p className="text-slate-400 text-sm">შეამოწმე უსაფრთხოა თუ არა ფრენა AI-ს დახმარებით</p>
+        <p className="text-slate-400 text-sm">{t('zone_subtitle')}</p>
         <p className="text-[11px] text-amber-300/80 max-w-md mx-auto">
-          ეს ინსტრუმენტი მხოლოდ საინფორმაციოა და არ ცვლის ოფიციალურ ავიაციის წესებს ან NOTAM-ებს.
+          {t('zone_disclaimer')}
         </p>
       </div>
 
@@ -67,7 +69,7 @@ const ZoneChecker = () => {
 
         <div className="flex items-center gap-4">
           <div className="h-px bg-white/10 flex-1"></div>
-          <span className="text-[10px] text-slate-400 uppercase">ან კოორდინატებით</span>
+          <span className="text-[10px] text-slate-400 uppercase">{t('zone_or_coords')}</span>
           <div className="h-px bg-white/10 flex-1"></div>
         </div>
 
@@ -81,7 +83,7 @@ const ZoneChecker = () => {
           disabled={!lat || !lng || loading}
           className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          {loading ? 'მოწმდება...' : 'შემოწმება'}
+          {loading ? t('zone_checking') : t('zone_check')}
         </button>
       </div>
 
