@@ -6,6 +6,7 @@ import { apiService } from '../services/apiService';
 import { SEARCH_SCAN_LIMIT } from '../utils/search';
 import PostCard from './PostCard';
 import PostCardSkeleton from './PostCardSkeleton';
+import { useLanguage } from '../contexts/useLanguage';
 
 export interface SearchPageProps {
   currentUser: User | null;
@@ -30,6 +31,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
   savedPostIds = [],
   onAddComment,
 }) => {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = (searchParams.get('q') ?? '').trim();
@@ -99,14 +101,14 @@ const SearchPage: React.FC<SearchPageProps> = ({
           value={draft}
           autoFocus
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="მოძებნე პოსტები, ავტორები, ტეგები..."
-          aria-label="ძებნა"
+          placeholder={t('search_page_placeholder')}
+          aria-label={t('route_search')}
           className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-12 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all"
         />
         {draft && (
           <button
             type="button"
-            aria-label="გასუფთავება"
+            aria-label={t('action_clear')}
             onClick={() => { setDraft(''); navigate('/search', { replace: true }); }}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-white transition-colors"
           >
@@ -118,9 +120,9 @@ const SearchPage: React.FC<SearchPageProps> = ({
       {query && (
         <p className="px-1 mb-5 text-xs font-bold text-slate-400">
           {isSearching
-            ? 'ვეძებ…'
+            ? t('search_searching')
             : failed
-              ? 'ძებნა ვერ შესრულდა'
+              ? t('search_failed_short')
               : <>„<span className="text-white">{query}</span>" — <span className="text-white">{results.length}</span> შედეგი</>}
         </p>
       )}
@@ -134,13 +136,13 @@ const SearchPage: React.FC<SearchPageProps> = ({
 
       {!isSearching && failed && (
         <div className="text-center py-16 border-2 border-dashed border-rose-500/20 rounded-3xl">
-          <p className="text-sm text-rose-400 font-bold mb-4">ძებნა ვერ შესრულდა.</p>
+          <p className="text-sm text-rose-400 font-bold mb-4">{t('search_failed')}</p>
           <button
             type="button"
             onClick={() => setRetryToken((token) => token + 1)}
             className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
           >
-            ხელახლა ცდა
+            {t('action_retry')}
           </button>
         </div>
       )}
@@ -148,7 +150,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
       {!isSearching && !failed && query && results.length === 0 && (
         <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-3xl px-6">
           <SearchIcon size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
-          <p className="text-sm font-bold text-slate-300 mb-2">არაფერი მოიძებნა</p>
+          <p className="text-sm font-bold text-slate-300 mb-2">{t('search_no_results')}</p>
           <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
             სცადე ერთი სიტყვით ძებნა — ყველა სიტყვა უნდა დაემთხვეს.
             ძებნა ბოლო {SEARCH_SCAN_LIMIT} პოსტში მუშაობს.
@@ -159,8 +161,8 @@ const SearchPage: React.FC<SearchPageProps> = ({
       {!isSearching && !failed && !query && (
         <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-3xl">
           <SearchIcon size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
-          <p className="text-sm font-bold text-slate-300">დაწერე რას ეძებ</p>
-          <p className="text-xs text-slate-500 mt-2">სათაური, ტექსტი, ავტორი, კატეგორია ან ტეგი</p>
+          <p className="text-sm font-bold text-slate-300">{t('search_prompt')}</p>
+          <p className="text-xs text-slate-500 mt-2">{t('search_fields_hint')}</p>
         </div>
       )}
 

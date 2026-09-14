@@ -12,6 +12,7 @@ import ProfileEmptyState from './ProfileEmptyState';
 import { Plus, Check, X, Save, Camera, Loader2 } from 'lucide-react';
 import EditProfileModal from './EditProfileModal';
 import Modal from './Modal';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface ProfilePageProps {
   currentUser?: User | null;
@@ -24,6 +25,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   onToggleSave,
   onLoginClick
 }) => {
+  const { t } = useLanguage();
   const { userId } = useParams();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -196,7 +198,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   }
 
   if (!profileUser) {
-    return <div className="text-center py-20 text-slate-400">მომხმარებელი არ მოიძებნა</div>;
+    return <div className="text-center py-20 text-slate-400">{t('user_not_found')}</div>;
   }
 
   return (
@@ -217,8 +219,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         >
           <p className="text-sm font-bold text-rose-200">
             {pendingDelete.kind === 'drone'
-              ? 'ნამდვილად გსურთ ამ დრონის წაშლა ანგარიდან?'
-              : 'ნამდვილად გსურთ პოსტის წაშლა?'}
+              ? t('drone_delete_question')
+              : t('post_delete_question_long')}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -226,14 +228,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
               onClick={() => setPendingDelete(null)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
             >
-              <X size={14} aria-hidden="true" /> გაუქმება
+              <X size={14} aria-hidden="true" /> {t('action_cancel')}
             </button>
             <button
               type="button"
               onClick={() => void confirmPendingDelete()}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 hover:text-rose-200 transition-colors"
             >
-              <Check size={14} aria-hidden="true" /> დიახ, წაშალე
+              <Check size={14} aria-hidden="true" /> {t('delete_confirm_yes')}
             </button>
           </div>
         </div>
@@ -271,7 +273,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 />
               ))
             ) : (
-              <ProfileEmptyState message={isOwnProfile ? 'ჯერ არაფერი გამოგიქვეყნებია' : 'პოსტები ჯერ არ არის'} />
+              <ProfileEmptyState message={isOwnProfile ? t('profile_no_posts_own') : t('profile_no_posts_other')} />
             )}
           </div>
         )}
@@ -284,7 +286,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 onClick={openAddDroneModal}
                 className="w-full mb-8 py-4 border-2 border-dashed border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5 text-emerald-500 font-bold uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2"
               >
-                <Plus size={18} /> ახალი დრონის დამატება
+                <Plus size={18} /> {t('drone_add')}
               </button>
             )}
 
@@ -301,7 +303,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             </div>
 
             {userBuilds.length === 0 && !isOwnProfile && (
-              <ProfileEmptyState message="ანგარი ცარიელია" />
+              <ProfileEmptyState message={t('hangar_empty')} />
             )}
           </div>
         )}
@@ -311,7 +313,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
       <Modal
         isOpen={showAddModal && Boolean(isOwnProfile)}
         onClose={() => setShowAddModal(false)}
-        title={editingDroneId ? 'დრონის რედაქტირება' : 'ახალი დრონი'}
+        title={editingDroneId ? t('drone_edit') : t('drone_new')}
         size="max-w-xl"
         busy={isSubmitting}
       >
@@ -324,10 +326,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                   ) : (
                     <>
                       <Camera className="text-slate-500 mb-2 group-hover:text-emerald-500 transition-colors" />
-                      <span className="text-[10px] text-slate-500 font-bold uppercase">ფოტო</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">{t('field_photo')}</span>
                     </>
                   )}
-                  <input id="drone-image" aria-label="დრონის ფოტოს ატვირთვა" type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <input id="drone-image" aria-label={t('drone_photo_upload')} type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
 
                 <div className="flex-1 space-y-4">

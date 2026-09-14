@@ -1,13 +1,14 @@
 import React from 'react';
 import { LayoutGrid, Plane, Cpu, Glasses, Radio, Battery } from 'lucide-react';
+import { useLanguage } from '../contexts/useLanguage';
 
 const MARKET_FILTERS = [
-  { id: 'all', label: 'ყველა', icon: LayoutGrid },
-  { id: 'drones', label: 'დრონები', icon: Plane },
-  { id: 'parts', label: 'ნაწილები', icon: Cpu },
-  { id: 'goggles', label: 'სათვალეები', icon: Glasses },
-  { id: 'radios', label: 'მართვა', icon: Radio },
-  { id: 'batteries', label: 'ელემენტები', icon: Battery },
+  { id: 'all', labelKey: 'filter_all', icon: LayoutGrid },
+  { id: 'drones', labelKey: 'market_cat_drones', icon: Plane },
+  { id: 'parts', labelKey: 'market_cat_parts', icon: Cpu },
+  { id: 'goggles', labelKey: 'market_cat_goggles', icon: Glasses },
+  { id: 'radios', labelKey: 'market_cat_radios_short', icon: Radio },
+  { id: 'batteries', labelKey: 'market_cat_batteries', icon: Battery },
 ];
 
 interface MarketplaceFiltersProps {
@@ -16,6 +17,7 @@ interface MarketplaceFiltersProps {
 }
 
 const MarketplaceFilters: React.FC<MarketplaceFiltersProps> = ({ activeFilter, onFilterChange }) => {
+  const { t } = useLanguage();
   return (
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-8">
       {MARKET_FILTERS.map((filter) => {
@@ -32,7 +34,7 @@ const MarketplaceFilters: React.FC<MarketplaceFiltersProps> = ({ activeFilter, o
             }`}
           >
             <Icon size={20} className={isActive ? 'text-sky-400' : 'text-slate-400'} />
-            <span className="text-[10px] font-bold uppercase tracking-wide">{filter.label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide">{t(filter.labelKey)}</span>
           </button>
         );
       })}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Youtube, Loader2, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '../contexts/useToast';
 import Modal from './Modal';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface AddVlogModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface AddVlogModalProps {
 }
 
 const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }) => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -27,7 +29,7 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
       onClose();
     } catch (error) {
       console.error('Error adding vlog:', error);
-      showToast('შეცდომა ვლოგის დამატებისას. შეამოწმეთ ლინკი.', 'error');
+      showToast(t('vlog_add_failed'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -37,7 +39,7 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="ვლოგის დამატება"
+      title={t('vlog_add_title')}
       size="max-w-md"
       busy={isSubmitting}
     >
@@ -48,7 +50,7 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="vlog-url" className="text-[10px] font-bold text-slate-400 uppercase ml-1">YouTube ლინკი</label>
+              <label htmlFor="vlog-url" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('vlog_youtube_link')}</label>
               <div className="relative">
                 <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input 
@@ -64,13 +66,13 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="vlog-title" className="text-[10px] font-bold text-slate-400 uppercase ml-1">სათაური</label>
+              <label htmlFor="vlog-title" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_title')}</label>
               <input 
                 id="vlog-title"
                 type="text" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="ვიდეოს სათაური..."
+                placeholder={t('vlog_title_placeholder')}
                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none font-bold"
                 required
               />
@@ -81,7 +83,7 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
               disabled={isSubmitting}
               className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl uppercase tracking-wider shadow-lg shadow-red-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isSubmitting ? <Loader2 className="animate-spin" /> : 'დამატება'}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : t('action_add')}
             </button>
           </form>
     </Modal>

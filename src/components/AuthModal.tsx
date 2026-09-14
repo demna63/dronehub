@@ -3,6 +3,7 @@ import { signInWithGoogle, signInWithDemo, registerWithEmail, loginWithEmail } f
 import { isDemoAuthEnabled } from '../utils/authUtils';
 import { Mail, Lock, User as UserIcon, LogIn, Chrome } from 'lucide-react';
 import Modal from './Modal';
+import { useLanguage } from '../contexts/useLanguage';
 
 /**
  * Firebase surfaces its auth failures as `FirebaseError`, whose `message` is
@@ -10,7 +11,7 @@ import Modal from './Modal';
  * an `any` — a rejection is not guaranteed to be an Error at all, and the old
  * `err.message.replace(...)` threw a second time when it was not.
  */
-const authErrorMessage = (err: unknown, fallback = 'ავტორიზაცია ვერ მოხერხდა.'): string => {
+const authErrorMessage = (err: unknown, fallback: string): string => {
   if (!(err instanceof Error) || !err.message) return fallback;
   return err.message.replace('Firebase:', '').trim() || fallback;
 };
@@ -21,6 +22,7 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+  const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,7 +44,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
       onClose();
     } catch (err) {
-      setError(authErrorMessage(err));
+      setError(authErrorMessage(err, t('auth_failed')));
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       await signInWithGoogle();
       onClose();
     } catch (err) {
-      setGoogleError(authErrorMessage(err, 'Google sign-in failed'));
+      setGoogleError(authErrorMessage(err, t('auth_google_failed')));
       console.error(err);
     } finally {
       setLoading(false);
@@ -73,7 +75,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } catch (err) {
       // Previously logged only to the console, so a failed demo sign-in looked
       // to the user like a button that does nothing.
-      setError(authErrorMessage(err));
+      setError(authErrorMessage(err, t('auth_failed')));
       console.error(err);
     }
   };
@@ -81,7 +83,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isLogin ? 'სისტემაში შესვლა' : 'რეგისტრაცია'}
+      title={isLogin ? t('auth_sign_in_title') : t('auth_register')}
       size="max-w-md"
       busy={loading}
     >
@@ -122,14 +124,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-900 px-2 text-slate-400">ან ელ-ფოსტით</span></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-slate-900 px-2 text-slate-400">{t('auth_or_email')}</span></div>
               </div>
 
               {/* Email Form */}
               <form onSubmit={handleEmailAuth} className="space-y-4">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <label htmlFor="auth-name" className="text-xs font-medium text-slate-400 ml-1">მომხმარებლის სახელი</label>
+                    <label htmlFor="auth-name" className="text-xs font-medium text-slate-400 ml-1">{t('field_username')}</label>
                     <div className="relative">
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input
@@ -141,14 +143,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="w-full bg-slate-950 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-slate-200 focus:border-sky-500 focus:outline-none transition-colors"
-                        placeholder="თქვენი სახელი"
+                        placeholder={t('field_your_name')}
                       />
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="auth-email" className="text-xs font-medium text-slate-400 ml-1">ელ-ფოსტა</label>
+                  <label htmlFor="auth-email" className="text-xs font-medium text-slate-400 ml-1">{t('field_email')}</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -166,7 +168,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="auth-password" className="text-xs font-medium text-slate-400 ml-1">პაროლი</label>
+                  <label htmlFor="auth-password" className="text-xs font-medium text-slate-400 ml-1">{t('field_password')}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
@@ -195,7 +197,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   ) : (
                     <>
                       <LogIn className="w-5 h-5" />
-                      {isLogin ? 'შესვლა' : 'რეგისტრაცია'}
+                      {isLogin ? t('auth_sign_in') : t('auth_register')}
                     </>
                   )}
                 </button>
@@ -207,7 +209,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onClick={() => setIsLogin(!isLogin)}
                   className="text-sm text-slate-400 hover:text-sky-400 transition-colors"
                 >
-                  {isLogin ? "არ გაქვთ ანგარიში? დარეგისტრირდით" : "უკვე გაქვთ ანგარიში? შედით"}
+                  {isLogin ? t('auth_switch_to_register') : t('auth_switch_to_login')}
                 </button>
               </div>
             </div>

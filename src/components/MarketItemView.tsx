@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { formatShortDate } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface SpecRowProps {
   label: string;
@@ -49,11 +50,12 @@ interface MarketItemViewProps {
 const MarketItemView: React.FC<MarketItemViewProps> = ({ 
   item, currentUser, onLoginClick, onToggleSave, isSaved 
 }) => {
+  const { t } = useLanguage();
   const [showPhone, setShowPhone] = useState(false);
 
   return (
     <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
-      <h1 className="sr-only">{`განცხადება: ${item.title}`}</h1>
+      <h1 className="sr-only">{t('market_listing_heading', { title: item.title })}</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
@@ -72,7 +74,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
               ) : (
                 <div className="flex flex-col items-center gap-3 text-slate-400">
                   <Box size={48} />
-                  <span className="text-sm font-bold uppercase">სურათი არ არის</span>
+                  <span className="text-sm font-bold uppercase">{t('market_no_image')}</span>
                 </div>
               )}
             </div>
@@ -83,31 +85,31 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                  <Eye size={14} className="text-sky-400" /> {item.views || 0} ნახვა
                </span>
                <span className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                 <Calendar size={14} className="text-sky-400" /> {formatShortDate(item.createdAt) || 'ახლახანს'}
+                 <Calendar size={14} className="text-sky-400" /> {formatShortDate(item.createdAt) || t('time_just_now')}
                </span>
             </div>
           </div>
 
           {/* 2. DESCRIPTION & SPECS */}
           <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 md:p-8">
-            <h2 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">დეტალური ინფორმაცია</h2>
+            <h2 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">{t('market_details_title')}</h2>
             
             {/* Specs Table */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2 mb-8">
                <SpecRow 
-                 icon={Tag} label="მდგომარეობა" 
+                 icon={Tag} label={t('field_condition')} 
                  value={item.condition === 'new' ? 'ახალი' : item.condition === 'used' ? 'მეორადი' : 'დაზიანებული'} 
                />
-               <SpecRow icon={Box} label="ბრენდი/მოდელი" value={item.brand} />
-               <SpecRow icon={Box} label="კატეგორია" value={item.subCategory} />
-               <SpecRow icon={MapPin} label="ლოკაცია" value={item.location} />
+               <SpecRow icon={Box} label={t('field_brand_model')} value={item.brand} />
+               <SpecRow icon={Box} label={t('field_category')} value={item.subCategory} />
+               <SpecRow icon={MapPin} label={t('field_location')} value={item.location} />
             </div>
 
             {/* Description Text */}
             <div className="prose prose-invert prose-sm max-w-none">
-              <h3 className="text-sm font-bold text-slate-400 uppercase mb-3">აღწერა</h3>
+              <h3 className="text-sm font-bold text-slate-400 uppercase mb-3">{t('field_description')}</h3>
               <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
-                {item.content || "აღწერა არ არის მითითებული."}
+                {item.content || t('market_no_description')}
               </p>
             </div>
           </div>
@@ -126,7 +128,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                <button 
                  type="button"
                  onClick={() => onToggleSave(item.id)}
-                 aria-label={isSaved ? 'შენახულებიდან წაშლა' : 'შენახვა'}
+                 aria-label={isSaved ? t('action_unsave') : t('action_save')}
                  className={`p-2 rounded-lg transition-colors ${isSaved ? 'text-rose-500 bg-rose-500/10' : 'text-slate-400 hover:bg-white/5'}`}
                >
                  <Heart size={20} fill={isSaved ? "currentColor" : "none"} aria-hidden="true" />
@@ -136,7 +138,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
             {/* Price */}
             <div className="mb-6">
                <span className="text-3xl font-black text-emerald-400 tracking-tight">
-                 {item.price ? `${item.price} ₾` : 'შეთანხმებით'}
+                 {item.price ? `${item.price} ₾` : t('price_negotiable')}
                </span>
                {item.condition && (
                  <span className="ml-3 text-xs font-bold px-2 py-1 bg-white/5 rounded text-slate-400 border border-white/10 uppercase align-middle">
@@ -160,7 +162,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                  }`}
                >
                  <Phone size={18} />
-                 {showPhone ? (item.phone || 'ნომერი უცნობია') : 'ნომრის ჩვენება'}
+                 {showPhone ? (item.phone || t('phone_unknown')) : t('phone_show')}
                </button>
 
                <button 
@@ -168,7 +170,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                  className="w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-500/20"
                >
                  <MessageSquare size={18} />
-                 მიწერა ჩატში
+                 {t('market_message_in_chat')}
                </button>
             </div>
           </div>
@@ -187,7 +189,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                  {item.author}
                  <CheckCircle2 size={14} className="text-sky-500" />
                </h2>
-               <p className="text-xs text-slate-400">რეგისტრირებული პილოტი</p>
+               <p className="text-xs text-slate-400">{t('market_registered_pilot')}</p>
              </div>
           </div>
 
@@ -195,7 +197,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
           <div className="bg-rose-500/5 border border-rose-500/10 rounded-2xl p-4 flex gap-3">
              <div className="shrink-0 mt-0.5"><ShieldCheck size={18} className="text-rose-400" /></div>
              <p className="text-[11px] text-rose-200/60 leading-relaxed">
-               <strong>უსაფრთხოება:</strong> არ გადარიცხოთ თანხა წინასწარ. შეამოწმეთ ნივთი პირადად შეძენამდე.
+               <strong>{t('market_safety_label')}</strong> {t('market_safety_note')}
              </p>
           </div>
 

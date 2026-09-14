@@ -2,6 +2,7 @@ import React from 'react';
 import { Post } from '../types';
 import { MapPin, Clock, Image as ImageIcon } from 'lucide-react';
 import { formatShortDate } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface MarketplaceCardProps {
   item: Post;
@@ -9,9 +10,10 @@ interface MarketplaceCardProps {
 }
 
 const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item, onClick }) => {
+  const { t } = useLanguage();
   
   // ფასი დაფორმატებული
-  const priceDisplay = item.price ? `${item.price} ₾` : 'შეთანხმებით';
+  const priceDisplay = item.price ? `${item.price} ₾` : t('price_negotiable');
 
   // მდგომარეობის ფერი
   const getConditionStyle = (cond?: string) => {
@@ -24,11 +26,11 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item, onClick }) => {
   };
 
   const getConditionLabel = (cond?: string) => {
-    switch(cond) {
-      case 'new': return 'ახალი';
-      case 'used': return 'მეორადი';
-      case 'damaged': return 'ნაწილები';
-      default: return 'უცნობია';
+    switch (cond) {
+      case 'new': return t('condition_new');
+      case 'used': return t('condition_used');
+      case 'damaged': return t('condition_damaged');
+      default: return t('condition_unknown');
     }
   };
 
@@ -83,12 +85,12 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item, onClick }) => {
         <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400">
            <div className="flex items-center gap-1">
               <MapPin size={12} className="text-slate-400" />
-              <span className="truncate max-w-[80px]">{item.location || 'საქართველო'}</span>
+              <span className="truncate max-w-[80px]">{item.location || t('location_default')}</span>
            </div>
            <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
                 <Clock size={12} className="text-slate-400" />
-                {formatShortDate(item.createdAt) || 'ახლახანს'}
+                {formatShortDate(item.createdAt) || t('time_just_now')}
               </span>
            </div>
         </div>

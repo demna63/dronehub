@@ -5,6 +5,7 @@ import { prepareAvatarFile } from '../services/storageService';
 import { AlertCircle, Loader2, Upload } from 'lucide-react';
 import Avatar from './Avatar';
 import Modal from './Modal';
+import { useLanguage } from '../contexts/useLanguage';
 
 /** Matches the 5MB the copy promises; the crop shrinks it far below this. */
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
@@ -19,6 +20,7 @@ interface EditProfileModalProps {
 const EditProfileModal: React.FC<EditProfileModalProps> = ({ 
   isOpen, onClose, currentUser, onUpdate 
 }) => {
+  const { t } = useLanguage();
   // საწყისი სთეითი
   const [name, setName] = useState(currentUser.name);
   const [bio, setBio] = useState(currentUser.bio || '');
@@ -59,11 +61,11 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (!file) return;
 
     if (file.size > MAX_AVATAR_BYTES) {
-      setError('ფაილი ძალიან დიდია (მაქს. 5MB).');
+      setError(t('upload_too_large'));
       return;
     }
     if (!file.type.startsWith('image/')) {
-      setError('აირჩიე სურათი (JPEG, PNG ან WebP).');
+      setError(t('upload_wrong_type'));
       return;
     }
 
@@ -78,7 +80,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setError(
         uploadError instanceof Error && /ვერ|აირჩიე/.test(uploadError.message)
           ? uploadError.message
-          : 'სურათის ატვირთვა ვერ მოხერხდა. სცადე ხელახლა.',
+          : t('upload_failed'),
       );
     } finally {
       setIsUploading(false);
@@ -114,7 +116,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       onClose();
     } catch (saveError) {
       console.error('Profile update failed:', saveError);
-      setError('პროფილის განახლება ვერ მოხერხდა. სცადე ხელახლა.');
+      setError(t('profile_update_failed'));
     } finally {
       setIsSaving(false);
     }
@@ -124,7 +126,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="პროფილის რედაქტირება"
+      title={t('profile_edit')}
       busy={isSaving || isUploading}
     >
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -164,50 +166,50 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {/* Fields */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="edit-profile-name" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">სახელი</label>
+                <label htmlFor="edit-profile-name" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_name')}</label>
                 <input 
                   id="edit-profile-name"
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none transition-colors"
-                  placeholder="თქვენი სახელი"
+                  placeholder={t('field_your_name')}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="edit-profile-bio" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">ბიოგრაფია</label>
+                <label htmlFor="edit-profile-bio" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_bio')}</label>
                 <textarea 
                   id="edit-profile-bio"
                   value={bio} 
                   onChange={(e) => setBio(e.target.value)}
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none resize-none h-24 text-sm transition-colors"
-                  placeholder="მოკლედ თქვენს შესახებ..."
+                  placeholder={t('field_bio_placeholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="edit-profile-location" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">ლოკაცია</label>
+                <label htmlFor="edit-profile-location" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_location')}</label>
                 <input 
                   id="edit-profile-location"
                   type="text" 
                   value={location} 
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none text-sm transition-colors"
-                  placeholder="მაგ: Tbilisi, Georgia"
+                  placeholder={t('field_location_placeholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="edit-profile-gear" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">აღჭურვილობა (Gear)</label>
+                <label htmlFor="edit-profile-gear" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_gear')}</label>
                 <input 
                   id="edit-profile-gear"
                   type="text" 
                   value={gear} 
                   onChange={(e) => setGear(e.target.value)}
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none text-sm transition-colors"
-                  placeholder="მაგ: DJI Mini 3, GoPro 11 (მძიმით გამოყავით)"
+                  placeholder={t('field_gear_placeholder')}
                 />
               </div>
             </div>
@@ -228,7 +230,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 onClick={onClose}
                 className="flex-1 py-4 bg-white/5 text-slate-400 hover:text-white font-bold rounded-2xl text-[10px] uppercase tracking-widest transition-colors"
               >
-                გაუქმება
+                {t('action_cancel')}
               </button>
               <button 
                 type="submit" 
@@ -238,10 +240,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 {isSaving ? (
                   <>
                     <Loader2 className="animate-spin" size={16} />
-                    ინახება...
+                    {t('action_saving')}
                   </>
                 ) : (
-                  'შენახვა'
+                  t('action_save')
                 )}
               </button>
             </div>

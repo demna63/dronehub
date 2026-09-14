@@ -10,6 +10,7 @@ import { compressImageFile } from '../services/storageService';
 import type { ProcessedImage } from '../services/storageService';
 import { POST_CONTENT_MAX_LENGTH, POST_TITLE_MAX_LENGTH } from '../constants/limits';
 import type { User } from '../types';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface CreatePostModalProps {
   onClose: () => void;
@@ -19,9 +20,9 @@ interface CreatePostModalProps {
 
 // მთავარი ტიპები
 const POST_TYPES = [
-  { id: 'news', label: 'სიახლე / ზოგადი', icon: Newspaper, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  { id: 'fpv', label: 'FPV პილოტი', icon: Gamepad2, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  { id: 'cine', label: 'Cine Drone', icon: Camera, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  { id: 'news', labelKey: 'post_type_news', icon: Newspaper, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  { id: 'fpv', labelKey: 'post_type_fpv', icon: Gamepad2, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { id: 'cine', labelKey: 'post_type_cine', icon: Camera, color: 'text-amber-400', bg: 'bg-amber-500/10' },
 ];
 
 // FPV ქვეკატეგორიები
@@ -32,6 +33,7 @@ const FPV_SUBCATEGORIES = [
 ];
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreated, currentUser }) => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   
@@ -59,7 +61,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
     
     // FPV-ს შემთხვევაში ქვეკატეგორია აუცილებელია
     if (mainType === 'fpv' && !subCategory) {
-      showToast('გთხოვთ აირჩიოთ FPV კატეგორია (Freestyle, Racing ან Long Range)', 'error');
+      showToast(t('post_pick_fpv_category'), 'error');
       return;
     }
 
@@ -90,7 +92,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
       onClose();
     } catch (error) {
       console.error("Error creating post:", error);
-      showToast('პოსტი ვერ შეიქმნა. სცადეთ თავიდან.', 'error');
+      showToast(t('post_create_failed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
     <Modal
       isOpen
       onClose={onClose}
-      title="ახალი პოსტი"
+      title={t('post_new_title')}
       size="max-w-2xl"
       busy={loading}
     >
@@ -123,7 +125,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                 }`}
               >
                 <type.icon size={24} />
-                <span className="text-xs font-bold uppercase">{type.label}</span>
+                <span className="text-xs font-bold uppercase">{t(type.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -132,7 +134,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
           {mainType === 'fpv' && (
             <div className="mb-6 animate-in slide-in-from-top-2">
               <span id="fpv-subcategory-label" className="text-xs font-bold text-slate-400 uppercase mb-3 block">
-                აირჩიე დისციპლინა:
+                {t('post_pick_discipline')}
               </span>
               <div role="group" aria-labelledby="fpv-subcategory-label" className="flex flex-wrap gap-2">
                 {FPV_SUBCATEGORIES.map((sub) => (
@@ -158,14 +160,14 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
             
             {/* სათაური */}
             <div className="space-y-2">
-              <label htmlFor="post-title" className="text-xs font-bold text-slate-400 uppercase">სათაური</label>
+              <label htmlFor="post-title" className="text-xs font-bold text-slate-400 uppercase">{t('field_title')}</label>
               <input
                 id="post-title"
                 type="text"
                 value={title}
                 maxLength={POST_TITLE_MAX_LENGTH}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="მაგ: ჩემი ახალი 5-ინჩიანი ბილდი..."
+                placeholder={t('post_title_placeholder')}
                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400"
                 required
               />
@@ -173,13 +175,13 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
 
             {/* ტექსტი */}
             <div className="space-y-2">
-              <label htmlFor="post-content" className="text-xs font-bold text-slate-400 uppercase">აღწერა</label>
+              <label htmlFor="post-content" className="text-xs font-bold text-slate-400 uppercase">{t('field_description')}</label>
               <textarea
                 id="post-content"
                 value={content}
                 maxLength={POST_CONTENT_MAX_LENGTH}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="რაზეა ეს პოსტი? გაგვიზიარე დეტალები..."
+                placeholder={t('post_body_placeholder')}
                 className="w-full h-32 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400 resize-none"
                 required
               />
@@ -187,7 +189,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
 
             {/* სურათის ატვირთვა */}
             <div className="space-y-2">
-              <label htmlFor="image-upload" className="text-xs font-bold text-slate-400 uppercase">მედია (სურათი)</label>
+              <label htmlFor="image-upload" className="text-xs font-bold text-slate-400 uppercase">{t('field_media_image')}</label>
               <div className="relative group">
                 <input
                   type="file"
@@ -240,12 +242,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                 {loading ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    ქვეყნდება...
+                    {t('action_publishing')}
                   </>
                 ) : (
                   <>
                     <Upload size={18} />
-                    გამოქვეყნება
+                    {t('action_publish')}
                   </>
                 )}
               </button>

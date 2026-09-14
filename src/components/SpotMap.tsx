@@ -7,6 +7,7 @@ import {
 import { apiService } from '../services/apiService';
 import { useToast } from '../contexts/useToast';
 import type { Spot, User } from '../types';
+import { useLanguage } from '../contexts/useLanguage';
 
 /**
  * Google Maps configuration.
@@ -40,6 +41,7 @@ interface SpotMapProps {
 }
 
 const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) => {
+  const { t } = useLanguage();
   const { showToast } = useToast();
   const [spots, setSpots] = useState<Spot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,11 +68,11 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
       setSpots(fetchedSpots);
     } catch (error) {
       console.error('Error fetching spots:', error);
-      showToast('ლოკაციები ვერ ჩაიტვირთა.', 'error');
+      showToast(t('spots_load_failed'), 'error');
     } finally {
       setIsLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   useEffect(() => { void fetchSpots(); }, [fetchSpots]);
 
@@ -90,7 +92,7 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
     setIsSubmitting(true);
     try {
       if (!currentUser) {
-        showToast('ლოკაციის დასამატებლად გაიარე ავტორიზაცია.', 'error');
+        showToast(t('spot_add_needs_auth'), 'error');
         onLoginClick?.();
         return;
       }
@@ -113,7 +115,7 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
       
     } catch (error) {
       console.error('Error adding spot:', error);
-      showToast('ლოკაცია ვერ დაემატა. სცადე ხელახლა.', 'error');
+      showToast(t('spot_add_failed'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -188,10 +190,11 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
           <div className="w-full h-full flex items-center justify-center p-8">
             <div className="max-w-sm text-center border-2 border-dashed border-white/10 rounded-3xl p-8">
               <MapPin size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
-              <p className="text-sm font-bold text-slate-300 mb-2">რუკა არ არის კონფიგურირებული</p>
+              <p className="text-sm font-bold text-slate-300 mb-2">{t('map_not_configured')}</p>
               <p className="text-xs text-slate-500 leading-relaxed">
-                დააყენე <code className="text-slate-400">VITE_GOOGLE_MAPS_API_KEY</code> და
-                {' '}<code className="text-slate-400">VITE_GOOGLE_MAPS_ID</code> გარემოს ცვლადებში.
+                {t('map_set_env_vars')}
+                {' '}<code className="text-slate-400">VITE_GOOGLE_MAPS_API_KEY</code>
+                {', '}<code className="text-slate-400">VITE_GOOGLE_MAPS_ID</code>
               </p>
             </div>
           </div>
@@ -233,7 +236,7 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
                       onClick={() => { setSelectedSpot(activeInfo); setActiveInfo(null); }}
                       className="text-[10px] text-sky-600 font-bold uppercase hover:underline"
                     >
-                      დეტალები &rarr;
+                      {t('action_details_arrow')}
                     </button>
                   </div>
                 </InfoWindow>
@@ -280,7 +283,7 @@ const SpotMap: React.FC<SpotMapProps> = ({ currentUser = null, onLoginClick }) =
             <div className="bg-slate-900 border border-white/10 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
               <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50">
                 <h2 className="text-xl font-black text-white flex items-center gap-2"><MapPin className="text-sky-500"/> Add New Spot</h2>
-                <button onClick={() => setShowAddModal(false)} aria-label="დახურვა" className="text-slate-400 hover:text-white"><X size={20}/></button>
+                <button onClick={() => setShowAddModal(false)} aria-label={t('action_close')} className="text-slate-400 hover:text-white"><X size={20}/></button>
               </div>
               
               <form onSubmit={handleAddSpot} className="p-6 space-y-4">

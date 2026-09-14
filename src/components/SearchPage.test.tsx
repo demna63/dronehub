@@ -5,6 +5,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { LanguageProvider } from '../contexts/LanguageContext';
 import type { Post } from '../types';
 
 const searchPosts = vi.fn();
@@ -25,16 +26,20 @@ import SearchPage from './SearchPage';
 
 const post = (id: string, title: string): Post => ({ id, title } as Post);
 
+// SearchPage reads its labels through useLanguage, so the provider is part of
+// the component's contract rather than optional test scaffolding.
 const renderAt = (path: string) =>
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route
-          path="/search"
-          element={<SearchPage currentUser={null} onLoginClick={() => {}} />}
-        />
-      </Routes>
-    </MemoryRouter>,
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route
+            path="/search"
+            element={<SearchPage currentUser={null} onLoginClick={() => {}} />}
+          />
+        </Routes>
+      </MemoryRouter>
+    </LanguageProvider>,
   );
 
 beforeEach(() => {

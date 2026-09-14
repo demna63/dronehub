@@ -3,6 +3,7 @@ import { BadgeCheck, Calendar, MapPin, Settings, Wrench } from 'lucide-react';
 import type { User } from '../types';
 import Avatar from './Avatar';
 import { formatMonthYear } from '../utils/dates';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface ProfileHeaderProps {
   profileUser: User;
@@ -26,6 +27,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   postsCount = 0,
   buildsCount = 0,
 }) => {
+  const { t } = useLanguage();
   // `createdAt` is a Firestore Timestamp, which `new Date(...)` cannot read —
   // that is where the "Joined NaN" came from. Missing dates are now omitted
   // rather than replaced by today's year, which was simply a wrong fact.
@@ -61,7 +63,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
               <span className="truncate">{profileUser.name}</span>
               {profileUser.isVerified && (
-                <BadgeCheck size={20} className="text-sky-400 shrink-0" aria-label="ვერიფიცირებული" />
+                <BadgeCheck size={20} className="text-sky-400 shrink-0" aria-label={t('profile_verified')} />
               )}
             </h1>
 
@@ -81,9 +83,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-5 mt-3">
-              <Stat value={postsCount} label="პოსტი" />
-              <Stat value={buildsCount} label="დრონი" />
-              <Stat value={profileUser.reputation ?? 0} label="რეპუტაცია" />
+              <Stat value={postsCount} label={t('profile_stat_posts')} />
+              <Stat value={buildsCount} label={t('profile_stat_drones')} />
+              <Stat value={profileUser.reputation ?? 0} label={t('profile_stat_reputation')} />
             </div>
           </div>
 
@@ -93,15 +95,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               onClick={onEditProfile}
               className="shrink-0 px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-colors flex items-center gap-2"
             >
-              <Settings size={16} aria-hidden="true" /> პროფილის რედაქტირება
+              <Settings size={16} aria-hidden="true" /> {t('profile_edit')}
             </button>
           )}
         </div>
 
         <p className="text-sm text-slate-300 max-w-2xl leading-relaxed text-center sm:text-left whitespace-pre-wrap">
           {profileUser.bio || (isOwnProfile
-            ? 'ბიოგრაფია ჯერ არ დაგიმატებია — დააჭირე „პროფილის რედაქტირებას".'
-            : 'პილოტს ჯერ არ დაუმატებია ბიოგრაფია.')}
+            ? t('profile_bio_empty_own')
+            : t('profile_bio_empty_other'))}
         </p>
 
         {/* `gear` was editable but never rendered anywhere, so anything typed

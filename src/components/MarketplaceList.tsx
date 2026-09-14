@@ -6,6 +6,7 @@ import { User } from '../types';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMarketItems } from '../hooks/useMarketItems';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface MarketplaceListProps {
   currentUser?: User | null;
@@ -20,6 +21,7 @@ interface MarketplaceListProps {
  * the feed was paged, only those inside one 12-post page.
  */
 const MarketplaceList: React.FC<MarketplaceListProps> = () => {
+  const { t } = useLanguage();
   const { items: marketItems, isLoading, isLoadingMore, hasMore, error, loadMore, retry } = useMarketItems();
   const { categoryId } = useParams<{ categoryId: string }>();
   // The /market/category/:id route existed but its param was never read, so the
@@ -47,7 +49,7 @@ const MarketplaceList: React.FC<MarketplaceListProps> = () => {
       
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-white uppercase tracking-wider">მარკეტი</h1>
+        <h1 className="text-2xl font-black text-white uppercase tracking-wider">{t('route_market')}</h1>
       </div>
 
       <MarketplaceFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
@@ -60,7 +62,7 @@ const MarketplaceList: React.FC<MarketplaceListProps> = () => {
             onClick={retry}
             className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
           >
-            ხელახლა ცდა
+            {t('action_retry')}
           </button>
         </div>
       )}
@@ -96,7 +98,7 @@ const MarketplaceList: React.FC<MarketplaceListProps> = () => {
             disabled={isLoadingMore}
             className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors disabled:opacity-50"
           >
-            {isLoadingMore ? 'იტვირთება…' : 'მეტის ჩვენება'}
+            {isLoadingMore ? t('state_loading') : t('action_load_more')}
           </button>
         </div>
       )}
