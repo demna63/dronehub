@@ -239,7 +239,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     className="px-4 py-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors"
                     disabled={isSaving}
                   >
-                    გაუქმება
+                    {t('action_cancel')}
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); void saveEdit(post); }}
@@ -314,7 +314,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     }} 
                     className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-white text-left transition-colors"
                   >
-                    <Edit size={16} /> რედაქტირება
+                    <Edit size={16} /> {t('action_edit')}
                   </button>
                   <div className="h-px bg-white/5"></div>
                   <button 
@@ -325,7 +325,7 @@ const PostCard: React.FC<PostCardProps> = ({
                     }} 
                     className="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 text-left transition-colors"
                   >
-                    <Trash2 size={16} /> წაშლა
+                    <Trash2 size={16} /> {t('action_delete')}
                   </button>
                 </div>
               )}

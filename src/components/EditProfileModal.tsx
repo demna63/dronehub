@@ -17,6 +17,15 @@ interface EditProfileModalProps {
   onUpdate: (updatedUser: User) => void;
 }
 
+/** Keys thrown by storageService that are safe to show to the user as-is. */
+const IMAGE_ERROR_KEYS = new Set([
+  'image_read_failed',
+  'image_canvas_failed',
+  'image_process_failed',
+  'upload_too_large',
+  'upload_wrong_type',
+]);
+
 const EditProfileModal: React.FC<EditProfileModalProps> = ({ 
   isOpen, onClose, currentUser, onUpdate 
 }) => {
@@ -77,11 +86,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setAvatar(url);
     } catch (uploadError) {
       console.error('Avatar upload failed:', uploadError);
-      setError(
-        uploadError instanceof Error && /ვერ|აირჩიე/.test(uploadError.message)
-          ? uploadError.message
-          : t('upload_failed'),
-      );
+      // Our own image errors carry a translation key; anything else is an
+      // unexpected failure and gets the generic message. This used to sniff the
+      // text with /ვერ|აირჩიე/, which stopped meaning anything the moment the
+      // strings could be in English.
+      const key = uploadError instanceof Error ? uploadError.message : '';
+      setError(t(IMAGE_ERROR_KEYS.has(key) ? key : 'upload_failed'));
     } finally {
       setIsUploading(false);
     }

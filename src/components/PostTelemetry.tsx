@@ -99,7 +99,9 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
     } catch (err) {
       // Keep the panel open so the choices are not lost, and say what actually
       // failed instead of silently showing a rating the server rejected.
-      setError(err instanceof Error && err.message ? err.message : t('rating_save_failed'));
+      // The service reports a translation key; `t` falls back to the key itself
+      // if it is ever unknown, which is visible rather than silent.
+      setError(t(err instanceof Error && err.message ? err.message : 'rating_save_failed'));
     } finally {
       setIsSaving(false);
     }

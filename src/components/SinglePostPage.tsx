@@ -100,7 +100,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
           <div className="hidden lg:block space-y-4">
              <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 sticky top-24">
                <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                 <Hash size={14} /> მსგავსი თემები
+                 <Hash size={14} /> {t('related_topics')}
                </h2>
                
                <div className="space-y-3">
@@ -127,7 +127,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
                  ) : (
                    <div className="text-center text-xs text-slate-400 py-8 flex flex-col items-center gap-2">
                      <AlertTriangle size={24} className="opacity-20" />
-                     მსგავსი პოსტები არ მოიძებნა
+                     {t('related_none')}
                    </div>
                  )}
                </div>

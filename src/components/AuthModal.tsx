@@ -111,7 +111,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   className="w-full flex items-center justify-center gap-3 bg-slate-800 text-slate-200 border border-white/10 p-3 rounded-xl font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50"
                 >
                   <UserIcon className="w-5 h-5" />
-                  დემო режимი
+                  {t('auth_demo_mode')}
                 </button>
                 )}
               </div>

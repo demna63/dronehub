@@ -5,10 +5,7 @@ import {
   updateCommentInFirestore,
 } from '../services/firestoreRepository';
 import type { Comment } from '../types';
-
-const EDIT_FAILED = 'კომენტარის შენახვა ვერ მოხერხდა.';
-const DELETE_FAILED = 'კომენტარის წაშლა ვერ მოხერხდა.';
-const EMPTY_TEXT = 'კომენტარი ცარიელი ვერ იქნება.';
+import { useLanguage } from '../contexts/useLanguage';
 
 export interface UsePostCommentsResult {
   comments: Comment[];
@@ -32,6 +29,7 @@ export interface UsePostCommentsResult {
  * comment visibly deleted.
  */
 export const usePostComments = (postId: string | null, enabled: boolean): UsePostCommentsResult => {
+  const { t } = useLanguage();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -105,7 +103,7 @@ export const usePostComments = (postId: string | null, enabled: boolean): UsePos
   const editComment = useCallback((commentId: string, text: string): Promise<boolean> => {
     const trimmed = text.trim();
     if (!trimmed) {
-      setError(EMPTY_TEXT);
+      setError(t('comment_empty'));
       return Promise.resolve(false);
     }
 
@@ -117,16 +115,16 @@ export const usePostComments = (postId: string | null, enabled: boolean): UsePos
           : comment
       )),
       (targetPostId) => updateCommentInFirestore(targetPostId, commentId, trimmed),
-      EDIT_FAILED,
+      t('comment_save_failed'),
     );
-  }, [mutate]);
+  }, [mutate, t]);
 
   const removeComment = useCallback((commentId: string): Promise<boolean> => mutate(
     commentId,
     (list) => list.filter((comment) => comment.id !== commentId),
     (targetPostId) => deleteCommentFromFirestore(targetPostId, commentId),
-    DELETE_FAILED,
-  ), [mutate]);
+    t('comment_delete_failed'),
+  ), [mutate, t]);
 
   const refresh = useCallback(() => setReloadToken((token) => token + 1), []);
   const clearError = useCallback(() => setError(null), []);

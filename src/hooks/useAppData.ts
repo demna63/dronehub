@@ -8,11 +8,13 @@ import { apiService } from '../services/apiService';
 import type { MeetRoomData, Notification as NotificationType, Post, User, VlogEntry } from '../types';
 import type { PostCursor, PostSort } from '../services/firestoreRepository';
 import { readCachedData, writeCachedData } from '../utils/offlineCache';
+import { useLanguage } from '../contexts/useLanguage';
 
 const readStaleCache = <T,>(key: 'posts' | 'vlogs' | 'meetRooms') =>
   readCachedData<T>(key, { allowStale: true });
 
 export const useAppData = () => {
+  const { t } = useLanguage();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   /**
    * Feed ordering. Held in a ref rather than state because fetchPosts is
@@ -144,14 +146,14 @@ export const useAppData = () => {
         // Stale content beats an error screen, but say so rather than passing
         // it off as fresh.
         setPosts(cachedPosts);
-        setPostsError('ვერ განვაახლე — ნაჩვენებია შენახული ვერსია.');
+        setPostsError(t('feed_stale_cache'));
       } else {
-        setPostsError('პოსტები ვერ ჩაიტვირთა.');
+        setPostsError(t('feed_load_failed'));
       }
     } finally {
       setPostsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   fetchPostsRef.current = fetchPosts;
 
@@ -183,12 +185,12 @@ export const useAppData = () => {
       });
     } catch (error) {
       console.error('Failed to load more posts:', error);
-      setPostsError('შემდეგი გვერდი ვერ ჩაიტვირთა.');
+      setPostsError(t('next_page_failed'));
     } finally {
       loadingMoreRef.current = false;
       setIsLoadingMorePosts(false);
     }
-  }, []);
+  }, [t]);
 
   const fetchVlogs = useCallback(async () => {
     try {

@@ -37,7 +37,7 @@ const EcosystemLinksNav: React.FC<EcosystemLinksNavProps> = ({
         {ECOSYSTEM_LINKS.map((link) => {
           const isCurrent = link.id === currentSiteId;
           const Icon = link.icon;
-          const label = t(link.labelKey) || link.labelFallback;
+          const label = t(link.labelKey);
           const isExternal = isExternalEcosystemUrl(link.url) && !isCurrent;
           const rowClass = `
                 flex items-center justify-between rounded-xl transition-all duration-200 group

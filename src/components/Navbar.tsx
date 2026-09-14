@@ -155,7 +155,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
           <div className="flex items-center gap-2 md:gap-4">
             <button 
-              aria-label={language === 'ka' ? 'ენა: GE' : 'ენა: EN'}
+              aria-label={t('language_aria', { code: language === 'ka' ? 'GE' : 'EN' })}
               onClick={toggleLanguage}
               className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"
             >
@@ -248,7 +248,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2 text-rose-400 hover:bg-rose-400/10 text-xs font-bold transition-colors"
                       >
-                        <LogOut size={16} /> გასვლა
+                        <LogOut size={16} /> {t('action_sign_out')}
                       </button>
                     </div>
                   )}
@@ -259,7 +259,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 onClick={onLoginClick}
                 className="px-6 py-2.5 bg-white text-slate-900 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-sky-400 hover:text-white transition-all active:scale-95"
               >
-                ავტორიზაცია
+                {t('action_sign_in')}
               </button>
             )}
 
@@ -330,7 +330,7 @@ const Navbar: React.FC<NavbarProps> = ({
               
               {!currentUser && (
                 <button onClick={() => { if(onLoginClick) onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 bg-white text-slate-900 hover:bg-sky-400 hover:text-white transition-colors font-black rounded-xl uppercase tracking-widest">
-                  ავტორიზაცია
+                  {t('action_sign_in')}
                 </button>
               )}
 
@@ -339,7 +339,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
                   className="w-full py-4 bg-rose-500/10 text-rose-400 font-black rounded-xl uppercase tracking-widest"
                 >
-                  გასვლა
+                  {t('action_sign_out')}
                 </button>
               )}
             </div>

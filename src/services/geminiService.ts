@@ -34,8 +34,8 @@ const callGeminiProxy = async (action: GeminiAction, payload: Record<string, unk
  */
 export const describeGeminiError = (error: unknown): string | null => {
   const code = (error as { code?: string })?.code;
-  if (code === 'functions/unauthenticated') return 'ამ ფუნქციისთვის გაიარე ავტორიზაცია.';
-  if (code === 'functions/resource-exhausted') return 'დღიური ლიმიტი ამოიწურა. სცადე ხვალ.';
+  if (code === 'functions/unauthenticated') return 'ai_needs_auth';
+  if (code === 'functions/resource-exhausted') return 'ai_quota_exhausted';
   return null;
 };
 
@@ -101,7 +101,7 @@ export const geminiService = {
   },
 
   async checkZoneWithAI(lat: number, lng: number) {
-    const fallback = { status: 'CAUTION', message: 'სერვისი კონფიგურირებული არ არის. იფრინეთ სიფრთხილით.' };
+    const fallback = { status: 'CAUTION', message: 'ai_not_configured' };
 
     try {
       if (import.meta.env.DEV && getDevGeminiApiKey()) {
@@ -133,7 +133,7 @@ export const geminiService = {
   },
 
   async checkRestrictedZone(query: string) {
-    const fallback = { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' };
+    const fallback = { status: 'CAUTION', message: 'ai_check_failed' };
 
     try {
       if (import.meta.env.DEV && getDevGeminiApiKey()) {

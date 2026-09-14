@@ -52,8 +52,12 @@ export type CategoryGroup = 'community' | 'official' | 'marketplace' | 'resource
 export interface Category {
   id: string;
   name: string;
+  /** Translation key for `name`; falls back to `name` when absent. */
+  nameKey?: string;
   icon: string;
   description: string;
+  /** Translation key for `description`; falls back to `description` when absent. */
+  descriptionKey?: string;
   memberCount?: number; // Legacy support
   membersCount?: number; 
   onlineCount?: number;

@@ -81,7 +81,7 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/10 transition-colors"
               >
-                <Edit2 size={14} /> რედაქტირება
+                <Edit2 size={14} /> {t('action_edit')}
               </button>
 
               <button
@@ -91,7 +91,7 @@ const PostCardHeader: React.FC<PostCardHeaderProps> = ({
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors border-t border-white/5"
               >
-                <Trash2 size={14} /> წაშლა
+                <Trash2 size={14} /> {t('action_delete')}
               </button>
             </div>
           )}

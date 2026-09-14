@@ -3,6 +3,11 @@ import type { Category } from '../types';
 /**
  * The feed's category taxonomy.
  *
+ * `name`, `label` and `description` hold English text and exist only as a
+ * fallback; what renders is `nameKey` / `descriptionKey` through `t`. Keeping
+ * the Georgian here as well would mean two copies of every category name, one
+ * of which nobody updates.
+ *
  * Moved out of the old src/constants.ts, which was 80% mock fixtures
  * (MOCK_USERS, MOCK_NOTIFICATIONS, POPULAR_TAGS, an empty MOCK_POSTS) with no
  * consumers — this was the only live export in the file.
@@ -10,20 +15,24 @@ import type { Category } from '../types';
 export const CATEGORIES: Category[] = [
   { 
     id: 'general', 
-    name: 'ზოგადი', 
-    label: 'ზოგადი',
+    name: 'General',
+    nameKey: 'cat_general', 
+    label: 'General',
     icon: 'Hash', 
-    description: 'ზოგადი საუბრები დრონებზე', 
+    description: 'General drone talk',
+    descriptionKey: 'cat_general_desc', 
     group: 'community',
     slug: 'r/general',
     subCategories: []
   },
   { 
     id: 'fpv', 
-    name: 'FPV', 
+    name: 'FPV',
+    nameKey: 'cat_fpv', 
     label: 'FPV',
     icon: 'Activity', 
-    description: 'First Person View დრონები, აწყობა, ფრენა', 
+    description: 'First-person-view drones: builds and flying',
+    descriptionKey: 'cat_fpv_desc', 
     group: 'community',
     slug: 'r/fpv',
     subCategories: [
@@ -35,10 +44,12 @@ export const CATEGORIES: Category[] = [
   },
   { 
     id: 'racing', 
-    name: 'Racing League', 
+    name: 'Racing League',
+    nameKey: 'cat_racing', 
     label: 'Racing League',
     icon: 'Flag', 
-    description: 'რბოლები, ტურნირები, შედეგები და ტრასები.',
+    description: 'Races, tournaments, results and tracks.',
+    descriptionKey: 'cat_racing_desc',
     group: 'community',
     slug: 'r/racing',
     subCategories: [
@@ -49,10 +60,12 @@ export const CATEGORIES: Category[] = [
   },
   { 
     id: 'cinematic', 
-    name: 'Cine Drone', 
+    name: 'Cine Drone',
+    nameKey: 'cat_cinematic', 
     label: 'Cine Drone',
     icon: 'Camera', 
-    description: 'სინემატიკური გადაღებები (DJI, Autel, etc.)', 
+    description: 'Cinematic filming (DJI, Autel, etc.)',
+    descriptionKey: 'cat_cinematic_desc', 
     group: 'community',
     slug: 'r/cine',
     subCategories: [
@@ -64,34 +77,40 @@ export const CATEGORIES: Category[] = [
   },
   { 
     id: 'marketplace', 
-    name: 'მარკეტი', 
-    label: 'მარკეტი',
+    name: 'Market',
+    nameKey: 'cat_marketplace', 
+    label: 'Market',
     icon: 'ShoppingBag', 
-    description: 'ყიდვა-გაყიდვა', 
+    description: 'Buying and selling',
+    descriptionKey: 'cat_marketplace_desc', 
     group: 'marketplace',
     slug: 'r/market',
     subCategories: [
-      { id: 'drones', label: 'დრონები' },
-      { id: 'parts', label: 'ნაწილები' },
-      { id: 'goggles', label: 'სათვალეები' }
+      { id: 'drones', label: 'Drones' },
+      { id: 'parts', label: 'Parts' },
+      { id: 'goggles', label: 'Goggles' }
     ]
   },
   { 
     id: 'help', 
-    name: 'დახმარება', 
-    label: 'დახმარება',
+    name: 'Help',
+    nameKey: 'cat_help', 
+    label: 'Help',
     icon: 'HelpCircle', 
-    description: 'კითხვა-პასუხი და დახმარება', 
+    description: 'Questions, answers and help',
+    descriptionKey: 'cat_help_desc', 
     group: 'resources',
     slug: 'r/help',
     subCategories: []
   },
   { 
     id: 'events', 
-    name: 'Events', 
+    name: 'Events',
+    nameKey: 'cat_events', 
     label: 'Events',
     icon: 'Calendar', 
-    description: 'შეკრებები, ღონისძიებები და ფრენის დღეები.',
+    description: 'Meet-ups, events and fly days.',
+    descriptionKey: 'cat_events_desc',
     group: 'resources',
     slug: 'r/events',
     subCategories: [
@@ -101,10 +120,12 @@ export const CATEGORIES: Category[] = [
   },
   { 
     id: 'stores', 
-    name: 'Local Stores', 
+    name: 'Local Stores',
+    nameKey: 'cat_stores', 
     label: 'Local Stores',
     icon: 'ShoppingCart', 
-    description: 'პარტნიორი მაღაზიები და ოფიციალური დილერები.',
+    description: 'Partner shops and official dealers.',
+    descriptionKey: 'cat_stores_desc',
     group: 'resources',
     slug: 'r/stores',
     subCategories: [

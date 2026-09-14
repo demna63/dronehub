@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { apiService } from '../services/apiService';
 import { Post } from '../types';
+import { useLanguage } from '../contexts/useLanguage';
 
 /**
  * Encapsulates the post-editing state and async save logic.
@@ -9,6 +10,7 @@ import { Post } from '../types';
  * @param onSuccess - called after a successful save with the updated post and new content
  */
 export const usePostEdit = (onSuccess?: (post: Post, newContent: string) => void) => {
+  const { t } = useLanguage();
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -55,11 +57,11 @@ export const usePostEdit = (onSuccess?: (post: Post, newContent: string) => void
       // Surfaced as state, not thrown: every call site fires this from an
       // onClick, where a rejected promise would go unhandled. The editor stays
       // open so the text is not lost.
-      setSaveError('ცვლილება ვერ შეინახა. სცადე ხელახლა.');
+      setSaveError(t('edit_save_failed'));
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [t]);
 
   return { editingPostId, editContent, setEditContent, isSaving, saveError, startEdit, cancelEdit, saveEdit };
 };

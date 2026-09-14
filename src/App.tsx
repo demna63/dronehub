@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // --- CONTEXTS ---
-import { LanguageProvider } from './contexts/LanguageContext';
-import { ToastProvider } from './contexts/ToastContext';
 
 // --- FIREBASE & SERVICES ---
 import { apiService } from './services/apiService';
@@ -30,8 +28,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AppRoutes from './routes/AppRoutes';
 import type { FeedProps } from './components/Feed';
 import { useAppData } from './hooks/useAppData';
+import { useLanguage } from './contexts/useLanguage';
 
 const App: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -237,14 +237,13 @@ const App: React.FC = () => {
   }
 
   return (
-    <LanguageProvider>
-      <ToastProvider>
+    <>
         <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-sky-500/30 selection:text-sky-200">
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-sky-500 focus:text-white focus:font-bold focus:text-sm focus:shadow-lg"
           >
-            მთავარ შიგთავსზე გადასვლა
+            {t('skip_to_content')}
           </a>
 
           <OfflineStatus isOffline={isOffline} hasCachedData={Boolean(posts.length || vlogs.length || meetRooms.length)} />
@@ -262,7 +261,7 @@ const App: React.FC = () => {
           <div className="pt-20 px-4 md:px-8 max-w-[1600px] mx-auto flex gap-8">
 
             {/* Left Sidebar */}
-            <aside aria-label="ნავიგაცია" className="hidden md:block w-64 flex-shrink-0 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pb-4">
+            <aside aria-label={t('landmark_navigation')} className="hidden md:block w-64 flex-shrink-0 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pb-4">
               <Sidebar currentUser={currentUser} onOpenAuth={handleLoginRequest} />
             </aside>
 
@@ -272,7 +271,7 @@ const App: React.FC = () => {
             </main>
 
             {/* Right Sidebar */}
-            <aside aria-label="დამატებითი ინფორმაცია" className="hidden xl:block w-72 flex-shrink-0 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pb-4">
+            <aside aria-label={t('landmark_complementary')} className="hidden xl:block w-72 flex-shrink-0 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pb-4">
               <RightSidebar
                 currentUser={currentUser}
                 onOpenAuth={handleLoginRequest}
@@ -296,8 +295,7 @@ const App: React.FC = () => {
           )}
 
         </div>
-      </ToastProvider>
-    </LanguageProvider>
+    </>
   );
 };
 

@@ -145,7 +145,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
               className="w-full flex items-center justify-between p-2.5 bg-slate-950 hover:bg-white/5 border border-white/5 rounded-xl transition-colors group text-left"
             >
               <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">
-                {community.icon} {community.name}
+                {community.icon} {t(community.nameKey ?? community.name)}
               </span>
             </button>
           ))}

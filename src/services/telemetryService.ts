@@ -52,6 +52,10 @@ const getRatePostCallable = () => {
 /**
  * Turn a callable failure into something a pilot can act on.
  *
+ * Returns a TRANSLATION KEY, not a sentence. A service has no access to the
+ * language context, and hardcoding one language here would mean a Georgian
+ * error appearing in an English UI.
+ *
  * A single "could not save" covers up the two cases that matter most: the
  * function is not deployed (the whole feature is down, retrying is pointless),
  * and the user is signed out (retrying after signing in will work).
@@ -61,15 +65,15 @@ const describeFailure = (error: unknown): string => {
   switch (code) {
     case 'functions/not-found':
     case 'functions/unavailable':
-      return 'შეფასების სერვისი დროებით მიუწვდომელია.';
+      return 'rating_service_unavailable';
     case 'functions/unauthenticated':
-      return 'შესაფასებლად გაიარე ავტორიზაცია.';
+      return 'rating_needs_auth';
     case 'functions/permission-denied':
-      return 'ამ პოსტის შეფასების უფლება არ გაქვს.';
+      return 'rating_not_allowed';
     case 'functions/deadline-exceeded':
-      return 'დროის ლიმიტი ამოიწურა. სცადე ხელახლა.';
+      return 'rating_timeout';
     default:
-      return 'ვერ შევინახე. სცადე ხელახლა.';
+      return 'rating_save_failed';
   }
 };
 

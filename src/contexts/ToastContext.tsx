@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 import { ToastContext, type ToastType } from './useToast';
+import { useLanguage } from './useLanguage';
 
 interface Toast {
   id: string;
@@ -26,6 +27,7 @@ const TONE: Record<ToastType, { chip: string; Icon: typeof CheckCircle2 }> = {
  * chunk. The same motion is one CSS keyframe.
  */
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useLanguage();
   const [toasts, setToasts] = useState<Toast[]>([]);
   // Ids were `Date.now().toString()`: two toasts raised in the same millisecond
   // collided, and dismissing one removed both.
@@ -81,7 +83,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               <p className="text-sm font-bold text-white flex-1">{toast.message}</p>
               <button
                 type="button"
-                aria-label="დახურვა"
+                aria-label={t('action_close')}
                 onClick={() => removeToast(toast.id)}
                 className="text-slate-400 hover:text-white transition-colors shrink-0"
               >

@@ -123,7 +123,7 @@ const SearchPage: React.FC<SearchPageProps> = ({
             ? t('search_searching')
             : failed
               ? t('search_failed_short')
-              : <>„<span className="text-white">{query}</span>" — <span className="text-white">{results.length}</span> შედეგი</>}
+              : <>„<span className="text-white">{query}</span>" — <span className="text-white">{results.length}</span> {t('search_result_word')}</>}
         </p>
       )}
 

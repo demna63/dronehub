@@ -4,6 +4,7 @@ import { MARKET_CATEGORY } from '../constants/market';
 import { toFacet } from '../utils/facets';
 import type { PostCursor } from '../services/firestoreRepository';
 import type { Post } from '../types';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface MarketItemsState {
   items: Post[];
@@ -32,6 +33,7 @@ interface MarketItemsState {
  * listings is small enough that the difference is not measurable.
  */
 export const useMarketItems = (): MarketItemsState => {
+  const { t } = useLanguage();
   const [items, setItems] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -59,14 +61,14 @@ export const useMarketItems = (): MarketItemsState => {
       })
       .catch((fetchError) => {
         console.error('Failed to load market items:', fetchError);
-        if (!cancelled) setError('განცხადებები ვერ ჩაიტვირთა.');
+        if (!cancelled) setError(t('market_load_failed'));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
 
     return () => { cancelled = true; };
-  }, [attempt]);
+  }, [attempt, t]);
 
   const loadMore = useCallback(() => {
     if (inFlightRef.current || !cursorRef.current) return;
@@ -85,13 +87,13 @@ export const useMarketItems = (): MarketItemsState => {
       })
       .catch((fetchError) => {
         console.error('Failed to load more market items:', fetchError);
-        setError('შემდეგი გვერდი ვერ ჩაიტვირთა.');
+        setError(t('next_page_failed'));
       })
       .finally(() => {
         inFlightRef.current = false;
         setIsLoadingMore(false);
       });
-  }, []);
+  }, [t]);
 
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
 

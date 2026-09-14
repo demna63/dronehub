@@ -252,14 +252,14 @@ const Feed: React.FC<FeedProps> = ({
                     onClick={() => { onDeletePost?.(post.id); setPendingDeleteId(null); }}
                     className="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors"
                   >
-                    დიახ, წაშალე
+                    {t('delete_confirm_yes')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setPendingDeleteId(null)}
                     className="px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 text-[11px] font-bold hover:bg-white/10 transition-colors"
                   >
-                    გაუქმება
+                    {t('action_cancel')}
                   </button>
                 </span>
               </div>
@@ -323,7 +323,7 @@ const Feed: React.FC<FeedProps> = ({
                   <MessageSquare size={18} />
                   {(post.commentsCount || 0) > 0 && <span className="absolute -top-1.5 -right-1 text-[8px] font-black bg-sky-500 text-white w-4 h-4 rounded-full flex items-center justify-center border-2 border-slate-900">{post.commentsCount}</span>}
                 </button>
-                <button aria-label="შენახვა" onClick={(e) => { e.stopPropagation(); onToggleSave?.(post.id); }} className={`p-2 rounded-xl transition-all ${savedPostIds?.includes(post.id) ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}>
+                <button aria-label={t('action_save')} onClick={(e) => { e.stopPropagation(); onToggleSave?.(post.id); }} className={`p-2 rounded-xl transition-all ${savedPostIds?.includes(post.id) ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`}>
                   <Tag size={18} className={savedPostIds?.includes(post.id) ? "fill-current" : ""} />
                 </button>
                 <button aria-label={t('action_share')} onClick={(e) => { e.stopPropagation(); handleShare(post.id); }} className="p-2 text-slate-400 hover:text-white transition-all">

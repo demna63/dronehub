@@ -75,7 +75,7 @@ const PostContentBlock: React.FC<PostContentBlockProps> = ({
               className="px-4 py-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors"
               disabled={isSavingEdit}
             >
-              გაუქმება
+              {t('action_cancel')}
             </button>
             <button
               type="button"

@@ -204,7 +204,7 @@ const BatteryCalculator: React.FC = () => {
                  <div className="font-mono text-xs bg-slate-900 p-3 rounded-lg border border-white/5 text-emerald-400/80 break-all">
                     Time (h) = (Capacity_Ah * (1 - SoC)) / Charge_Current_A / Efficiency
                  </div>
-                 <p className="mt-3 text-xs">რეალობაში დატენვის პროცესი არ არის ხაზოვანი. LiPo/Li-ion ელემენტები იტენება <strong>CC/CV</strong> (Constant Current / Constant Voltage) მეთოდით.</p>
+                 <p className="mt-3 text-xs">{t('battery_cccv_1')} <strong>CC/CV</strong> {t('battery_cccv_2')}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -142,19 +142,19 @@ export const prepareAvatarFile = async (file: File): Promise<ProcessedImage> => 
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const probe = new Image();
       probe.onload = () => resolve(probe);
-      probe.onerror = () => reject(new Error('სურათის წაკითხვა ვერ მოხერხდა.'));
+      probe.onerror = () => reject(new Error('image_read_failed'));
       probe.src = objectUrl;
     });
 
     const side = Math.min(img.naturalWidth, img.naturalHeight);
-    if (!side) throw new Error('სურათის წაკითხვა ვერ მოხერხდა.');
+    if (!side) throw new Error('image_read_failed');
 
     const canvas = document.createElement('canvas');
     canvas.width = AVATAR_SIZE;
     canvas.height = AVATAR_SIZE;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('ბრაუზერმა სურათის დამუშავება ვერ შეძლო.');
+    if (!ctx) throw new Error('image_canvas_failed');
 
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(
@@ -172,7 +172,7 @@ export const prepareAvatarFile = async (file: File): Promise<ProcessedImage> => 
     const blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob(resolve, 'image/webp', AVATAR_QUALITY);
     });
-    if (!blob) throw new Error('სურათის დამუშავება ვერ მოხერხდა.');
+    if (!blob) throw new Error('image_process_failed');
 
     const name = `${file.name.replace(/\.[^/.]+$/, '') || 'avatar'}.webp`;
     return {

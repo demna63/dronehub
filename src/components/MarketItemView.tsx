@@ -98,7 +98,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2 mb-8">
                <SpecRow 
                  icon={Tag} label={t('field_condition')} 
-                 value={item.condition === 'new' ? 'ახალი' : item.condition === 'used' ? 'მეორადი' : 'დაზიანებული'} 
+                 value={item.condition === 'new' ? t('condition_new') : item.condition === 'used' ? t('condition_used') : t('condition_damaged')} 
                />
                <SpecRow icon={Box} label={t('field_brand_model')} value={item.brand} />
                <SpecRow icon={Box} label={t('field_category')} value={item.subCategory} />
@@ -142,7 +142,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
                </span>
                {item.condition && (
                  <span className="ml-3 text-xs font-bold px-2 py-1 bg-white/5 rounded text-slate-400 border border-white/10 uppercase align-middle">
-                   {item.condition === 'new' ? 'ახალი' : 'მეორადი'}
+                   {item.condition === 'new' ? t('condition_new') : t('condition_used')}
                  </span>
                )}
             </div>

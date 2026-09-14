@@ -99,7 +99,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1"><Eye size={12} /> {vlog.views}</span>
-                        <span className="flex items-center gap-1"><Clock size={12} /> 1დღ</span>
+                        <span className="flex items-center gap-1"><Clock size={12} /> {t('time_one_day')}</span>
                       </div>
                     </div>
                   </div>
