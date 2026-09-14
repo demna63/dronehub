@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { translations, type Language } from '../utils/translations';
+import { interpolate, translations, type Language } from '../utils/translations';
 import { LanguageContext } from './useLanguage';
 
 const STORAGE_KEY = 'dhg_language';
@@ -44,9 +44,12 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     [],
   );
 
-  const t = useCallback((key: string): string => {
+  const t = useCallback((key: string, vars?: Record<string, string | number>): string => {
     const table = translations[language] as Record<string, string>;
-    return table[key] ?? key;
+    // Falling back to the key rather than to the other language: a missing
+    // translation should look obviously missing, not silently ship Georgian
+    // to an English reader.
+    return interpolate(table[key] ?? key, vars);
   }, [language]);
 
   // Memoised: this provider wraps the entire app, so a fresh object here

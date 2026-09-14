@@ -1,5 +1,23 @@
 export type Language = 'ka' | 'en';
 
+/**
+ * Substitute `{name}` placeholders in a translated string.
+ *
+ * Sentences are translated whole rather than assembled from fragments in JSX:
+ * word order differs between Georgian and English, so `"ნაპოვნია " + n + " შედეგი"`
+ * cannot be translated without rewriting the component. An unknown placeholder
+ * is left as-is so a typo shows up in the UI instead of vanishing.
+ */
+export const interpolate = (
+  template: string,
+  vars?: Record<string, string | number>,
+): string => {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in vars ? String(vars[name]) : match,
+  );
+};
+
 export const translations = {
   ka: {
     // --- Navigation ---
