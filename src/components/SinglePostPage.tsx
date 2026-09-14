@@ -6,6 +6,7 @@ import MarketItemView from './MarketItemView'; // ✅ ახალი იმპ�
 import { CornerDownLeft, ArrowRight, Hash, AlertTriangle } from 'lucide-react';
 import { isMarketItem } from '../constants/market';
 import { useLanguage } from '../contexts/useLanguage';
+import { scrollAppToTop } from '../utils/appScroll';
 
 interface SinglePostPageProps {
   post: Post;
@@ -27,7 +28,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    scrollAppToTop();
   }, [post.id]);
 
   const handleBack = () => {

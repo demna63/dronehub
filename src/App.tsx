@@ -28,6 +28,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AppRoutes from './routes/AppRoutes';
 import type { FeedProps } from './components/Feed';
 import { useAppData } from './hooks/useAppData';
+import { APP_SCROLL_ID } from './utils/appScroll';
 import { useLanguage } from './contexts/useLanguage';
 
 const App: React.FC = () => {
@@ -238,7 +239,14 @@ const App: React.FC = () => {
 
   return (
     <>
-        <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-sky-500/30 selection:text-sky-200">
+        {/*
+          From `md` up this is a fixed-height shell: the navbar and both
+          sidebars hold their position and only the centre column scrolls.
+          Below `md` the sidebars are hidden and the document scrolls as
+          normal — pinning the height on a phone stops the browser's address
+          bar from collapsing, which costs more screen than it saves.
+        */}
+        <div className="min-h-screen md:h-dvh md:overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-sky-500/30 selection:text-sky-200">
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-sky-500 focus:text-white focus:font-bold focus:text-sm focus:shadow-lg"
@@ -258,20 +266,22 @@ const App: React.FC = () => {
             onMarkAllAsRead={handleMarkAllNotificationsRead}
           />
 
-          <div className="pt-20 px-4 md:px-8 max-w-[1600px] mx-auto flex gap-8">
+          <div className="pt-20 px-4 md:px-8 max-w-[1600px] mx-auto flex gap-8 md:h-full md:min-h-0">
 
-            {/* Left Sidebar */}
-            <aside aria-label={t('landmark_navigation')} className="hidden md:block w-64 flex-shrink-0 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pb-4">
+            {/* Left Sidebar — scrolls its own overflow, never the page */}
+            <aside aria-label={t('landmark_navigation')} className="hidden md:block w-64 flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto custom-scrollbar pb-4">
               <Sidebar currentUser={currentUser} onOpenAuth={handleLoginRequest} />
             </aside>
 
-            {/* Main Content */}
-            <main id="main" className="flex-1 min-w-0 pb-20">
+            {/* Main Content — the app's scroll container from `md` up.
+                `min-h-0` is what lets a flex child actually scroll: without it
+                the item's min-height is its content, so it grows instead. */}
+            <main id={APP_SCROLL_ID} className="flex-1 min-w-0 pb-20 md:h-full md:min-h-0 md:overflow-y-auto custom-scrollbar">
               <AppRoutes {...appRoutesProps} />
             </main>
 
             {/* Right Sidebar */}
-            <aside aria-label={t('landmark_complementary')} className="hidden xl:block w-72 flex-shrink-0 sticky top-24 h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar pb-4">
+            <aside aria-label={t('landmark_complementary')} className="hidden xl:block w-72 flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto custom-scrollbar pb-4">
               <RightSidebar
                 currentUser={currentUser}
                 onOpenAuth={handleLoginRequest}

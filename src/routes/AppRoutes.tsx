@@ -1,5 +1,6 @@
-import React, { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { scrollAppToTop } from '../utils/appScroll';
 import type { MeetRoomData, Notification as NotificationType, Post, User, VlogEntry } from '../types';
 import ErrorBoundary from '../components/ErrorBoundary';
 import PageMeta from '../components/PageMeta';
@@ -144,6 +145,17 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
   onDeleteVlog,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * Start each route at the top.
+   *
+   * The browser does this for a document scroll, but the centre column is its
+   * own scroller from `md` up and keeps its offset across a route change —
+   * opening a post from halfway down the feed would drop you halfway down the
+   * post.
+   */
+  useEffect(() => { scrollAppToTop(); }, [location.pathname]);
 
   return (
     <ErrorBoundary>

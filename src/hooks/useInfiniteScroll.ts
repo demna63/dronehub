@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { getAppScrollRoot } from '../utils/appScroll';
 
 interface UseInfiniteScrollOptions {
   /** Whether another page exists. The observer is not attached when false. */
@@ -41,7 +42,10 @@ export const useInfiniteScroll = <T extends HTMLElement>({
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) onLoadMoreRef.current();
       },
-      { rootMargin },
+      // Root is the app's scroll container when there is one. Against the
+      // viewport, a sentinel inside that container is clipped the moment it
+      // scrolls out of sight, and `rootMargin` would buy nothing.
+      { root: getAppScrollRoot(), rootMargin },
     );
 
     observer.observe(sentinel);

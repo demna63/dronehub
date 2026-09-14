@@ -14,6 +14,7 @@ import { StableLabel } from './StableLabel';
 import EcosystemLinksNav from './EcosystemLinksNav';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import { getAppScrollTop, subscribeToAppScroll } from '../utils/appScroll';
 
 
 interface NavbarProps {
@@ -56,9 +57,12 @@ const Navbar: React.FC<NavbarProps> = ({
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // The page scroller is the centre column from `md` up, not the window, so
+    // `window.scrollY` stops changing there and the bar never picks up its
+    // condensed state.
+    const handleScroll = () => setIsScrolled(getAppScrollTop() > 20);
+    handleScroll();
+    return subscribeToAppScroll(handleScroll);
   }, []);
 
   // მენიუების დახურვა გარე კლიკისას
