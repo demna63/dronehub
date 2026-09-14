@@ -10,6 +10,7 @@ import Logo from './Logo';
 import Avatar from './Avatar';
 import NotificationsDropdown from './NotificationsDropdown';
 import { NavLink, MobileNavLink, ProfileMenuItem } from './NavbarLinks';
+import { StableLabel } from './StableLabel';
 import EcosystemLinksNav from './EcosystemLinksNav';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -122,11 +123,11 @@ const Navbar: React.FC<NavbarProps> = ({
             </Link>
 
             <div className="hidden lg:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
-              <NavLink to="/" active={location.pathname === '/'} label={t('route_home')} />
-              <NavLink to="/market" active={location.pathname.startsWith('/market')} label={t('route_market')} />
-              <NavLink to="/vlogs" active={location.pathname.startsWith('/vlogs')} label={t('route_vlogs')} />
-              <NavLink to="/tools" active={location.pathname.startsWith('/tools')} label={t('route_tools_short')} />
-              <NavLink to="/map" active={location.pathname.startsWith('/map')} label={t('route_map')} />
+              <NavLink to="/" active={location.pathname === '/'} tKey="route_home" />
+              <NavLink to="/market" active={location.pathname.startsWith('/market')} tKey="route_market" />
+              <NavLink to="/vlogs" active={location.pathname.startsWith('/vlogs')} tKey="route_vlogs" />
+              <NavLink to="/tools" active={location.pathname.startsWith('/tools')} tKey="route_tools_short" />
+              <NavLink to="/map" active={location.pathname.startsWith('/map')} tKey="route_map" />
             </div>
           </div>
 
@@ -169,7 +170,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   onClick={location.pathname.startsWith('/market') ? onCreateMarketItem : onAddPost}
                   className="hidden sm:flex items-center gap-2 bg-sky-700 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-sky-500/20 active:scale-95"
                 >
-                  <Plus size={18} /> <span className="uppercase tracking-widest text-[11px]">{t('action_add')}</span>
+                  <Plus size={18} /> <StableLabel tKey="action_add" className="uppercase tracking-widest text-[11px]" />
                 </button>
 
                 {/* Notifications */}
@@ -229,7 +230,7 @@ const Navbar: React.FC<NavbarProps> = ({
                           setIsProfileOpen(false); 
                         }} 
                         icon={<UserCircle size={16}/>} 
-                        label={t('nav_profile')} 
+                        tKey="nav_profile" 
                       />
                       
                       <ProfileMenuItem
@@ -239,7 +240,7 @@ const Navbar: React.FC<NavbarProps> = ({
                           setIsProfileOpen(false);
                         }}
                         icon={<Settings size={16}/>}
-                        label={t('nav_settings')}
+                        tKey="nav_settings"
                       />
                       
                       <div className="h-px bg-slate-800 my-1 mx-2"></div>
@@ -248,7 +249,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2 text-rose-400 hover:bg-rose-400/10 text-xs font-bold transition-colors"
                       >
-                        <LogOut size={16} /> {t('action_sign_out')}
+                        <LogOut size={16} /> <StableLabel tKey="action_sign_out" align="start" />
                       </button>
                     </div>
                   )}
@@ -259,7 +260,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 onClick={onLoginClick}
                 className="px-6 py-2.5 bg-white text-slate-900 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-sky-400 hover:text-white transition-all active:scale-95"
               >
-                {t('action_sign_in')}
+                <StableLabel tKey="action_sign_in" />
               </button>
             )}
 
@@ -305,11 +306,11 @@ const Navbar: React.FC<NavbarProps> = ({
           </form>
 
           <div className="space-y-4">
-            <MobileNavLink to="/" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname === '/'} label={t('route_home')} />
-            <MobileNavLink to="/market" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/market')} label={t('route_market')} />
-            <MobileNavLink to="/vlogs" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/vlogs')} label={t('route_vlogs')} />
-            <MobileNavLink to="/tools" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/tools')} label={t('route_tools_short')} />
-            <MobileNavLink to="/map" active={location.pathname.startsWith('/map')} label={t('route_map')} onClick={() => setIsMobileMenuOpen(false)} />
+            <MobileNavLink to="/" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname === '/'} tKey="route_home" />
+            <MobileNavLink to="/market" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/market')} tKey="route_market" />
+            <MobileNavLink to="/vlogs" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/vlogs')} tKey="route_vlogs" />
+            <MobileNavLink to="/tools" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/tools')} tKey="route_tools_short" />
+            <MobileNavLink to="/map" active={location.pathname.startsWith('/map')} tKey="route_map" onClick={() => setIsMobileMenuOpen(false)} />
 
             <div className="pt-6 border-t border-white/5">
               <EcosystemLinksNav
@@ -325,7 +326,11 @@ const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center justify-between w-full px-4 py-4 bg-white/5 hover:bg-white/10 transition-colors rounded-xl text-slate-400 font-bold"
               >
                 <span className="flex items-center gap-2 text-lg"><Globe size={24}/> {t('language_label')}</span>
-                <span className="text-sm uppercase font-black text-white">{language === 'ka' ? t('language_ka') : 'English (EN)'}</span>
+                <StableLabel
+                  tKey={language === 'ka' ? 'language_ka' : 'language_en'}
+                  className="text-sm uppercase font-black text-white"
+                  align="start"
+                />
               </button>
               
               {!currentUser && (

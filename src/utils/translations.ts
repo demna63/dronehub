@@ -687,6 +687,7 @@ export const translations = {
     'meet_join_aria': 'შეერთება ოთახთან: {room}',
     'language_aria': 'ენა: {code}',
     'time_one_day': '1დღ',
+    'language_en': 'English (EN)',
   },
   
   en: {
@@ -1355,5 +1356,6 @@ export const translations = {
     'meet_join_aria': 'Join the room: {room}',
     'language_aria': 'Language: {code}',
     'time_one_day': '1d',
+    'language_en': 'English (EN)',
   }
 };
