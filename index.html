@@ -59,24 +59,34 @@
     </noscript>
 
     <script>
-      (async function preloadLatestPost() {
+      /*
+       * Fetch the feed's first page over REST while the app bundle is still
+       * downloading, and hand it to React (useAppData reads
+       * window.__DHG_FIRST_PAGE__, or listens for "dhg:first-page" if this
+       * lands after mount). Same order as the app's default query —
+       * telemetryScore desc, createdAt desc — so the SDK result that follows
+       * replaces these rows with identical ones and nothing moves.
+       *
+       * No image preload any more: the feed shows 120px thumbnails, and
+       * preloading the newest post's full-size image at high priority spent
+       * ~150 KB on something that is neither the LCP element nor, in the
+       * rated order, necessarily the first row.
+       */
+      (async function preloadFirstPage() {
         try {
-          const projectId = "%VITE_FIREBASE_PROJECT_ID%"; 
-          
-          if (!projectId || projectId.includes("%")) {
-            console.warn("Firebase Project ID not injected properly.");
-            return;
-          }
-          
-          const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/posts?orderBy=createdAt%20desc&pageSize=1`;
+          const projectId = "%VITE_FIREBASE_PROJECT_ID%";
+          if (!projectId || projectId.includes("%")) return;
+
+          const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/posts`
+            + '?orderBy=' + encodeURIComponent('telemetryScore desc, createdAt desc')
+            + '&pageSize=12';
           const response = await fetch(url);
+          if (!response.ok) return;
           const data = await response.json();
-          const document0 = data.documents && data.documents[0];
-          if (!document0) return;
+          if (!data.documents || data.documents.length === 0) return;
 
           // Decode a Firestore REST value into the same native shape the client
-          // SDK's document.data() would produce, so the handed-off post is
-          // structurally identical to what apiService.getPosts() returns.
+          // SDK's document.data() would produce.
           const decode = (v) => {
             if (v == null) return null;
             if ('stringValue' in v) return v.stringValue;
@@ -99,32 +109,17 @@
             return null;
           };
 
-          const fields = document0.fields || {};
-          const post = { id: document0.name.split('/').pop() };
-          for (const key in fields) post[key] = decode(fields[key]);
+          const toPost = (document0) => {
+            const fields = document0.fields || {};
+            const post = { id: document0.name.split('/').pop() };
+            for (const key in fields) post[key] = decode(fields[key]);
+            return post;
+          };
 
-          // Hand the newest post to the app so the first feed card and its LCP
-          // image can paint on React's first render, instead of waiting for the
-          // Firestore SDK query. Best-effort: if this resolves after hydration,
-          // the app falls back to its normal fetch with no regression.
-          window.__DHG_LCP_POST__ = post;
-
-          const imageUrl = post.image;
-          // Attacker-controlled otherwise: `image` is written by the client and
-          // never validated, and every visitor's browser would fetch it.
-          const isOwnStorage = typeof imageUrl === 'string'
-            && imageUrl.startsWith('https://firebasestorage.googleapis.com/');
-          if (isOwnStorage) {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.as = 'image';
-            link.fetchPriority = 'high';
-            link.setAttribute('fetchpriority', 'high');
-            link.href = imageUrl;
-            document.head.appendChild(link);
-          }
+          window.__DHG_FIRST_PAGE__ = data.documents.map(toPost);
+          window.dispatchEvent(new Event('dhg:first-page'));
         } catch (e) {
-          console.warn("LCP Preload skipped");
+          // Best-effort: the app's own query still runs.
         }
       })();
     </script>

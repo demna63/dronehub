@@ -10,6 +10,10 @@ import { SIDEBAR_CATEGORIES } from '../constants/navigation';
 
 interface SidebarProps {
   currentUser: User | null;
+  /** Auth has not settled yet. */
+  authPending?: boolean;
+  /** The last visit ended signed in: reserve the "My space" block meanwhile. */
+  authHint?: boolean;
 }
 
 const CATEGORY_IDS = SIDEBAR_CATEGORIES.map((category) => category.id);
@@ -21,12 +25,14 @@ const CATEGORY_IDS = SIDEBAR_CATEGORIES.map((category) => category.id);
  * (feed, tools, market, map, vlogs) were removed, as were the outer glass
  * panel and a footer that never rendered — App never passed its handlers.
  */
-const Sidebar: React.FC<SidebarProps> = ({ currentUser }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentUser, authPending = false, authHint = false }) => {
   const { t } = useLanguage();
   const counts = useCategoryCounts(CATEGORY_IDS);
 
   return (
     <nav aria-label={t('landmark_navigation')} className="flex flex-col gap-6">
+      {/* Same height as the section below, so categories do not jump when it appears. */}
+      {authPending && authHint && <div aria-hidden="true" className="h-[102px]" />}
       {currentUser && (
         <SidebarNavSection title={t('side_my_space')}>
           <SidebarNavItem to="/saved" icon={Bookmark} label={t('route_saved')} />

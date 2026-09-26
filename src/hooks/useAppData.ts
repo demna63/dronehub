@@ -13,6 +13,41 @@ import { useLanguage } from '../contexts/useLanguage';
 const readStaleCache = <T,>(key: 'posts' | 'vlogs' | 'meetRooms') =>
   readCachedData<T>(key, { allowStale: true });
 
+/** Event the index.html probe dispatches when its REST page arrives. */
+const FIRST_PAGE_EVENT = 'dhg:first-page';
+
+/** Rows fetched by the inline probe in index.html, if it has resolved. */
+const readFirstPageProbe = (): Post[] | null => {
+  try {
+    const page = (window as unknown as { __DHG_FIRST_PAGE__?: Post[] }).__DHG_FIRST_PAGE__;
+    return Array.isArray(page) && page.length > 0 ? page : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Whether the last visit ended signed in. Lets the shell reserve room for the
+ * signed-in controls while Firebase Auth restores the session, so they do not
+ * push the layout when they appear.
+ */
+const AUTH_HINT_KEY = 'dronehub-auth-hint';
+const readAuthHint = (): boolean => {
+  try {
+    return window.localStorage.getItem(AUTH_HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const writeAuthHint = (signedIn: boolean) => {
+  try {
+    if (signedIn) window.localStorage.setItem(AUTH_HINT_KEY, '1');
+    else window.localStorage.removeItem(AUTH_HINT_KEY);
+  } catch {
+    // Storage blocked (private mode): the hint is an optimisation only.
+  }
+};
+
 export const useAppData = () => {
   const { t } = useLanguage();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -65,23 +100,28 @@ export const useAppData = () => {
     void fetchPostsRef.current?.();
   }, []);
 
+  /**
+   * First paint of the feed without waiting for the Firestore SDK.
+   *
+   * On the home route the list starts from, in order: the first page cached by
+   * the last visit, or the page the inline probe in index.html fetched over
+   * REST (`window.__DHG_FIRST_PAGE__`). Both hold the default `rated` order, so
+   * fetchPosts() below replaces them with the same rows and nothing shifts.
+   * Category routes start empty: an unfiltered list there would flash the
+   * wrong posts before the facet query lands.
+   */
   const [posts, setPosts] = useState<Post[]>(() => {
-    // Seed the first render from the newest post the inline HTML probe already
-    // fetched (window.__DHG_LCP_POST__), so the LCP image paints immediately
-    // instead of waiting for the Firestore SDK query. Best-effort and safe: the
-    // shape mirrors apiService.getPosts(); the cache effect and fetchPosts below
-    // overwrite it with the fuller list as soon as either resolves.
-    try {
-      const seed = (window as unknown as { __DHG_LCP_POST__?: Post }).__DHG_LCP_POST__;
-      return seed && seed.id ? [seed] : [];
-    } catch {
-      return [];
-    }
+    if (typeof window === 'undefined' || window.location.pathname !== '/') return [];
+    const cached = readStaleCache<Post[]>('posts');
+    if (cached && cached.length > 0) return cached;
+    return readFirstPageProbe() ?? [];
   });
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [vlogs, setVlogs] = useState<VlogEntry[]>([]);
   const [meetRooms, setMeetRooms] = useState<MeetRoomData[]>([]);
+  /** True until Firebase Auth has restored (or ruled out) a session. */
   const [loading, setLoading] = useState(true);
+  const [authHint] = useState(readAuthHint);
   // Distinct from `loading`, which only tracks auth. The feed used to bind its
   // spinner to the auth flag, so a cold visit showed "no posts yet" while the
   // query was still in flight — and showed the same thing when it failed.
@@ -103,13 +143,25 @@ export const useAppData = () => {
   }, []);
 
   useEffect(() => {
-    const cachedPosts = readStaleCache<Post[]>('posts');
     const cachedVlogs = readStaleCache<VlogEntry[]>('vlogs');
     const cachedMeetRooms = readStaleCache<MeetRoomData[]>('meetRooms');
 
-    if (cachedPosts) setPosts(cachedPosts);
     if (cachedVlogs) setVlogs(cachedVlogs);
     if (cachedMeetRooms) setMeetRooms(cachedMeetRooms);
+  }, []);
+
+  /**
+   * The probe usually resolves before React mounts; when it lands later, use
+   * it only if nothing better has arrived (the SDK page or the cache).
+   */
+  useEffect(() => {
+    if (window.location.pathname !== '/') return;
+    const onFirstPage = () => {
+      const page = readFirstPageProbe();
+      if (page) setPosts((current) => (current.length === 0 ? page : current));
+    };
+    window.addEventListener(FIRST_PAGE_EVENT, onFirstPage);
+    return () => window.removeEventListener(FIRST_PAGE_EVENT, onFirstPage);
   }, []);
 
   /** Load the first page, replacing whatever is on screen. */
@@ -128,7 +180,9 @@ export const useAppData = () => {
         setPosts(nextPosts);
         // Only the first page is cached. Caching an accumulated feed would
         // grow without bound and restore a scroll position nobody asked for.
-        if (!postFacetRef.current) writeCachedData('posts', nextPosts);
+        // `rated` only: it is the order a fresh visit starts in, so the cached
+        // rows seed the first paint without being reshuffled a moment later.
+        if (!postFacetRef.current && sort === 'rated') writeCachedData('posts', nextPosts);
       } else {
         const cachedPosts = postFacetRef.current
           ? null
@@ -246,6 +300,7 @@ export const useAppData = () => {
        * reload, which reproduced it.
        */
       try {
+        writeAuthHint(Boolean(user));
         if (!user) {
           setCurrentUser(null);
           return;
@@ -341,6 +396,8 @@ export const useAppData = () => {
     meetRooms,
     setMeetRooms,
     loading,
+    authPending: loading,
+    authHint,
     postsLoading,
     postsError,
     refetchPosts: fetchPosts,

@@ -64,7 +64,8 @@ interface AppRoutesProps {
   notifications: NotificationType[];
   vlogs: VlogEntry[];
   meetRooms: MeetRoomData[];
-  loading: boolean;
+  /** Firebase Auth has not settled yet: `currentUser` is not final. */
+  authPending: boolean;
   feedProps: FeedProps;
   onLoginRequest: () => void;
   onOpenCreatePost: () => void;
@@ -124,7 +125,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
   notifications: _notifications,
   vlogs,
   meetRooms,
-  loading: _loading,
+  authPending,
   feedProps,
   onLoginRequest,
   onOpenCreatePost: _onOpenCreatePost,
@@ -164,7 +165,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/c/:categoryId" element={<CategoryRedirect />} />
           <Route path="/post/:postId" element={<PostPage posts={posts} currentUser={currentUser} feedProps={feedProps} />} />
           <Route path="/marketplace" element={<Navigate to="/market" replace />} />
-          <Route path="/saved" element={<SavedPosts currentUser={currentUser} onToggleSave={feedProps.onToggleSave ?? (() => {})} onLoginClick={onLoginRequest} />} />
+          <Route path="/saved" element={authPending ? <RouteFallback /> : <SavedPosts currentUser={currentUser} onToggleSave={feedProps.onToggleSave ?? (() => {})} onLoginClick={onLoginRequest} />} />
           <Route
             path="/search"
             element={(
@@ -199,10 +200,10 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/market" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} onCreateListing={onOpenMarketModal} />} />
           <Route path="/market/category/:categoryId" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} onCreateListing={onOpenMarketModal} />} />
           <Route path="/map" element={<SpotMap currentUser={currentUser} onLoginClick={onLoginRequest} />} />
-          <Route path="/chat" element={currentUser ? <GlobalChat currentUser={currentUser} onUserClick={(id) => navigate(`/u/${id}`)} onLoginClick={onLoginRequest} /> : <Navigate to="/" replace />} />
+          <Route path="/chat" element={authPending ? <RouteFallback /> : currentUser ? <GlobalChat currentUser={currentUser} onUserClick={(id) => navigate(`/u/${id}`)} onLoginClick={onLoginRequest} /> : <Navigate to="/" replace />} />
           <Route path="/meet" element={<OnRouteMount run={fetchMeetRooms}><MeetSection rooms={meetRooms} user={currentUser} onOpenRoom={(id) => navigate(`/meet/${id}`)} onLoginClick={onLoginRequest} /></OnRouteMount>} />
           <Route path="/meet/:roomId" element={<OnRouteMount run={fetchMeetRooms}><MeetRoomPage rooms={meetRooms} user={currentUser} onLoginRequest={onLoginRequest} /></OnRouteMount>} />
-          <Route path="/admin" element={<AdminDashboard currentUser={currentUser} posts={posts} />} />
+          <Route path="/admin" element={authPending ? <RouteFallback /> : <AdminDashboard currentUser={currentUser} posts={posts} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

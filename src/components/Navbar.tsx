@@ -19,6 +19,8 @@ import { signOut } from 'firebase/auth';
 
 interface NavbarProps {
   currentUser?: User | null;
+  /** Auth is still restoring the session: render neither signed-in controls nor the sign-in button. */
+  authPending?: boolean;
   onSearch?: (query: string) => void;
   onAddPost?: () => void;
   onCreateMarketItem?: () => void;
@@ -91,6 +93,7 @@ const SearchField: React.FC<SearchFieldProps> = ({ id, value, onChange, onSubmit
  */
 const Navbar: React.FC<NavbarProps> = ({
   currentUser,
+  authPending = false,
   onSearch,
   onAddPost,
   onCreateMarketItem,
@@ -208,7 +211,11 @@ const Navbar: React.FC<NavbarProps> = ({
               {language === 'ka' ? 'GE' : 'EN'}
             </button>
 
-            {currentUser ? (
+            {authPending ? (
+              // Holds the width of the account controls so the bar does not
+              // reflow when the session resolves.
+              <span aria-hidden="true" className="hidden h-10 w-[136px] sm:block" />
+            ) : currentUser ? (
               <>
                 <button
                   type="button"

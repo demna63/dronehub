@@ -50,7 +50,8 @@ const App: React.FC = () => {
     vlogs,
     setVlogs,
     meetRooms,
-    loading,
+    authPending,
+    authHint,
     postsLoading,
     postsError,
     isOffline,
@@ -207,7 +208,7 @@ const App: React.FC = () => {
     notifications,
     vlogs,
     meetRooms,
-    loading,
+    authPending,
     feedProps,
     // Handed to the routes that need them, so a visitor who never opens /vlogs
     // or /meet does not pay for those collection scans on every cold load.
@@ -235,14 +236,12 @@ const App: React.FC = () => {
   const showRightSidebar = pathname === '/' || pathname.startsWith('/category/');
   const isFullHeightRoute = pathname === '/map' || pathname === '/chat';
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4" role="status">
-        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-        <span className="text-sm text-ink-3">{t('state_loading')}</span>
-      </div>
-    );
-  }
+  /*
+   * No full-screen splash while Firebase Auth restores the session: the feed
+   * does not need it, and gating the whole app on it (plus a profile read)
+   * was most of the 1.1 s LCP render delay. Routes that do depend on the user
+   * wait on `authPending` themselves (see AppRoutes).
+   */
 
   return (
     <>
@@ -265,6 +264,7 @@ const App: React.FC = () => {
 
           <Navbar
             currentUser={currentUser}
+            authPending={authPending}
             onLoginClick={handleLoginRequest}
             onAddPost={handleCreatePost}
             onCreateMarketItem={handleCreateMarketItem}
@@ -278,7 +278,7 @@ const App: React.FC = () => {
             {/* Left navigation — scrolls its own overflow, never the page.
                 A plain column: the <nav> inside is the landmark. */}
             <div className="hidden md:block w-[232px] flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto custom-scrollbar pt-6 pb-4">
-              <Sidebar currentUser={currentUser} />
+              <Sidebar currentUser={currentUser} authPending={authPending} authHint={authHint} />
             </div>
 
             {/* Main Content — the app's scroll container from `md` up.
