@@ -52,7 +52,7 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
   const isListing = isMarketItem(post.category);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div>
       {!isListing && <h1 className="sr-only">{post.title}</h1>}
 
       <button
@@ -64,8 +64,8 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
         {t('action_back')}
       </button>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className={isListing ? 'lg:col-span-3' : 'lg:col-span-2'}>
+      <div className={`grid grid-cols-1 gap-6 ${isListing ? '' : 'lg:grid-cols-[minmax(0,1fr)_280px]'}`}>
+        <div className="min-w-0">
           {isListing ? (
             <MarketItemView
               item={post}

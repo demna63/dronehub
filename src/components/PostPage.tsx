@@ -52,7 +52,7 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
 
   if (loading && !post) {
     return (
-      <div aria-busy="true" aria-label={t('state_loading')} className="mx-auto max-w-5xl">
+      <div aria-busy="true" aria-label={t('state_loading')} >
         <PostCardSkeleton />
       </div>
     );

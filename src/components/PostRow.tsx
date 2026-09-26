@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bookmark, MessageSquare, MoreHorizontal, Pencil, Share2, Trash2 } from 'lucide-react';
 import type { Post } from '../types';
@@ -44,6 +44,7 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -139,28 +140,32 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
             </button>
           )}
 
-          <div className="relative z-10" ref={menuRef}>
+          {/*
+            More actions expand inline, in the row's own action strip, rather
+            than as a popover: a dropdown here covered the next post, and on
+            a phone the strip simply wraps inside this row.
+          */}
+          <div ref={menuRef} className="relative z-10 flex flex-wrap items-center gap-1">
             <button
               type="button"
               aria-label={t('post_menu')}
-              aria-haspopup="menu"
               aria-expanded={isMenuOpen}
+              aria-controls={menuId}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className={`${ACTION} ${isMenuOpen ? 'bg-white/5' : ''}`}
+              className={`${ACTION} ${isMenuOpen ? 'bg-white/5 text-ink' : ''}`}
             >
               <MoreHorizontal size={16} aria-hidden="true" />
             </button>
             {isMenuOpen && (
-              <div role="menu" className="absolute left-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-[10px] border border-white/10 bg-surface py-1 shadow-2xl">
-                <button type="button" role="menuitem" onClick={handleShare} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-ink-2 hover:bg-white/5">
+              <div id={menuId} role="group" aria-label={t('post_menu')} className="flex flex-wrap items-center gap-1 border-l border-line pl-1">
+                <button type="button" onClick={handleShare} className={ACTION}>
                   <Share2 size={16} aria-hidden="true" /> {t('action_share')}
                 </button>
                 {canManage && (
                   <button
                     type="button"
-                    role="menuitem"
                     onClick={() => { setIsMenuOpen(false); navigate(href, { state: { edit: true } }); }}
-                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-ink-2 hover:bg-white/5"
+                    className={ACTION}
                   >
                     <Pencil size={16} aria-hidden="true" /> {t('action_edit')}
                   </button>
@@ -168,9 +173,8 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
                 {canManage && onDelete && (
                   <button
                     type="button"
-                    role="menuitem"
                     onClick={() => { setIsMenuOpen(false); setIsConfirmingDelete(true); }}
-                    className="flex w-full items-center gap-2.5 border-t border-line px-3.5 py-2.5 text-sm text-bad hover:bg-bad/10"
+                    className={`${ACTION} text-bad hover:bg-bad/10`}
                   >
                     <Trash2 size={16} aria-hidden="true" /> {t('action_delete')}
                   </button>
