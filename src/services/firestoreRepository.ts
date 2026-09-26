@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getCountFromServer,
   limit,
   orderBy,
   query,
@@ -169,6 +170,19 @@ export const getPostPageFromFirestore = async ({
     cursor: docs.length > 0 ? docs[docs.length - 1] : null,
     hasMore,
   };
+};
+
+/**
+ * How many posts carry a facet, counted server-side.
+ *
+ * An aggregation query bills one read per 1000 index entries, so the sidebar's
+ * category counts cost a handful of reads instead of downloading the posts.
+ */
+export const countPostsByFacetFromFirestore = async (facet: string): Promise<number> => {
+  const snapshot = await getCountFromServer(
+    query(collection(db, 'posts'), where('facets', 'array-contains', facet)),
+  );
+  return snapshot.data().count;
 };
 
 /**

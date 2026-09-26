@@ -20,8 +20,8 @@ interface CreatePostModalProps {
 
 // მთავარი ტიპები
 const POST_TYPES = [
-  { id: 'news', labelKey: 'post_type_news', icon: Newspaper, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  { id: 'fpv', labelKey: 'post_type_fpv', icon: Gamepad2, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { id: 'news', labelKey: 'post_type_news', icon: Newspaper, color: 'text-accent', bg: 'bg-accent-tint' },
+  { id: 'fpv', labelKey: 'post_type_fpv', icon: Gamepad2, color: 'text-accent', bg: 'bg-accent-tint' },
   { id: 'cine', labelKey: 'post_type_cine', icon: Camera, color: 'text-amber-400', bg: 'bg-amber-500/10' },
 ];
 
@@ -121,19 +121,19 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                 className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
                   mainType === type.id
                     ? `${type.bg} ${type.color} border-${type.color.split('-')[1]}-500/50`
-                    : 'bg-slate-950 border-white/5 text-slate-400 hover:bg-slate-800'
+                    : 'bg-bg border-white/5 text-ink-3 hover:bg-surface-2'
                 }`}
               >
                 <type.icon size={24} />
-                <span className="text-xs font-bold uppercase">{t(type.labelKey)}</span>
+                <span className="text-xs font-bold">{t(type.labelKey)}</span>
               </button>
             ))}
           </div>
 
           {/* 2. FPV ქვეკატეგორიები */}
           {mainType === 'fpv' && (
-            <div className="mb-6 animate-in slide-in-from-top-2">
-              <span id="fpv-subcategory-label" className="text-xs font-bold text-slate-400 uppercase mb-3 block">
+            <div className="mb-6">
+              <span id="fpv-subcategory-label" className="text-xs font-bold text-ink-3 mb-3 block">
                 {t('post_pick_discipline')}
               </span>
               <div role="group" aria-labelledby="fpv-subcategory-label" className="flex flex-wrap gap-2">
@@ -142,10 +142,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                     key={sub.id}
                     type="button"
                     onClick={() => setSubCategory(sub.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-[10px] text-sm font-bold border transition-all ${
                       subCategory === sub.id
-                        ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20'
-                        : 'bg-slate-950 text-slate-400 border-white/5 hover:border-white/20 hover:text-white'
+                        ? 'bg-accent-fill text-white border-accent/30 shadow-lg '
+                        : 'bg-bg text-ink-3 border-white/5 hover:border-white/20 hover:text-white'
                     }`}
                   >
                     <sub.icon size={16} />
@@ -160,7 +160,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
             
             {/* სათაური */}
             <div className="space-y-2">
-              <label htmlFor="post-title" className="text-xs font-bold text-slate-400 uppercase">{t('field_title')}</label>
+              <label htmlFor="post-title" className="text-xs font-bold text-ink-3">{t('field_title')}</label>
               <input
                 id="post-title"
                 type="text"
@@ -168,28 +168,28 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                 maxLength={POST_TITLE_MAX_LENGTH}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t('post_title_placeholder')}
-                className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400"
+                className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:outline-none focus:border-accent/50 transition-colors placeholder:text-ink-3"
                 required
               />
             </div>
 
             {/* ტექსტი */}
             <div className="space-y-2">
-              <label htmlFor="post-content" className="text-xs font-bold text-slate-400 uppercase">{t('field_description')}</label>
+              <label htmlFor="post-content" className="text-xs font-bold text-ink-3">{t('field_description')}</label>
               <textarea
                 id="post-content"
                 value={content}
                 maxLength={POST_CONTENT_MAX_LENGTH}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder={t('post_body_placeholder')}
-                className="w-full h-32 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400 resize-none"
+                className="w-full h-32 bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:outline-none focus:border-accent/50 transition-colors placeholder:text-ink-3 resize-none"
                 required
               />
             </div>
 
             {/* სურათის ატვირთვა */}
             <div className="space-y-2">
-              <label htmlFor="image-upload" className="text-xs font-bold text-slate-400 uppercase">{t('field_media_image')}</label>
+              <label htmlFor="image-upload" className="text-xs font-bold text-ink-3">{t('field_media_image')}</label>
               <div className="relative group">
                 <input
                   type="file"
@@ -202,8 +202,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                   htmlFor="image-upload"
                   className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
                     imagePreview 
-                      ? 'border-indigo-500/50 bg-slate-950' 
-                      : 'border-white/10 bg-slate-950/50 hover:bg-slate-950 hover:border-indigo-500/30'
+                      ? 'border-accent/30 bg-bg' 
+                      : 'border-white/10 bg-bg/50 hover:bg-bg hover:border-accent/30'
                   }`}
                 >
                   {imagePreview ? (
@@ -211,21 +211,21 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                       <img 
                         src={imagePreview} 
                         alt="Preview" 
-                        className="w-full h-full object-contain rounded-xl"
+                        className="w-full h-full object-contain rounded-[10px]"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-[10px]">
                         <span className="text-white text-sm font-bold flex items-center gap-2">
                           <ImageIcon size={16} /> შეცვლა
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center text-slate-400">
-                      <div className="p-3 bg-slate-900 rounded-full mb-2 group-hover:scale-110 transition-transform">
+                    <div className="flex flex-col items-center text-ink-3">
+                      <div className="p-3 bg-surface rounded-full mb-2 transition-transform">
                         <Upload size={20} />
                       </div>
-                      <span className="text-sm font-bold text-slate-400">ატვირთე სურათი</span>
-                      <span className="text-xs text-slate-400 mt-1">PNG, JPG, GIF up to 5MB</span>
+                      <span className="text-sm font-bold text-ink-3">ატვირთე სურათი</span>
+                      <span className="text-xs text-ink-3 mt-1">PNG, JPG, GIF up to 5MB</span>
                     </div>
                   )}
                 </label>
@@ -237,7 +237,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-8 py-3 bg-accent-fill hover:bg-accent-fill-hover active:bg-accent-fill-active text-white font-bold rounded-[10px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {loading ? (
                   <>

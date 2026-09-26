@@ -44,36 +44,36 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
       busy={isSubmitting}
     >
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div className="flex items-center gap-2 text-slate-400">
-              <Youtube className="text-red-500" aria-hidden="true" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">YouTube</span>
+            <div className="flex items-center gap-2 text-ink-3">
+              <Youtube className="text-bad" aria-hidden="true" />
+              <span className="text-xs font-bold">YouTube</span>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="vlog-url" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('vlog_youtube_link')}</label>
+              <label htmlFor="vlog-url" className="text-xs font-bold text-ink-3 ml-1">{t('vlog_youtube_link')}</label>
               <div className="relative">
-                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" size={16} />
                 <input 
                   id="vlog-url"
                   type="url" 
                   value={url} 
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white focus:border-red-500 outline-none text-sm"
+                  className="w-full bg-bg border border-white/10 rounded-[10px] pl-10 pr-4 py-3 text-white focus:border-bad/30 outline-none text-sm"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="vlog-title" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_title')}</label>
+              <label htmlFor="vlog-title" className="text-xs font-bold text-ink-3 ml-1">{t('field_title')}</label>
               <input 
                 id="vlog-title"
                 type="text" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t('vlog_title_placeholder')}
-                className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none font-bold"
+                className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-bad/30 outline-none font-bold"
                 required
               />
             </div>
@@ -81,7 +81,7 @@ const AddVlogModal: React.FC<AddVlogModalProps> = ({ isOpen, onClose, onSubmit }
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl uppercase tracking-wider shadow-lg shadow-red-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-bad hover:bg-bad text-white font-bold rounded-[10px] shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="animate-spin" /> : t('action_add')}
             </button>

@@ -4,7 +4,8 @@ import { useParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import PostCard from './PostCard';
+import PostRow from './PostRow';
+import { isUserAdmin } from '../utils/authUtils';
 import HangarCard from './HangarCard';
 import ProfileHeader from './ProfileHeader';
 import ProfileTabs from './ProfileTabs';
@@ -23,7 +24,6 @@ interface ProfilePageProps {
 const ProfilePage: React.FC<ProfilePageProps> = ({ 
   currentUser, 
   onToggleSave,
-  onLoginClick
 }) => {
   const { t } = useLanguage();
   const { userId } = useParams();
@@ -198,11 +198,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
   }
 
   if (!profileUser) {
-    return <div className="text-center py-20 text-slate-400">{t('user_not_found')}</div>;
+    return <div className="text-center py-20 text-ink-3">{t('user_not_found')}</div>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20 duration-500">
       
       <ProfileHeader
         profileUser={profileUser}
@@ -226,14 +226,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             <button
               type="button"
               onClick={() => setPendingDelete(null)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] text-xs font-bold text-ink-2 hover:text-white hover:bg-white/5 transition-colors"
             >
               <X size={14} aria-hidden="true" /> {t('action_cancel')}
             </button>
             <button
               type="button"
               onClick={() => void confirmPendingDelete()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 hover:text-rose-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] text-xs font-bold bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 hover:text-rose-200 transition-colors"
             >
               <Check size={14} aria-hidden="true" /> {t('delete_confirm_yes')}
             </button>
@@ -253,29 +253,24 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
       {/* CONTENT */}
       <div className="py-4">
         {activeTab === 'posts' && (
-          <div className="space-y-6">
-            {userPosts.length > 0 ? (
-              userPosts.map(post => (
-                <PostCard 
-                  key={post.id} 
-                  post={post} 
-                  currentUser={currentUser ?? null}
-                  onAddComment={async () => {}} 
-                  onDelete={() => setPendingDelete({ kind: 'post', id: post.id })}
-                  onEdit={(newContent) => {
-                    setUserPosts(prev => prev.map(p => 
-                      p.id === post.id ? { ...p, content: newContent } : p
-                    ));
-                  }}
+          userPosts.length > 0 ? (
+            <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+              {userPosts.map((post, index) => (
+                <PostRow
+                  key={post.id}
+                  post={post}
                   isSaved={!!currentUser?.savedPosts?.includes(post.id)}
-                  onToggleSave={onToggleSave ? () => onToggleSave(post.id) : undefined}
-                  onLoginClick={onLoginClick || (() => {})} 
+                  onToggleSave={onToggleSave}
+                  canManage={Boolean(isOwnProfile) || isUserAdmin(currentUser ?? null)}
+                  // PostRow asks "delete?" inline; this deletes directly.
+                  onDelete={(id) => { void handleDeletePost(id); }}
+                  priority={index === 0}
                 />
-              ))
-            ) : (
-              <ProfileEmptyState message={isOwnProfile ? t('profile_no_posts_own') : t('profile_no_posts_other')} />
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <ProfileEmptyState message={isOwnProfile ? t('profile_no_posts_own') : t('profile_no_posts_other')} />
+          )
         )}
 
         {activeTab === 'hangar' && (
@@ -284,7 +279,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
               <button 
                 type="button"
                 onClick={openAddDroneModal}
-                className="w-full mb-8 py-4 border-2 border-dashed border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5 text-emerald-500 font-bold uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2"
+                className="w-full mb-8 py-4 border-2 border-dashed border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5 text-emerald-500 font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
               >
                 <Plus size={18} /> {t('drone_add')}
               </button>
@@ -320,22 +315,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
             <form onSubmit={handleSaveDrone} className="space-y-6 p-6 md:p-8">
               
               <div className="flex gap-6">
-                <div className="w-32 h-32 shrink-0 bg-slate-950 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-emerald-500/50 transition-colors">
+                <div className="w-32 h-32 shrink-0 bg-bg border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-emerald-500/50 transition-colors">
                   {imagePreview ? (
                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
                     <>
-                      <Camera className="text-slate-500 mb-2 group-hover:text-emerald-500 transition-colors" />
-                      <span className="text-[10px] text-slate-500 font-bold uppercase">{t('field_photo')}</span>
+                      <Camera className="text-ink-3 mb-2 group-hover:text-emerald-500 transition-colors" />
+                      <span className="text-xs text-ink-3 font-bold">{t('field_photo')}</span>
                     </>
                   )}
                   <input id="drone-image" aria-label={t('drone_photo_upload')} type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                 </div>
 
                 <div className="flex-1 space-y-4">
-                  <input id="drone-name" aria-label="დრონის სახელი" required placeholder="Drone Name (e.g. Apex 5)" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-bold focus:border-emerald-500 focus:outline-none" />
+                  <input id="drone-name" aria-label="დრონის სახელი" required placeholder="Drone Name (e.g. Apex 5)" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white font-bold focus:border-emerald-500 focus:outline-none" />
                   
-                  <select id="drone-status" aria-label="დრონის სტატუსი" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as 'flying' | 'broken' | 'wip'})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer">
+                  <select id="drone-status" aria-label="დრონის სტატუსი" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as 'flying' | 'broken' | 'wip'})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer">
                     <option value="flying">🟢 Ready to Fly</option>
                     <option value="wip">🟡 Work in Progress</option>
                     <option value="broken">🔴 Broken / Repairing</option>
@@ -343,22 +338,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 </div>
               </div>
 
-              <div className="bg-slate-950/50 p-5 rounded-2xl border border-white/5 space-y-4">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ნაწილები (სურვილისამებრ)</h3>
+              <div className="bg-bg/50 p-5 rounded-2xl border border-white/5 space-y-4">
+                <h3 className="text-xs font-extrabold text-ink-3">ნაწილები (სურვილისამებრ)</h3>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="Frame" value={formData.frame} onChange={(e) => setFormData({...formData, frame: e.target.value})} className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
-                    <input type="text" placeholder="Motors" value={formData.motors} onChange={(e) => setFormData({...formData, motors: e.target.value})} className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder="Frame" value={formData.frame} onChange={(e) => setFormData({...formData, frame: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder="Motors" value={formData.motors} onChange={(e) => setFormData({...formData, motors: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
                   </div>
-                  <input type="text" placeholder="FC & ESC" value={formData.fc_esc} onChange={(e) => setFormData({...formData, fc_esc: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                  <input type="text" placeholder="FC & ESC" value={formData.fc_esc} onChange={(e) => setFormData({...formData, fc_esc: e.target.value})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none" />
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="VTX" value={formData.vtx} onChange={(e) => setFormData({...formData, vtx: e.target.value})} className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
-                    <input type="text" placeholder="Camera" value={formData.camera} onChange={(e) => setFormData({...formData, camera: e.target.value})} className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder="VTX" value={formData.vtx} onChange={(e) => setFormData({...formData, vtx: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder="Camera" value={formData.camera} onChange={(e) => setFormData({...formData, camera: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
                   </div>
                 </div>
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-50">
+              <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
                 {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                 {isSubmitting ? 'ინახება...' : 'შენახვა'}
               </button>

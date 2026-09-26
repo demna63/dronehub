@@ -121,9 +121,9 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
               })
             : t('rating_none_yet')
         }
-        className={`w-full h-10 px-3 rounded-xl border flex items-center gap-2 transition-all ${
+        className={`w-full h-10 px-3 rounded-[10px] border flex items-center gap-2 transition-all ${
           isOpen
-            ? 'bg-slate-900 border-white/20'
+            ? 'bg-surface border-white/20'
             : 'bg-white/[0.03] border-white/5 hover:border-white/15 hover:bg-white/[0.06]'
         }`}
       >
@@ -134,14 +134,14 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
           tone={isConfirmed ? 'gold' : 'muted'}
         />
 
-        <span className={`text-xs font-bold tabular-nums ${isConfirmed ? 'text-white' : 'text-slate-300'}`}>
+        <span className={`text-xs font-bold tabular-nums ${isConfirmed ? 'text-white' : 'text-ink-2'}`}>
           {hasAny ? overallStars.toFixed(1) : '–'}
         </span>
 
         {/* A number backed by one or two people is still shown — hiding it read
             as "my rating did not save" — but it is labelled provisional and
             drawn in a muted tone so it is never mistaken for a consensus. */}
-        <span className="text-[10px] text-slate-400 truncate">
+        <span className="text-xs text-ink-3 truncate">
           {!hasAny
             ? t('rating_none_yet')
             : isConfirmed
@@ -152,32 +152,32 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
         <span className="flex-1" />
 
         {hasVoted && (
-          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 shrink-0 tabular-nums">
-            <Check size={11} aria-hidden="true" /> შენი {ownStars.toFixed(1)}
+          <span className="flex items-center gap-1 text-xs font-bold text-emerald-400 shrink-0 tabular-nums">
+            <Check size={11} aria-hidden="true" /> {t('rating_yours', { stars: ownStars.toFixed(1) })}
           </span>
         )}
 
         <ChevronDown
           size={14}
           aria-hidden="true"
-          className={`text-slate-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-ink-3 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {isOpen && (
         <div
           onClick={(event) => event.stopPropagation()}
-          className="mt-2 bg-slate-950 border border-white/10 rounded-xl p-3 animate-in slide-in-from-top-1 fade-in duration-200"
+          className="mt-2 bg-bg border border-white/10 rounded-[10px] p-3 duration-200"
         >
           {isLoadingVote ? (
-            <p className="text-[11px] text-slate-500 py-6 text-center">{t('state_loading')}</p>
+            <p className="text-xs text-ink-3 py-6 text-center">{t('state_loading')}</p>
           ) : (
             <>
               <div className="space-y-2.5">
                 {AXES.map((axis) => (
                   <div key={axis.key} className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 w-[86px] shrink-0">
-                      <axis.icon size={12} className="text-slate-500" aria-hidden="true" />
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-ink-2 w-[86px] shrink-0">
+                      <axis.icon size={12} className="text-ink-3" aria-hidden="true" />
                       {t(axis.labelKey)}
                     </span>
 
@@ -198,7 +198,7 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
                     {hasAny && (
                       <span
                         title={t(isConfirmed ? 'rating_community_average' : 'rating_provisional_average')}
-                        className={`text-[10px] tabular-nums shrink-0 ${isConfirmed ? 'text-slate-400' : 'text-slate-600'}`}
+                        className={`text-xs tabular-nums shrink-0 ${isConfirmed ? 'text-ink-3' : 'text-ink-3'}`}
                       >
                         {percentToStars(averages[axis.key]).toFixed(1)}
                       </span>
@@ -208,14 +208,14 @@ const PostTelemetry: React.FC<PostTelemetryProps> = ({
               </div>
 
               {error && (
-                <p role="alert" className="mt-3 text-[10px] text-rose-400 text-center">{error}</p>
+                <p role="alert" className="mt-3 text-xs text-rose-400 text-center">{error}</p>
               )}
 
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSaving || !isComplete}
-                className="w-full mt-3 h-8 rounded-lg bg-amber-400 text-black text-[11px] font-bold flex items-center justify-center gap-2 hover:bg-amber-300 transition-colors disabled:bg-slate-800 disabled:text-slate-500"
+                className="w-full mt-3 h-8 rounded-lg bg-amber-400 text-black text-xs font-bold flex items-center justify-center gap-2 hover:bg-amber-300 transition-colors disabled:bg-surface-2 disabled:text-ink-3"
               >
                 {isSaving
                   ? <><Loader2 size={12} className="animate-spin" /> {t('action_saving')}</>

@@ -58,7 +58,7 @@ const HarmonicsCalculator: React.FC = () => {
   }, [harmonics]);
 
   return (
-    <div className="p-6 space-y-8 animate-in fade-in duration-500">
+    <div className="p-6 space-y-8 duration-500">
       
       {/* 1. Header */}
       <div className="flex items-center gap-4 border-b border-white/10 pb-6">
@@ -66,18 +66,18 @@ const HarmonicsCalculator: React.FC = () => {
           <Activity size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight">Harmonics Calculator</h2>
-          <p className="text-sm text-slate-400 font-medium">Analyze RF interference across all VTX bands</p>
+          <h2 className="text-2xl font-extrabold text-white">Harmonics Calculator</h2>
+          <p className="text-sm text-ink-3 font-medium">Analyze RF interference across all VTX bands</p>
         </div>
       </div>
 
       {/* 2. Top Bar: Configuration & Range (Grid Layout) */}
-      <div className="bg-slate-950/50 border border-white/10 rounded-2xl p-6">
+      <div className="bg-bg/50 border border-white/10 rounded-2xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-end">
           
           {/* Input: Center Freq */}
           <div className="space-y-2">
-            <label htmlFor="harmonics-center-freq" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label htmlFor="harmonics-center-freq" className="text-xs font-extrabold text-ink-3 flex items-center gap-2">
               <Radio size={14} /> Central Freq (MHz)
             </label>
             <div className="relative group">
@@ -86,14 +86,14 @@ const HarmonicsCalculator: React.FC = () => {
                 type="number" 
                 value={centerFreq}
                 onChange={(e) => setCenterFreq(Number(e.target.value))}
-                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 font-mono transition-colors group-hover:bg-slate-800"
+                className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 font-mono transition-colors group-hover:bg-surface-2"
               />
             </div>
           </div>
 
           {/* Input: Bandwidth */}
           <div className="space-y-2">
-            <label htmlFor="harmonics-bandwidth" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <label htmlFor="harmonics-bandwidth" className="text-xs font-extrabold text-ink-3 flex items-center gap-2">
               <Waves size={14} /> Channel Width (MHz)
             </label>
             <div className="relative group">
@@ -102,23 +102,23 @@ const HarmonicsCalculator: React.FC = () => {
                 type="number" 
                 value={bandwidth}
                 onChange={(e) => setBandwidth(Number(e.target.value))}
-                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 font-mono transition-colors group-hover:bg-slate-800"
+                className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:outline-none focus:border-rose-500 font-mono transition-colors group-hover:bg-surface-2"
               />
             </div>
           </div>
 
           {/* Output: Start Freq */}
-          <div className="bg-white/5 rounded-xl p-3 border border-white/5 flex flex-col justify-center h-[50px]">
+          <div className="bg-white/5 rounded-[10px] p-3 border border-white/5 flex flex-col justify-center h-[50px]">
              <div className="flex justify-between items-center">
-               <span className="text-[10px] text-slate-400 font-bold uppercase">Start Freq</span>
+               <span className="text-xs text-ink-3 font-bold">Start Freq</span>
                <span className="text-sm font-mono font-bold text-white">{startFreq.toFixed(2)} MHz</span>
              </div>
           </div>
 
           {/* Output: End Freq */}
-          <div className="bg-white/5 rounded-xl p-3 border border-white/5 flex flex-col justify-center h-[50px]">
+          <div className="bg-white/5 rounded-[10px] p-3 border border-white/5 flex flex-col justify-center h-[50px]">
              <div className="flex justify-between items-center">
-               <span className="text-[10px] text-slate-400 font-bold uppercase">End Freq</span>
+               <span className="text-xs text-ink-3 font-bold">End Freq</span>
                <span className="text-sm font-mono font-bold text-white">{endFreq.toFixed(2)} MHz</span>
              </div>
           </div>
@@ -133,24 +133,24 @@ const HarmonicsCalculator: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-rose-500/20">
             <AlertTriangle className="text-rose-500" size={18} />
-            <h3 className="text-sm font-black text-rose-100 uppercase tracking-widest">Affected Channels</h3>
+            <h3 className="text-sm font-extrabold text-rose-100">Affected Channels</h3>
           </div>
           
           <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
             {Object.keys(analysis.affected).length === 0 ? (
-              <div className="p-8 text-center text-slate-400 text-xs italic bg-slate-950/30 rounded-xl border border-white/5">
+              <div className="p-8 text-center text-ink-3 text-xs bg-bg/30 rounded-[10px] border border-white/5">
                 No interference detected. Safe to fly!
               </div>
             ) : (
               Object.entries(analysis.affected).map(([bandName, hits]) => (
-                <div key={bandName} className="bg-rose-950/10 border border-rose-500/20 rounded-xl overflow-hidden">
-                  <div className="bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-200 uppercase tracking-wider flex justify-between">
+                <div key={bandName} className="bg-rose-950/10 border border-rose-500/20 rounded-[10px] overflow-hidden">
+                  <div className="bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-200 flex justify-between">
                     <span>{bandName}</span>
-                    <span className="bg-rose-500/20 px-2 rounded-full text-[9px]">{hits.length} Hits</span>
+                    <span className="bg-rose-500/20 px-2 rounded-full text-xs">{hits.length} Hits</span>
                   </div>
                   <div className="p-3 space-y-2">
                     {hits.map((hit, i) => (
-                      <div key={i} className="text-[11px] text-rose-300 font-mono break-words flex items-start gap-2">
+                      <div key={i} className="text-xs text-rose-300 font-mono break-words flex items-start gap-2">
                         <ArrowRight size={12} className="mt-0.5 flex-shrink-0 opacity-50" />
                         {hit}
                       </div>
@@ -166,19 +166,19 @@ const HarmonicsCalculator: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20">
             <CheckCircle2 className="text-emerald-500" size={18} />
-            <h3 className="text-sm font-black text-emerald-100 uppercase tracking-widest">Unaffected Channels</h3>
+            <h3 className="text-sm font-extrabold text-emerald-100">Unaffected Channels</h3>
           </div>
 
           <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
             {Object.entries(analysis.unaffected).map(([bandName, channels]) => (
-              <div key={bandName} className="bg-emerald-950/10 border border-emerald-500/10 rounded-xl overflow-hidden">
-                <div className="bg-emerald-500/5 px-4 py-2 text-xs font-bold text-emerald-200 uppercase tracking-wider flex justify-between">
+              <div key={bandName} className="bg-emerald-950/10 border border-emerald-500/10 rounded-[10px] overflow-hidden">
+                <div className="bg-emerald-500/5 px-4 py-2 text-xs font-bold text-emerald-200 flex justify-between">
                    <span>{bandName}</span>
-                   <span className="bg-emerald-500/10 px-2 rounded-full text-[9px]">{channels.length} Clear</span>
+                   <span className="bg-emerald-500/10 px-2 rounded-full text-xs">{channels.length} Clear</span>
                 </div>
                 <div className="p-3 flex flex-wrap gap-2">
                   {channels.map((ch, i) => (
-                    <div key={i} className="text-[10px] text-emerald-400/80 font-mono bg-emerald-500/5 border border-emerald-500/10 rounded px-2 py-1">
+                    <div key={i} className="text-xs text-emerald-400/80 font-mono bg-emerald-500/5 border border-emerald-500/10 rounded px-2 py-1">
                       {ch}
                     </div>
                   ))}
@@ -192,13 +192,13 @@ const HarmonicsCalculator: React.FC = () => {
       {/* 4. Bottom Section: All Harmonics Table */}
       <div className="bg-[#0d1117] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
         <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
-          <Gauge size={16} className="text-indigo-400" />
-          <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Calculated Harmonics Table</h3>
+          <Gauge size={16} className="text-accent" />
+          <h3 className="text-xs font-extrabold text-ink-2">Calculated Harmonics Table</h3>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="text-[10px] font-black uppercase text-slate-400 bg-white/[0.02]">
+            <thead className="text-xs font-extrabold text-ink-3 bg-white/[0.02]">
               <tr>
                 <th className="p-4 w-24">Order</th>
                 <th className="p-4">Central Freq</th>
@@ -206,19 +206,19 @@ const HarmonicsCalculator: React.FC = () => {
                 <th className="p-4">Bandwidth</th>
               </tr>
             </thead>
-            <tbody className="text-sm font-mono text-slate-300 divide-y divide-white/5">
+            <tbody className="text-sm font-mono text-ink-2 divide-y divide-white/5">
               {harmonics.map((h) => (
                 <tr key={h.order} className="hover:bg-white/[0.02] transition-colors">
                   <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${h.order === 1 ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold ${h.order === 1 ? 'bg-accent-tint text-accent border border-accent/30' : 'bg-surface-2 text-ink-3 border border-white/10'}`}>
                       {h.order === 1 ? 'Fund.' : `#${h.order}`}
                     </span>
                   </td>
                   <td className="p-4 font-bold text-white">{h.center.toFixed(2)} MHz</td>
-                  <td className="p-4 text-slate-400">
-                    {h.min.toFixed(2)} <span className="text-slate-400 mx-1">-</span> {h.max.toFixed(2)} MHz
+                  <td className="p-4 text-ink-3">
+                    {h.min.toFixed(2)} <span className="text-ink-3 mx-1">-</span> {h.max.toFixed(2)} MHz
                   </td>
-                  <td className="p-4 text-slate-400">
+                  <td className="p-4 text-ink-3">
                     {(h.max - h.min).toFixed(2)} MHz
                   </td>
                 </tr>

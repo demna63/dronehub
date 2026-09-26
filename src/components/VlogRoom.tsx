@@ -166,9 +166,9 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)] max-w-7xl mx-auto gap-4 p-4">
       {/* VIDEO PLAYER */}
-      <div className="flex-1 bg-black rounded-3xl overflow-hidden shadow-2xl relative flex flex-col">
+      <div className="flex-1 bg-black rounded-2xl overflow-hidden shadow-2xl relative flex flex-col">
          <div className="absolute top-4 left-4 z-10">
-           <button onClick={() => navigate('/vlogs')} className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full backdrop-blur-md transition-all">
+           <button onClick={() => navigate('/vlogs')} className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all">
              <ArrowLeft size={20} />
            </button>
          </div>
@@ -181,9 +181,9 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
              title={activeVlog.title}
            />
          </div>
-         <div className="p-4 bg-slate-900 border-t border-white/10">
+         <div className="p-4 bg-surface border-t border-white/10">
             <h1 className="text-xl font-bold text-white mb-2">{activeVlog.title}</h1>
-            <div className="flex items-center gap-3 text-xs text-slate-400">
+            <div className="flex items-center gap-3 text-xs text-ink-3">
                <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg">
                  <UserIcon size={12} /> {activeVlog.author || activeVlog.authorName}
                </div>
@@ -193,34 +193,34 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       </div>
 
       {/* CHAT SECTION */}
-      <div className="w-full lg:w-96 bg-slate-900 border border-white/5 rounded-3xl flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-white/5 bg-slate-950/30">
+      <div className="w-full lg:w-96 bg-surface border border-white/5 rounded-2xl flex flex-col overflow-hidden">
+        <div className="p-4 border-b border-white/5 bg-bg/30">
           <h2 className="font-bold text-white text-sm">Live Chat</h2>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {messages.length === 0 ? (
-             <div className="text-center text-slate-400 text-xs mt-10">
+             <div className="text-center text-ink-3 text-xs mt-10">
                {t('chat_be_first')}
              </div>
           ) : (
             messages.map((msg) => (
               <div key={msg.id} className="flex gap-2">
-                <div className="w-6 h-6 rounded-full bg-slate-700 overflow-hidden shrink-0 mt-1">
+                <div className="w-6 h-6 rounded-full bg-surface-2 overflow-hidden shrink-0 mt-1">
                   {msg.avatar ? <img src={msg.avatar} className="w-full h-full object-cover" alt="av"/> : null}
                 </div>
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-bold text-slate-300">{msg.authorName}</span>
-                    <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
+                    <span className="text-xs font-bold text-ink-2">{msg.authorName}</span>
+                    <span className="text-xs text-ink-3">{msg.timestamp}</span>
                   </div>
-                  <p className="text-sm text-slate-400 leading-snug break-words">{msg.text}</p>
+                  <p className="text-sm text-ink-3 leading-snug break-words">{msg.text}</p>
                 </div>
               </div>
             ))
           )}
           {listenerError && (
-            <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] font-bold text-rose-300">
+            <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-300">
               {listenerError}
             </p>
           )}
@@ -228,9 +228,9 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
         </div>
 
         {/* Input */}
-        <div className="p-3 border-t border-white/5 bg-slate-900">
+        <div className="p-3 border-t border-white/5 bg-surface">
           {sendError && (
-            <p role="alert" className="mb-2 text-[10px] font-bold text-rose-400">{sendError}</p>
+            <p role="alert" className="mb-2 text-xs font-bold text-rose-400">{sendError}</p>
           )}
           {currentUser ? (
             <form onSubmit={handleSendMessage} className="flex gap-2">
@@ -241,12 +241,12 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
                 placeholder={t('message_placeholder')}
                 aria-label={t('message_label')}
                 maxLength={MESSAGE_MAX_LENGTH}
-                className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-indigo-500 outline-none"
+                className="flex-1 bg-bg border border-white/10 rounded-[10px] px-4 py-2 text-sm text-white focus:border-accent/50 outline-none"
               />
               <button 
                 type="submit" // ✅ გასწორდა: გასუფთავდა \ სიმბოლოებისგან
                 disabled={!newMessage.trim()}
-                className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+                className="p-2 bg-accent-fill text-white rounded-[10px] hover:bg-accent-fill-hover disabled:opacity-50 transition-colors"
               >
                 <Send size={18} />
               </button>
@@ -254,7 +254,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
           ) : (
             <button 
               onClick={onLoginClick}
-              className="w-full py-2 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl hover:bg-slate-700 transition-colors"
+              className="w-full py-2 bg-surface-2 text-ink-3 text-xs font-bold rounded-[10px] hover:bg-surface-2 transition-colors"
             >
               {t('chat_join')}
             </button>

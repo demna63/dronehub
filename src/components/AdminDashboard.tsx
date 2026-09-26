@@ -159,12 +159,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     if (isConfirming) {
       return (
         <span role="alert" className="shrink-0 flex items-center gap-2">
-          <span className="text-[11px] font-bold text-rose-300 hidden sm:inline">{t('delete_question')}</span>
+          <span className="text-xs font-bold text-rose-300 hidden sm:inline">{t('delete_question')}</span>
           <button
             type="button"
             aria-label={t('delete_confirm_label')}
             onClick={() => (kind === 'post' ? handleDeletePost(id) : handleDeleteStl(id))}
-            className="px-2.5 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-bold hover:bg-rose-400 transition-colors"
           >
             {t('action_yes')}
           </button>
@@ -172,7 +172,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
             type="button"
             aria-label={t('delete_confirm_no_label')}
             onClick={() => setPendingDelete(null)}
-            className="px-2.5 py-1.5 rounded-lg bg-white/5 text-slate-300 text-[11px] font-bold hover:bg-white/10 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg bg-white/5 text-ink-2 text-xs font-bold hover:bg-white/10 transition-colors"
           >
             {t('action_no')}
           </button>
@@ -186,7 +186,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
         aria-label={t('action_delete')}
         onClick={() => setPendingDelete({ kind, id })}
         disabled={isDeleting}
-        className="shrink-0 p-2.5 text-slate-400 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        className="shrink-0 p-2.5 text-ink-3 hover:text-white hover:bg-rose-500 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
       </button>
@@ -199,8 +199,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-rose-500">
         <Shield size={48} className="mb-4" />
-        <h1 className="text-2xl font-black uppercase">{t('access_denied')}</h1>
-        <button onClick={() => navigate('/')} className="mt-4 text-slate-400 hover:text-white">
+        <h1 className="text-2xl font-extrabold">{t('access_denied')}</h1>
+        <button onClick={() => navigate('/')} className="mt-4 text-ink-3 hover:text-white">
           {t('back_to_home')}
         </button>
       </div>
@@ -229,8 +229,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           <Shield size={24} />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white uppercase tracking-wider">Admin Panel</h1>
-          <p className="text-sm font-bold text-slate-400">{t('admin_subtitle')}</p>
+          <h1 className="text-2xl font-extrabold text-white">Admin Panel</h1>
+          <p className="text-sm font-bold text-ink-3">{t('admin_subtitle')}</p>
         </div>
       </div>
 
@@ -242,10 +242,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-5 py-3.5 rounded-xl font-bold transition-all text-sm w-full text-left ${
+              className={`flex items-center gap-3 px-5 py-3.5 rounded-[10px] font-bold transition-all text-sm w-full text-left ${
                 activeTab === tab.id
-                  ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25'
-                  : 'bg-slate-900/50 text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  ? 'bg-rose-500 text-white shadow-lg '
+                  : 'bg-surface/50 text-ink-3 hover:bg-white/5 hover:text-ink-2'
               }`}
             >
               <tab.icon size={18} />
@@ -255,24 +255,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
         </div>
 
         {/* Content */}
-        <div className="flex-1 bg-slate-900/50 border border-white/5 rounded-2xl p-6 min-h-[500px]">
+        <div className="flex-1 bg-surface/50 border border-white/5 rounded-2xl p-6 min-h-[500px]">
 
           {/* OVERVIEW */}
           {activeTab === 'overview' && (
             <div>
               <h2 className="text-xl font-bold text-white mb-6">{t('admin_stats')}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-slate-800 p-6 rounded-xl border border-white/5">
-                  <p className="text-sm font-bold text-slate-400 mb-1">{t('admin_total_posts')}</p>
-                  <p className="text-3xl font-black text-white">{regularPosts.length}</p>
+                <div className="bg-surface-2 p-6 rounded-[10px] border border-white/5">
+                  <p className="text-sm font-bold text-ink-3 mb-1">{t('admin_total_posts')}</p>
+                  <p className="text-3xl font-extrabold text-white">{regularPosts.length}</p>
                 </div>
-                <div className="bg-slate-800 p-6 rounded-xl border border-white/5">
-                  <p className="text-sm font-bold text-slate-400 mb-1">{t('admin_market_items')}</p>
-                  <p className="text-3xl font-black text-white">{marketItems.length}</p>
+                <div className="bg-surface-2 p-6 rounded-[10px] border border-white/5">
+                  <p className="text-sm font-bold text-ink-3 mb-1">{t('admin_market_items')}</p>
+                  <p className="text-3xl font-extrabold text-white">{marketItems.length}</p>
                 </div>
-                <div className="bg-slate-800 p-6 rounded-xl border border-white/5">
-                  <p className="text-sm font-bold text-slate-400 mb-1">{t('admin_stl_models')}</p>
-                  <p className="text-3xl font-black text-white">{stls.length}</p>
+                <div className="bg-surface-2 p-6 rounded-[10px] border border-white/5">
+                  <p className="text-sm font-bold text-ink-3 mb-1">{t('admin_stl_models')}</p>
+                  <p className="text-3xl font-extrabold text-white">{stls.length}</p>
                 </div>
               </div>
             </div>
@@ -284,15 +284,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
               <h2 className="text-xl font-bold text-white mb-6">{t('admin_manage_posts')}</h2>
               <div className="space-y-3">
                 {regularPosts.map(post => (
-                  <div key={post.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                  <div key={post.id} className="flex items-center justify-between p-4 bg-surface-2/50 rounded-[10px] border border-white/5 hover:border-white/10 transition-colors">
                     <div className="min-w-0 mr-4">
                       <p className="text-sm font-bold text-white truncate max-w-xs md:max-w-md">{post.title || post.content}</p>
-                      <p className="text-xs text-slate-500">ავტორი: {post.author || t('unknown')}</p>
+                      <p className="text-xs text-ink-3">{t('admin_author', { name: post.author || t('unknown') })}</p>
                     </div>
                     <DeleteControl kind="post" id={post.id} />
                   </div>
                 ))}
-                {regularPosts.length === 0 && <p className="text-slate-500 text-sm">{t('admin_no_posts')}</p>}
+                {regularPosts.length === 0 && <p className="text-ink-3 text-sm">{t('admin_no_posts')}</p>}
               </div>
             </div>
           )}
@@ -303,7 +303,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
               <h2 className="text-xl font-bold text-white mb-6">{t('admin_manage_market')}</h2>
               <div className="space-y-3">
                 {marketItems.map(item => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                  <div key={item.id} className="flex items-center justify-between p-4 bg-surface-2/50 rounded-[10px] border border-white/5 hover:border-white/10 transition-colors">
                     <div className="flex items-center gap-4 min-w-0 mr-4">
                       {item.image && <img src={item.image} alt="item" className="w-12 h-12 rounded-lg object-cover shrink-0" />}
                       <div className="min-w-0">
@@ -314,7 +314,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                     <DeleteControl kind="post" id={item.id} />
                   </div>
                 ))}
-                {marketItems.length === 0 && <p className="text-slate-500 text-sm">{t('admin_no_market_items')}</p>}
+                {marketItems.length === 0 && <p className="text-ink-3 text-sm">{t('admin_no_market_items')}</p>}
               </div>
             </div>
           )}
@@ -323,50 +323,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {activeTab === 'stl' && (
             <div>
               {/* Upload form */}
-              <div className="mb-10 bg-slate-800/30 p-6 rounded-2xl border border-white/5">
+              <div className="mb-10 bg-surface-2/30 p-6 rounded-2xl border border-white/5">
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Upload size={20} className="text-sky-400" /> {t('admin_add_stl')}
+                  <Upload size={20} className="text-accent" /> {t('admin_add_stl')}
                 </h2>
                 <form onSubmit={handleStlSubmit} className="space-y-4 max-w-2xl">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="stl-title" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_model_name')}</label>
+                      <label htmlFor="stl-title" className="text-xs font-bold text-ink-3 mb-1 block">{t('admin_model_name')}</label>
                       <input
                         id="stl-title"
                         required type="text" placeholder={t('admin_stl_name_placeholder')}
                         value={stlForm.title}
                         onChange={e => setStlForm(prev => ({ ...prev, title: e.target.value }))}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
+                        className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-accent/50 outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label htmlFor="stl-author" className="text-xs font-bold text-slate-400 mb-1 block">{t('field_author')}</label>
+                      <label htmlFor="stl-author" className="text-xs font-bold text-ink-3 mb-1 block">{t('field_author')}</label>
                       <input
                         id="stl-author"
                         required type="text"
                         value={stlForm.author}
                         onChange={e => setStlForm(prev => ({ ...prev, author: e.target.value }))}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
+                        className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-accent/50 outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label htmlFor="stl-type" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_part_type')}</label>
+                      <label htmlFor="stl-type" className="text-xs font-bold text-ink-3 mb-1 block">{t('admin_part_type')}</label>
                       <select
                         id="stl-type"
                         value={stlForm.type}
                         onChange={e => setStlForm(prev => ({ ...prev, type: e.target.value }))}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
+                        className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-accent/50 outline-none transition-colors"
                       >
                         {STL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="stl-frame" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_compatible_frame')}</label>
+                      <label htmlFor="stl-frame" className="text-xs font-bold text-ink-3 mb-1 block">{t('admin_compatible_frame')}</label>
                       <select
                         id="stl-frame"
                         value={stlForm.frame}
                         onChange={e => setStlForm(prev => ({ ...prev, frame: e.target.value }))}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-sky-500 outline-none transition-colors"
+                        className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-accent/50 outline-none transition-colors"
                       >
                         {STL_FRAMES.map(f => <option key={f} value={f}>{f}</option>)}
                       </select>
@@ -375,28 +375,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="stl-image" className="text-xs font-bold text-slate-400 mb-1 block">{t('admin_image_png_jpg')}</label>
+                      <label htmlFor="stl-image" className="text-xs font-bold text-ink-3 mb-1 block">{t('admin_image_png_jpg')}</label>
                       <input
                         id="stl-image"
                         required ref={stlImageInputRef} type="file" accept="image/*"
                         onChange={e => setStlImage(e.target.files?.[0] || null)}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-white/5 file:text-white hover:file:bg-white/10"
+                        className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-ink-3 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-white/5 file:text-white hover:file:bg-white/10"
                       />
                     </div>
                     <div>
-                      <label htmlFor="stl-file" className="text-xs font-bold text-slate-400 mb-1 block">3D მოდელი (.STL)</label>
+                      <label htmlFor="stl-file" className="text-xs font-bold text-ink-3 mb-1 block">3D მოდელი (.STL)</label>
                       <input
                         id="stl-file"
                         required ref={stlFileInputRef} type="file" accept=".stl"
                         onChange={e => setStlFile(e.target.files?.[0] || null)}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-sky-500/20 file:text-sky-400 hover:file:bg-sky-500/30"
+                        className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-ink-3 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-accent-tint file:text-accent hover:file:bg-accent-tint"
                       />
                     </div>
                   </div>
 
                   <button
                     type="submit" disabled={isUploadingStl}
-                    className="w-full py-3.5 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-3.5 bg-accent-fill hover:bg-accent-fill-hover text-white font-bold rounded-[10px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isUploadingStl ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />}
                     {isUploadingStl ? 'იტვირთება...' : 'STL ფაილის დამატება'}
@@ -410,15 +410,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
               </h2>
               <div className="space-y-3">
                 {stls.map(stl => (
-                  <div key={stl.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                  <div key={stl.id} className="flex items-center justify-between p-4 bg-surface-2/50 rounded-[10px] border border-white/5 hover:border-white/10 transition-colors">
                     <div>
                       <p className="text-sm font-bold text-white">{stl.title}</p>
-                      <p className="text-xs text-slate-500">{stl.type} • {stl.frame} • ავტორი: {stl.author}</p>
+                      <p className="text-xs text-ink-3">{stl.type} • {stl.frame} • {t('admin_author', { name: stl.author })}</p>
                     </div>
                     <DeleteControl kind="stl" id={stl.id} />
                   </div>
                 ))}
-                {stls.length === 0 && <p className="text-slate-500 text-sm">{t('admin_no_stl')}</p>}
+                {stls.length === 0 && <p className="text-ink-3 text-sm">{t('admin_no_stl')}</p>}
               </div>
             </div>
           )}
@@ -427,7 +427,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           {activeTab === 'users' && (
             <div>
               <h2 className="text-xl font-bold text-white mb-6">{t('admin_manage_users')}</h2>
-              <p className="text-slate-500 text-sm">{t('admin_users_soon')}</p>
+              <p className="text-ink-3 text-sm">{t('admin_users_soon')}</p>
             </div>
           )}
 

@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Menu, X, Bell, Search, LogOut, 
-  ChevronDown, Plus, Globe, Settings, UserCircle, ArrowRight
+import {
+  Menu, Bell, Search, LogOut, ChevronDown, ChevronRight, Plus, Settings, UserCircle, ArrowRight,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/useLanguage';
 import { User, Notification } from '../types';
 import Logo from './Logo';
 import Avatar from './Avatar';
+import Modal from './Modal';
 import NotificationsDropdown from './NotificationsDropdown';
-import { NavLink, MobileNavLink, ProfileMenuItem } from './NavbarLinks';
+import { NavLink, MobileNavTile, MobileMenuRow, ProfileMenuItem } from './NavbarLinks';
 import { StableLabel } from './StableLabel';
 import EcosystemLinksNav from './EcosystemLinksNav';
+import { SIDEBAR_CATEGORIES } from '../constants/navigation';
+import { isUserAdmin } from '../utils/authUtils';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
-import { getAppScrollTop, subscribeToAppScroll } from '../utils/appScroll';
-
 
 interface NavbarProps {
   currentUser?: User | null;
@@ -30,6 +30,65 @@ interface NavbarProps {
   onMarkAllAsRead?: () => void;
 }
 
+/** Primary action: the one filled button style in the app (F1, F2). */
+const PRIMARY_BUTTON =
+  'flex h-10 items-center justify-center gap-2 rounded-[10px] bg-accent-fill px-4 text-sm font-bold text-white transition-colors duration-150 hover:bg-accent-fill-hover active:bg-accent-fill-active';
+
+/** Bordered 40px icon/text control used by the language toggle and the bell. */
+const OUTLINE_CONTROL =
+  'flex h-10 items-center justify-center rounded-[10px] border border-white/[0.08] text-ink-2 transition-colors duration-150 hover:bg-white/5 hover:text-ink';
+
+interface SearchFieldProps {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
+  inputRef?: React.Ref<HTMLInputElement>;
+  className?: string;
+  /** Input height class: 40px in the bar, 44px in the mobile menu. */
+  heightClass: string;
+}
+
+/**
+ * The one search form, rendered in the bar (md+) and in the mobile menu.
+ * A form whose only trigger is the Enter key is unusable by touch, hence the
+ * explicit submit button.
+ */
+const SearchField: React.FC<SearchFieldProps> = ({ id, value, onChange, onSubmit, inputRef, className = '', heightClass }) => {
+  const { t } = useLanguage();
+  return (
+    <form role="search" onSubmit={onSubmit} className={`relative ${className}`}>
+      <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
+      <input
+        ref={inputRef}
+        type="search"
+        name={id}
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={t('search_placeholder')}
+        aria-label={t('route_search')}
+        className={`w-full ${heightClass} rounded-[10px] border border-white/[0.08] bg-surface pl-10 pr-11 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-accent/50 focus:outline-none`}
+      />
+      <button
+        type="submit"
+        aria-label={t('route_search')}
+        disabled={!value.trim()}
+        className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:text-accent disabled:cursor-default disabled:hover:text-ink-3"
+      >
+        <ArrowRight size={16} aria-hidden="true" />
+      </button>
+    </form>
+  );
+};
+
+/**
+ * Top bar (F2, F7, F16).
+ *
+ * Always opaque on `bg` with a hairline under it: the old transparent-to-blur
+ * scroll state changed the bar's legibility with scroll position. On narrow
+ * screens every sidebar destination lives in the grouped mobile menu.
+ */
 const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onSearch,
@@ -42,30 +101,22 @@ const Navbar: React.FC<NavbarProps> = ({
   onNotificationClick,
   onMarkAllAsRead,
 }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  
+
   const { t, language, toggleLanguage } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Refs მენიუების გარეთ კლიკის დასაჭერად
+
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  /** Set when the menu is opened from the search icon, so search gets focus. */
+  const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false);
 
-  useEffect(() => {
-    // The page scroller is the centre column from `md` up, not the window, so
-    // `window.scrollY` stops changing there and the bar never picks up its
-    // condensed state.
-    const handleScroll = () => setIsScrolled(getAppScrollTop() > 20);
-    handleScroll();
-    return subscribeToAppScroll(handleScroll);
-  }, []);
-
-  // მენიუების დახურვა გარე კლიკისას
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -79,12 +130,20 @@ const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // A route change from anywhere (back button, a link inside the menu) closes it.
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const closeMenu = () => setIsMobileMenuOpen(false);
+  const openMenu = (focusSearch: boolean) => {
+    setFocusSearchOnOpen(focusSearch);
+    setIsMobileMenuOpen(true);
+  };
+
   /**
    * Hand the query to /search and let that page own everything else.
-   *
-   * This used to navigate to `/?q=...`, but nothing anywhere read that
-   * parameter — the URL changed, the feed re-rendered unfiltered, and search
-   * appeared to do nothing at all.
+   * (It used to navigate to `/?q=…`, which nothing read.)
    */
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,105 +155,86 @@ const Navbar: React.FC<NavbarProps> = ({
     } else {
       navigate(`/search?q=${encodeURIComponent(q)}`);
     }
-    setIsMobileMenuOpen(false);
+    closeMenu();
   };
 
-  const handleLogout = async (e?: React.MouseEvent) => {
-    e?.stopPropagation();
+  const handleLogout = async () => {
     setIsProfileOpen(false);
+    closeMenu();
     try {
       await signOut(auth);
       navigate('/');
     } catch (error) {
-      console.error("Logout error", error);
+      console.error('Logout error', error);
     }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
+  const path = location.pathname;
+  const isActive = (prefix: string) => (prefix === '/' ? path === '/' : path.startsWith(prefix));
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl transition-[background-color,border-color,box-shadow,padding] duration-500 ease-in-out ${
-        isScrolled
-          ? 'bg-slate-950/90 border-b border-white/[0.07] py-2 shadow-[0_1px_32px_rgba(2,6,23,0.7)]'
-          : 'bg-slate-950/0 border-b border-transparent py-4'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
-          
-          <div className="flex items-center gap-8">
-            <Link to="/" onClick={onLogoClick} aria-label={t('nav_home_aria')}>
-              <Logo />
-            </Link>
+      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-line bg-bg">
+        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-3 px-4 md:gap-6 md:px-8">
+          <Link to="/" onClick={onLogoClick} aria-label={t('nav_home_aria')} className="shrink-0 rounded-[10px]">
+            <Logo />
+          </Link>
 
-            <div className="hidden lg:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
-              <NavLink to="/" active={location.pathname === '/'} tKey="route_home" />
-              <NavLink to="/market" active={location.pathname.startsWith('/market')} tKey="route_market" />
-              <NavLink to="/vlogs" active={location.pathname.startsWith('/vlogs')} tKey="route_vlogs" />
-              <NavLink to="/tools" active={location.pathname.startsWith('/tools')} tKey="route_tools_short" />
-              <NavLink to="/map" active={location.pathname.startsWith('/map')} tKey="route_map" />
-            </div>
-          </div>
+          <nav aria-label={t('landmark_main_nav')} className="hidden items-center gap-1 lg:flex">
+            <NavLink to="/" active={isActive('/')} tKey="route_home" />
+            <NavLink to="/market" active={isActive('/market')} tKey="route_market" />
+            <NavLink to="/vlogs" active={isActive('/vlogs')} tKey="route_vlogs" />
+            <NavLink to="/tools" active={isActive('/tools')} tKey="route_tools_short" />
+            <NavLink to="/map" active={isActive('/map')} tKey="route_map" />
+          </nav>
 
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" size={18} />
-            <input
-              type="search"
-              name="search"
-              id="search"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder={t('search_placeholder')}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-2.5 pl-12 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500/50 transition-all text-white placeholder:text-slate-400"
-            />
-            {/* A form whose only trigger is the Enter key is unusable by touch
-                and by anyone who never guesses that Enter submits. */}
+          <SearchField
+            id="search"
+            value={searchValue}
+            onChange={setSearchValue}
+            onSubmit={handleSearch}
+            heightClass="h-10"
+            className="ml-auto hidden max-w-[400px] flex-1 md:block"
+          />
+
+          <div className="ml-auto flex items-center gap-2 md:ml-0">
             <button
-              type="submit"
-              aria-label={t('route_search')}
-              disabled={!searchValue.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-sky-400 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors"
-            >
-              <ArrowRight size={16} />
-            </button>
-          </form>
-
-          <div className="flex items-center gap-2 md:gap-4">
-            <button 
+              type="button"
               aria-label={t('language_aria', { code: language === 'ka' ? 'GE' : 'EN' })}
               onClick={toggleLanguage}
-              className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all"
+              className={`${OUTLINE_CONTROL} hidden px-3 text-[13px] font-bold sm:flex`}
             >
-              <Globe size={18} />
-              <span className="text-[10px] font-black uppercase">{language === 'ka' ? 'GE' : 'EN'}</span>
+              {language === 'ka' ? 'GE' : 'EN'}
             </button>
 
             {currentUser ? (
               <>
-                <button 
-                  onClick={location.pathname.startsWith('/market') ? onCreateMarketItem : onAddPost}
-                  className="hidden sm:flex items-center gap-2 bg-sky-700 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl text-sm font-black transition-all shadow-lg shadow-sky-500/20 active:scale-95"
+                <button
+                  type="button"
+                  onClick={path.startsWith('/market') ? onCreateMarketItem : onAddPost}
+                  className={`${PRIMARY_BUTTON} hidden sm:flex`}
                 >
-                  <Plus size={18} /> <StableLabel tKey="action_add" className="uppercase tracking-widest text-[11px]" />
+                  <Plus size={16} aria-hidden="true" /> <StableLabel tKey="action_add" />
                 </button>
 
-                {/* Notifications */}
                 <div className="relative" ref={notificationsRef}>
-                  <button 
+                  <button
+                    type="button"
                     aria-label={t('notifications_title')}
+                    aria-expanded={showNotifications}
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className={`p-2.5 rounded-xl border transition-all relative ${
-                      showNotifications ? 'bg-sky-500/10 border-sky-500/50 text-sky-500' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
-                    }`}
+                    className={`${OUTLINE_CONTROL} relative w-10 ${showNotifications ? 'bg-accent-tint text-accent' : ''}`}
                   >
-                    <Bell size={20} />
+                    <Bell size={18} aria-hidden="true" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-slate-950">
+                      <span className="absolute -right-[5px] -top-[5px] flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-bg bg-bad px-1 text-xs font-extrabold text-white">
                         {unreadCount}
                       </span>
                     )}
                   </button>
                   {showNotifications && (
-                    <NotificationsDropdown 
+                    <NotificationsDropdown
                       notifications={notifications}
                       onNotificationClick={onNotificationClick || (() => {})}
                       onMarkAllAsRead={onMarkAllAsRead || (() => {})}
@@ -203,158 +243,174 @@ const Navbar: React.FC<NavbarProps> = ({
                   )}
                 </div>
 
-                {/* Profile Dropdown */}
-                <div className="relative" ref={profileRef}>
-                  <button 
+                <div className="relative hidden sm:block" ref={profileRef}>
+                  <button
+                    type="button"
                     aria-label={t('user_menu')}
+                    aria-expanded={isProfileOpen}
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all"
+                    className="flex h-10 items-center gap-1.5 rounded-[10px] pr-1.5 transition-colors hover:bg-white/5"
                   >
-                    <Avatar
-                      src={currentUser.avatar}
-                      name={currentUser.name}
-                      size={32}
-                      className="rounded-lg"
-                    />
-                    <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                    <Avatar src={currentUser.avatar} name={currentUser.name} size={40} className="rounded-[10px]" />
+                    <ChevronDown size={14} aria-hidden="true" className={`text-ink-3 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isProfileOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 z-[100]">
-                      <div className="px-4 py-3 border-b border-slate-800 mb-1">
-                        <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium tracking-tight">reputation: {currentUser.reputation || 0}</p>
+                    <div className="absolute right-0 top-full z-[100] mt-2 w-56 overflow-hidden rounded-2xl border border-white/10 bg-surface py-1.5 shadow-2xl">
+                      <div className="mb-1 border-b border-line px-4 py-3">
+                        <p className="truncate text-sm font-bold text-ink">{currentUser.name}</p>
+                        <p className="text-xs text-ink-3">{t('nav_reputation', { count: currentUser.reputation || 0 })}</p>
                       </div>
-                      
-                      <ProfileMenuItem 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          if(onProfileClick) onProfileClick(); 
-                          navigate(`/u/${currentUser.id}`);
-                          setIsProfileOpen(false); 
-                        }} 
-                        icon={<UserCircle size={16}/>} 
-                        tKey="nav_profile" 
-                      />
-                      
                       <ProfileMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        onClick={() => {
+                          onProfileClick?.();
                           navigate(`/u/${currentUser.id}`);
                           setIsProfileOpen(false);
                         }}
-                        icon={<Settings size={16}/>}
+                        icon={<UserCircle size={16} aria-hidden="true" />}
+                        tKey="nav_profile"
+                      />
+                      <ProfileMenuItem
+                        onClick={() => {
+                          navigate(`/u/${currentUser.id}`);
+                          setIsProfileOpen(false);
+                        }}
+                        icon={<Settings size={16} aria-hidden="true" />}
                         tKey="nav_settings"
                       />
-                      
-                      <div className="h-px bg-slate-800 my-1 mx-2"></div>
-                      
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-rose-400 hover:bg-rose-400/10 text-xs font-bold transition-colors"
+                      <div className="mx-2 my-1 h-px bg-line" />
+                      <button
+                        type="button"
+                        onClick={() => { void handleLogout(); }}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-bad transition-colors hover:bg-bad/10"
                       >
-                        <LogOut size={16} /> <StableLabel tKey="action_sign_out" align="start" />
+                        <LogOut size={16} aria-hidden="true" /> <StableLabel tKey="action_sign_out" align="start" />
                       </button>
                     </div>
                   )}
                 </div>
               </>
             ) : (
-              <button 
-                onClick={onLoginClick}
-                className="px-6 py-2.5 bg-white text-slate-900 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-sky-400 hover:text-white transition-all active:scale-95"
-              >
+              <button type="button" onClick={onLoginClick} className={`${PRIMARY_BUTTON} hidden sm:flex`}>
                 <StableLabel tKey="action_sign_in" />
               </button>
             )}
 
-            <button aria-label={t('mobile_menu')} onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2.5 bg-white/5 text-slate-400 rounded-xl hover:text-white transition-colors">
-              <Menu size={20} />
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-950 lg:hidden p-6 animate-in slide-in-from-right duration-300 overflow-y-auto">
-          <div className="flex justify-between items-center mb-12">
-            <Logo />
-            <button aria-label={t('mobile_menu_close')} onClick={() => setIsMobileMenuOpen(false)} className="p-2.5 bg-white/5 text-slate-400 rounded-xl hover:text-white transition-colors">
-              <X size={24} />
-            </button>
-          </div>
-          
-          {/* The desktop search form is `hidden md:flex`, so on a phone the
-              site had no search at all. */}
-          <form onSubmit={handleSearch} className="relative mb-8">
-            <Search size={18} aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              name="mobile-search"
-              id="mobile-search"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder={t('search_placeholder')}
-              aria-label={t('route_search')}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-12 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500/50"
-            />
             <button
-              type="submit"
+              type="button"
               aria-label={t('route_search')}
-              disabled={!searchValue.trim()}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-sky-400 disabled:opacity-30 transition-colors"
+              onClick={() => openMenu(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-white/5 md:hidden"
             >
-              <ArrowRight size={16} />
+              <Search size={22} aria-hidden="true" />
             </button>
-          </form>
-
-          <div className="space-y-4">
-            <MobileNavLink to="/" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname === '/'} tKey="route_home" />
-            <MobileNavLink to="/market" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/market')} tKey="route_market" />
-            <MobileNavLink to="/vlogs" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/vlogs')} tKey="route_vlogs" />
-            <MobileNavLink to="/tools" onClick={() => setIsMobileMenuOpen(false)} active={location.pathname.startsWith('/tools')} tKey="route_tools_short" />
-            <MobileNavLink to="/map" active={location.pathname.startsWith('/map')} tKey="route_map" onClick={() => setIsMobileMenuOpen(false)} />
-
-            <div className="pt-6 border-t border-white/5">
-              <EcosystemLinksNav
-                currentSiteId="main"
-                variant="mobile"
-                onNavigate={() => setIsMobileMenuOpen(false)}
-              />
-            </div>
-
-            <div className="pt-8 border-t border-white/5 space-y-4">
-              <button 
-                onClick={() => { toggleLanguage(); setIsMobileMenuOpen(false); }} 
-                className="flex items-center justify-between w-full px-4 py-4 bg-white/5 hover:bg-white/10 transition-colors rounded-xl text-slate-400 font-bold"
-              >
-                <span className="flex items-center gap-2 text-lg"><Globe size={24}/> {t('language_label')}</span>
-                <StableLabel
-                  tKey={language === 'ka' ? 'language_ka' : 'language_en'}
-                  className="text-sm uppercase font-black text-white"
-                  align="start"
-                />
-              </button>
-              
-              {!currentUser && (
-                <button onClick={() => { if(onLoginClick) onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 bg-white text-slate-900 hover:bg-sky-400 hover:text-white transition-colors font-black rounded-xl uppercase tracking-widest">
-                  {t('action_sign_in')}
-                </button>
-              )}
-
-              {currentUser && (
-                <button 
-                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                  className="w-full py-4 bg-rose-500/10 text-rose-400 font-black rounded-xl uppercase tracking-widest"
-                >
-                  {t('action_sign_out')}
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              aria-label={t('mobile_menu')}
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => openMenu(false)}
+              className="flex h-11 w-11 items-center justify-center rounded-[10px] text-ink-2 transition-colors hover:bg-white/5 lg:hidden"
+            >
+              <Menu size={22} aria-hidden="true" />
+            </button>
           </div>
         </div>
-      )}
+      </header>
+
+      {/* Grouped mobile menu (F16, 3c): every sidebar destination, 44px rows. */}
+      <Modal
+        isOpen={isMobileMenuOpen}
+        onClose={closeMenu}
+        title={t('mobile_menu')}
+        variant="fullscreen"
+        headerStart={<Logo />}
+        initialFocusRef={focusSearchOnOpen ? mobileSearchRef : undefined}
+      >
+        <div className="flex min-h-full flex-col gap-1.5 px-4 pb-5">
+          <SearchField
+            id="mobile-search"
+            value={searchValue}
+            onChange={setSearchValue}
+            onSubmit={handleSearch}
+            inputRef={mobileSearchRef}
+            heightClass="h-11"
+            className="mb-1.5"
+          />
+
+          <h2 className="px-0.5 pb-0.5 pt-1 text-xs font-bold text-ink-3">{t('mobile_group_pages')}</h2>
+          <nav aria-label={t('mobile_group_pages')} className="grid grid-cols-2 gap-1.5">
+            <MobileNavTile to="/" onClick={closeMenu} active={isActive('/')} tKey="route_home" />
+            <MobileNavTile to="/market" onClick={closeMenu} active={isActive('/market')} tKey="route_market" />
+            <MobileNavTile to="/vlogs" onClick={closeMenu} active={isActive('/vlogs')} tKey="route_vlogs" />
+            <MobileNavTile to="/tools" onClick={closeMenu} active={isActive('/tools')} tKey="route_tools_short" />
+            <MobileNavTile to="/map" onClick={closeMenu} active={isActive('/map')} tKey="route_map" />
+            {currentUser && (
+              <MobileNavTile to="/saved" onClick={closeMenu} active={isActive('/saved')} tKey="route_saved" />
+            )}
+            {currentUser && (
+              <MobileNavTile to={`/u/${currentUser.id}`} onClick={closeMenu} active={isActive(`/u/${currentUser.id}`)} tKey="nav_profile" />
+            )}
+          </nav>
+
+          <h2 className="px-0.5 pt-2.5 text-xs font-bold text-ink-3">{t('side_community')}</h2>
+          <MobileMenuRow to="/chat" onClick={closeMenu}>{t('side_chat')}</MobileMenuRow>
+          <MobileMenuRow to="/meet" onClick={closeMenu}>{t('nav_meet')}</MobileMenuRow>
+          <button
+            type="button"
+            aria-expanded={isCategoriesOpen}
+            aria-controls="mobile-menu-categories"
+            onClick={() => setIsCategoriesOpen((open) => !open)}
+            className="flex min-h-11 items-center justify-between border-b border-line text-left text-[15px] text-ink-2"
+          >
+            {t('side_categories')}
+            <ChevronRight size={16} aria-hidden="true" className={`text-ink-3 transition-transform ${isCategoriesOpen ? 'rotate-90' : ''}`} />
+          </button>
+          {isCategoriesOpen && (
+            <div id="mobile-menu-categories" className="flex flex-col pl-3">
+              {SIDEBAR_CATEGORIES.map((category) => (
+                <MobileMenuRow key={category.id} to={`/category/${category.id}`} onClick={closeMenu}>
+                  {t(category.labelKey)}
+                </MobileMenuRow>
+              ))}
+            </div>
+          )}
+
+          <h2 className="px-0.5 pt-2.5 text-xs font-bold text-ink-3">{t('side_info')}</h2>
+          <MobileMenuRow to="/regulations" onClick={closeMenu}>{t('nav_regulations')}</MobileMenuRow>
+          <EcosystemLinksNav currentSiteId="main" variant="mobile" onNavigate={closeMenu} />
+          {isUserAdmin(currentUser ?? null) && (
+            <MobileMenuRow to="/admin" onClick={closeMenu}>{t('side_admin_dashboard')}</MobileMenuRow>
+          )}
+
+          <div className="mt-auto flex gap-2 pt-4">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              aria-label={t('language_aria', { code: language === 'ka' ? 'GE' : 'EN' })}
+              className="flex h-11 flex-1 items-center justify-center rounded-[10px] border border-white/[0.12] text-sm font-bold text-ink transition-colors hover:bg-white/5"
+            >
+              GE / EN
+            </button>
+            {currentUser ? (
+              <button
+                type="button"
+                onClick={() => { void handleLogout(); }}
+                className={`${PRIMARY_BUTTON} h-11 flex-[2]`}
+              >
+                {t('action_sign_out')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { onLoginClick?.(); closeMenu(); }}
+                className={`${PRIMARY_BUTTON} h-11 flex-[2]`}
+              >
+                {t('action_sign_in')}
+              </button>
+            )}
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

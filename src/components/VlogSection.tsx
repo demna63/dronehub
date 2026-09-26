@@ -42,17 +42,17 @@ const VlogSection: React.FC<VlogSectionProps> = ({
         <Route index element={
           <div className="pb-20">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6 sticky top-0 bg-slate-950/95 backdrop-blur-sm z-30 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between mb-6 sticky top-0 bg-bg/95 z-30 py-4 border-b border-white/5">
               <div>
-                <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                  <span className="text-red-500">LIVE</span> VLOGS
+                <h1 className="text-2xl font-extrabold text-white flex items-center gap-2">
+                  <span className="text-bad">LIVE</span> VLOGS
                 </h1>
-                <p className="text-slate-400 text-xs">{t('vlogs_subtitle')}</p>
+                <p className="text-ink-3 text-xs">{t('vlogs_subtitle')}</p>
               </div>
 
               <button 
                 onClick={() => activeUser ? setIsAddModalOpen(true) : onLoginClick()}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-red-500/20"
+                className="flex items-center gap-2 px-4 py-2 bg-bad hover:bg-bad text-white rounded-[10px] font-bold transition-all shadow-lg"
               >
                 <Plus size={18} />
                 <span className="hidden sm:inline">{t('action_add')}</span>
@@ -66,33 +66,33 @@ const VlogSection: React.FC<VlogSectionProps> = ({
                   type="button"
                   key={vlog.id}
                   onClick={() => onOpenRoom(vlog.id)}
-                  className="text-left w-full group bg-slate-900 border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-red-500/50 transition-all hover:shadow-2xl hover:shadow-red-900/10"
+                  className="text-left w-full group bg-surface border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-bad/30 transition-all hover:shadow-2xl"
                 >
                   {/* Thumbnail */}
-                  <div className="relative aspect-video bg-slate-950 overflow-hidden">
+                  <div className="relative aspect-video bg-bg overflow-hidden">
                     <img 
                       src={vlog.thumbnail} 
                       alt={vlog.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center transition-transform">
                         <Play fill="white" className="text-white ml-1" size={20} />
                       </div>
                     </div>
-                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 rounded text-[10px] font-bold text-white">
+                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 rounded text-xs font-bold text-white">
                       YouTube
                     </div>
                   </div>
 
                   {/* Info */}
                   <div className="p-4">
-                    <span className="block font-bold text-white mb-2 line-clamp-2 group-hover:text-red-400 transition-colors">
+                    <span className="block font-bold text-white mb-2 line-clamp-2 group-hover:text-bad transition-colors">
                       {vlog.title}
                     </span>
-                    <div className="flex items-center justify-between text-xs text-slate-400">
+                    <div className="flex items-center justify-between text-xs text-ink-3">
                       <div className="flex items-center gap-2">
-                         <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center text-[8px] text-white font-bold">
+                         <div className="w-5 h-5 rounded-full bg-accent-fill flex items-center justify-center text-xs text-white font-bold">
                             {(vlog.authorName || 'U')[0]}
                          </div>
                          <span>{vlog.authorName || 'Unknown'}</span>
@@ -108,7 +108,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
             </div>
             
             {vlogs.length === 0 && (
-              <div className="text-center py-20 text-slate-400">
+              <div className="text-center py-20 text-ink-3">
                 {t('vlogs_empty')}
               </div>
             )}

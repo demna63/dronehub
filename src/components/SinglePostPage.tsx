@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Post, User } from '../types';
 import PostCard from './PostCard';
 import MarketItemView from './MarketItemView'; // ✅ ახალი იმპორტი
-import { CornerDownLeft, ArrowRight, Hash, AlertTriangle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { isMarketItem } from '../constants/market';
 import { useLanguage } from '../contexts/useLanguage';
 import { scrollAppToTop } from '../utils/appScroll';
@@ -26,6 +26,9 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
 }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
+  /** Set by the feed row's ⋯ → Edit. */
+  const startInEdit = Boolean((location.state as { edit?: boolean } | null)?.edit);
 
   useEffect(() => {
     scrollAppToTop();
@@ -49,31 +52,22 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
   const isListing = isMarketItem(post.category);
 
   return (
-    <div className="max-w-5xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="mx-auto max-w-5xl">
       {!isListing && <h1 className="sr-only">{post.title}</h1>}
-      
-      {/* Header / Back Button */}
-      <div className="mb-6 pt-4 px-4 md:px-0">
-        <button 
-          type="button"
-          onClick={handleBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
-        >
-          <div className="p-2 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
-            <CornerDownLeft size={20} />
-          </div>
-          <span className="text-xs font-bold uppercase tracking-widest">{t('action_back')}</span>
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-0">
-        
-        {/* MAIN CONTENT AREA */}
-        <div className={isListing ? "lg:col-span-3" : "lg:col-span-2"}>
-          
-          {/* ✅ ლოგიკა: მარკეტისთვის MarketItemView, სხვებისთვის PostCard */}
+      <button
+        type="button"
+        onClick={handleBack}
+        className="mb-5 flex h-9 items-center gap-2 rounded-[10px] px-2.5 -ml-2.5 text-sm font-bold text-ink-2 transition-colors hover:bg-white/5"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        {t('action_back')}
+      </button>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className={isListing ? 'lg:col-span-3' : 'lg:col-span-2'}>
           {isListing ? (
-            <MarketItemView 
+            <MarketItemView
               item={post}
               currentUser={currentUser}
               onLoginClick={onLoginClick}
@@ -81,61 +75,49 @@ const SinglePostPage: React.FC<SinglePostPageProps> = ({
               isSaved={savedPostIds.includes(post.id)}
             />
           ) : (
-            <PostCard 
+            <PostCard
               post={post}
               currentUser={currentUser}
               onToggleSave={() => onToggleSave(post.id)}
               isSaved={savedPostIds.includes(post.id)}
               onLoginClick={onLoginClick}
-              onDelete={() => onDeletePost(post.id)}
-              onEdit={() => onEditPost(post)}
+              onDelete={() => { onDeletePost(post.id); handleBack(); }}
+              // The editor hands back the new content; passing the old `post`
+              // here made the page keep rendering the pre-edit text.
+              onEdit={(newContent) => onEditPost({ ...post, content: newContent })}
               onAddComment={(id, text) => onAddComment(id, text)}
               defaultExpanded={true}
+              startInEdit={startInEdit}
             />
           )}
-
         </div>
 
-        {/* SIDEBAR (მხოლოდ ჩვეულებრივი პოსტებისთვის) */}
         {!isListing && (
-          <div className="hidden lg:block space-y-4">
-             <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-5 sticky top-24">
-               <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                 <Hash size={14} /> {t('related_topics')}
-               </h2>
-               
-               <div className="space-y-3">
-                 {similarPosts.length > 0 ? (
-                   similarPosts.map(simPost => (
-                     <button 
-                       type="button"
-                       key={simPost.id} 
-                       onClick={() => navigate(`/post/${simPost.id}`)}
-                       className="text-left w-full group cursor-pointer p-3 rounded-xl hover:bg-white/5 transition-all border border-transparent hover:border-white/5"
-                     >
-                        <span className="block text-sm font-bold text-slate-300 group-hover:text-indigo-400 line-clamp-2 transition-colors mb-1">
-                          {simPost.title}
-                        </span>
-                        <div className="flex items-center justify-between text-[10px] text-slate-400">
-                          <span>{simPost.author}</span>
-                          <div className="flex items-center gap-1">
-                             <span>{simPost.commentsCount || 0} კომენტარი</span>
-                             <ArrowRight size={10} className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-                          </div>
-                        </div>
-                     </button>
-                   ))
-                 ) : (
-                   <div className="text-center text-xs text-slate-400 py-8 flex flex-col items-center gap-2">
-                     <AlertTriangle size={24} className="opacity-20" />
-                     {t('related_none')}
-                   </div>
-                 )}
-               </div>
+          <aside aria-label={t('related_topics')} className="hidden lg:block">
+            <div className="sticky top-0 rounded-2xl border border-line bg-surface p-4">
+              <h2 className="mb-3 px-1 text-sm font-bold text-ink">{t('related_topics')}</h2>
+              {similarPosts.length > 0 ? (
+                <div className="flex flex-col">
+                  {similarPosts.map(simPost => (
+                    <button
+                      type="button"
+                      key={simPost.id}
+                      onClick={() => navigate(`/post/${simPost.id}`)}
+                      className="flex flex-col gap-1 rounded-[10px] px-2.5 py-2.5 text-left transition-colors hover:bg-white/5"
+                    >
+                      <span className="line-clamp-2 text-sm font-bold text-ink-2">{simPost.title}</span>
+                      <span className="text-xs text-ink-3">
+                        {simPost.author} · {t('related_comments_count', { count: simPost.commentsCount || 0 })}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="px-1 py-6 text-center text-[13px] text-ink-3">{t('related_none')}</p>
+              )}
             </div>
-          </div>
+          </aside>
         )}
-
       </div>
     </div>
   );

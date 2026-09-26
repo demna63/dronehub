@@ -103,9 +103,9 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-ink-3">
               <Package className="text-emerald-500" aria-hidden="true" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">{t('route_market')}</span>
+              <span className="text-xs font-bold">{t('route_market')}</span>
             </div>
 
             {/* 1. IMAGE UPLOAD (Big Area) */}
@@ -118,11 +118,11 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
               {imagePreview ? (
                 <img src={imagePreview} alt="Preview" className="h-full w-full object-contain rounded-2xl p-2" />
               ) : (
-                <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-400 transition-colors">
-                  <div className="p-3 bg-slate-800 rounded-full group-hover:scale-110 transition-transform">
+                <div className="flex flex-col items-center gap-2 text-ink-3 group-hover:text-emerald-400 transition-colors">
+                  <div className="p-3 bg-surface-2 rounded-full transition-transform">
                      <Upload size={24} />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider">{t('market_add_photo')}</span>
+                  <span className="text-xs font-bold">{t('market_add_photo')}</span>
                 </div>
               )}
               <input 
@@ -140,7 +140,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {/* Title */}
                <div className="md:col-span-2 space-y-1">
-                 <label htmlFor="market-title" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_title')}</label>
+                 <label htmlFor="market-title" className="text-xs font-bold text-ink-3 ml-1">{t('field_title')}</label>
                  <input 
                    id="market-title"
                    required 
@@ -148,13 +148,13 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
                    value={title} 
                    onChange={(e) => setTitle(e.target.value)} 
                    placeholder={t('market_title_placeholder')} 
-                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none" 
+                   className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none" 
                  />
                </div>
 
                {/* Price */}
                <div className="space-y-1">
-                 <label htmlFor="market-price" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_price_gel')}</label>
+                 <label htmlFor="market-price" className="text-xs font-bold text-ink-3 ml-1">{t('field_price_gel')}</label>
                  <div className="relative">
                    <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" />
                    <input 
@@ -164,63 +164,63 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
                      value={price} 
                      onChange={(e) => setPrice(e.target.value)} 
                      placeholder="0.00" 
-                     className="w-full bg-slate-950 border border-white/10 rounded-xl pl-9 pr-4 py-3 text-sm text-white focus:border-emerald-500 outline-none font-mono" 
+                     className="w-full bg-bg border border-white/10 rounded-[10px] pl-9 pr-4 py-3 text-sm text-white focus:border-emerald-500 outline-none font-mono" 
                    />
                  </div>
                </div>
 
                {/* Category */}
                <div className="space-y-1">
-                 <label htmlFor="market-category" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_category')}</label>
+                 <label htmlFor="market-category" className="text-xs font-bold text-ink-3 ml-1">{t('field_category')}</label>
                  <div className="relative">
                    <select 
                      id="market-category"
                      value={category} 
                      onChange={(e) => setCategory(e.target.value)}
-                     className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none appearance-none cursor-pointer"
+                     className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none appearance-none cursor-pointer"
                    >
                      {MARKET_CATEGORIES.map(cat => (
                        <option key={cat.id} value={cat.id}>{t(cat.labelKey)}</option>
                      ))}
                    </select>
-                   <Tag size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                   <Tag size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" />
                  </div>
                </div>
             </div>
 
             {/* 3. DETAILS GRID (Brand, Location, Condition) */}
             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-4">
-               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-2">{t('field_details')}</h3>
+               <h3 className="text-xs font-bold text-ink-3 border-b border-white/5 pb-2">{t('field_details')}</h3>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Brand */}
                   <div className="space-y-1">
-                    <label htmlFor="market-brand" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_brand_model')}</label>
+                    <label htmlFor="market-brand" className="text-xs font-bold text-ink-3 ml-1">{t('field_brand_model')}</label>
                     <div className="relative">
-                      <Box size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Box size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
                       <input 
                         id="market-brand"
                         type="text" 
                         value={brand} 
                         onChange={(e) => setBrand(e.target.value)} 
                         placeholder={t('market_brand_placeholder')} 
-                        className="w-full bg-slate-950 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-emerald-500 outline-none" 
+                        className="w-full bg-bg border border-white/10 rounded-[10px] pl-9 pr-4 py-2.5 text-sm text-white focus:border-emerald-500 outline-none" 
                       />
                     </div>
                   </div>
 
                   {/* Location */}
                   <div className="space-y-1">
-                    <label htmlFor="market-location" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_location')}</label>
+                    <label htmlFor="market-location" className="text-xs font-bold text-ink-3 ml-1">{t('field_location')}</label>
                     <div className="relative">
-                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
                       <input 
                         id="market-location"
                         type="text" 
                         value={location} 
                         onChange={(e) => setLocation(e.target.value)} 
                         placeholder={t('market_location_placeholder')} 
-                        className="w-full bg-slate-950 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white focus:border-emerald-500 outline-none" 
+                        className="w-full bg-bg border border-white/10 rounded-[10px] pl-9 pr-4 py-2.5 text-sm text-white focus:border-emerald-500 outline-none" 
                       />
                     </div>
                   </div>
@@ -228,7 +228,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
 
                {/* Condition Selector */}
                <div className="space-y-1">
-                 <span id="market-condition-label" className="block text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_condition')}</span>
+                 <span id="market-condition-label" className="block text-xs font-bold text-ink-3 ml-1">{t('field_condition')}</span>
                  <div role="group" aria-labelledby="market-condition-label" className="grid grid-cols-3 gap-2">
                     {CONDITIONS.map(cond => (
                       <button
@@ -238,7 +238,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
                         className={`py-2 text-xs font-bold rounded-lg border transition-all ${
                           condition === cond.id 
                             ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
-                            : 'bg-slate-950 border-white/10 text-slate-400 hover:bg-white/5'
+                            : 'bg-bg border-white/10 text-ink-3 hover:bg-white/5'
                         }`}
                       >
                         {t(cond.labelKey)}
@@ -252,9 +252,9 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
             <div className="space-y-4">
                {/* Phone */}
                <div className="space-y-1">
-                 <label htmlFor="market-phone" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_phone')}</label>
+                 <label htmlFor="market-phone" className="text-xs font-bold text-ink-3 ml-1">{t('field_phone')}</label>
                  <div className="relative">
-                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                   <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
                    <input 
                      id="market-phone"
                      required 
@@ -262,21 +262,21 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
                      value={phone} 
                      onChange={(e) => setPhone(e.target.value)} 
                      placeholder="5XX XX XX XX" 
-                     className="w-full bg-slate-950 border border-white/10 rounded-xl pl-9 pr-4 py-3 text-sm text-white focus:border-emerald-500 outline-none font-mono" 
+                     className="w-full bg-bg border border-white/10 rounded-[10px] pl-9 pr-4 py-3 text-sm text-white focus:border-emerald-500 outline-none font-mono" 
                    />
                  </div>
                </div>
 
                {/* Description */}
                <div className="space-y-1">
-                 <label htmlFor="market-description" className="text-[10px] font-bold text-slate-400 uppercase ml-1">{t('field_description')}</label>
+                 <label htmlFor="market-description" className="text-xs font-bold text-ink-3 ml-1">{t('field_description')}</label>
                  <textarea 
                    id="market-description"
                    required 
                    value={description} 
                    onChange={(e) => setDescription(e.target.value)} 
                    placeholder={t('market_desc_placeholder')} 
-                   className="w-full h-32 bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none resize-none" 
+                   className="w-full h-32 bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none resize-none" 
                  />
                </div>
             </div>
@@ -286,7 +286,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-[10px] shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
                 <span>{loading ? t('action_publishing') : t('market_add_title')}</span>

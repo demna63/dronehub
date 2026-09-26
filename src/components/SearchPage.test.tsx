@@ -16,8 +16,8 @@ vi.mock('../services/apiService', () => ({
   apiService: { searchPosts: (...args: [string]) => searchPosts(...args) },
 }));
 
-// PostCard reaches into Firebase and framer-motion; neither is under test here.
-vi.mock('./PostCard', () => ({
+// PostRow reaches into the router and toast context; neither is under test here.
+vi.mock('./PostRow', () => ({
   default: ({ post }: { post: Post }) => <article data-testid="post">{post.title}</article>,
 }));
 vi.mock('./PostCardSkeleton', () => ({ default: () => <div data-testid="skeleton" /> }));

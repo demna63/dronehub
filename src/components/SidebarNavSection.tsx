@@ -1,46 +1,44 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
+import { SIDEBAR_ROW, SIDEBAR_ROW_ACTIVE, SIDEBAR_ROW_IDLE } from '../constants/navigation';
 
 interface NavItemProps {
   to: string;
-  icon: LucideIcon;
   label: string;
+  icon?: LucideIcon;
+  /** Right-aligned trailing content, e.g. a post count. */
+  trailing?: React.ReactNode;
   end?: boolean;
 }
 
-export const SidebarNavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, end = false }) => (
+export const SidebarNavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, trailing, end = false }) => (
   <NavLink
     to={to}
     end={end}
-    className={({ isActive }) => `
-      flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative
-      ${isActive
-        ? 'bg-indigo-600/10 text-indigo-400 font-bold'
-        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5 font-medium'}
-    `}
+    className={({ isActive }) => `${SIDEBAR_ROW} ${isActive ? SIDEBAR_ROW_ACTIVE : SIDEBAR_ROW_IDLE}`}
   >
-    <Icon size={18} className="group-hover:scale-110 transition-transform" />
-    <span className="text-sm">{label}</span>
+    {Icon && <Icon size={18} aria-hidden="true" className="shrink-0" />}
+    <span className="min-w-0 flex-1 truncate">{label}</span>
+    {trailing}
   </NavLink>
 );
 
 interface SidebarNavSectionProps {
   title: string;
-  titleClassName?: string;
   children: React.ReactNode;
 }
 
-const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({ title, titleClassName, children }) => {
+/** A titled group: 12px/700 ink-3 sentence-case title (F5), 2px row gap. */
+const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({ title, children }) => {
+  const headingId = React.useId();
   return (
-    <div className="space-y-1">
-      <div className="px-3 mb-2">
-        <h3 className={`text-[10px] font-black uppercase tracking-widest ${titleClassName || 'text-slate-300'}`}>
-          {title}
-        </h3>
-      </div>
+    <section aria-labelledby={headingId} className="flex flex-col gap-0.5">
+      <h2 id={headingId} className="px-3 pb-1.5 text-xs font-bold text-ink-3">
+        {title}
+      </h2>
       {children}
-    </div>
+    </section>
   );
 };
 

@@ -14,7 +14,7 @@ const TOAST_MS = 4000;
 const TONE: Record<ToastType, { chip: string; Icon: typeof CheckCircle2 }> = {
   success: { chip: 'bg-emerald-500/20 text-emerald-400', Icon: CheckCircle2 },
   error: { chip: 'bg-rose-500/20 text-rose-400', Icon: AlertCircle },
-  info: { chip: 'bg-sky-500/20 text-sky-400', Icon: Info },
+  info: { chip: 'bg-accent-tint text-accent', Icon: Info },
 };
 
 /**
@@ -75,7 +75,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return (
             <div
               key={toast.id}
-              className="animate-toast-enter pointer-events-auto min-w-[300px] max-w-sm bg-slate-900/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3"
+              className="animate-toast-enter pointer-events-auto min-w-[300px] max-w-sm bg-surface/90 border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center gap-3"
             >
               <span className={`p-2 rounded-full shrink-0 ${chip}`}>
                 <Icon size={18} aria-hidden="true" />
@@ -85,7 +85,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 type="button"
                 aria-label={t('action_close')}
                 onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-white transition-colors shrink-0"
+                className="text-ink-3 hover:text-white transition-colors shrink-0"
               >
                 <X size={16} />
               </button>

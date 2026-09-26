@@ -5,6 +5,8 @@ import { getPostByIdFromFirestore } from '../services/firestoreRepository';
 import SinglePostPage from './SinglePostPage';
 import PageMeta from './PageMeta';
 import type { FeedProps } from './Feed';
+import PostCardSkeleton from './PostCardSkeleton';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface PostPageProps {
   posts: Post[];
@@ -13,6 +15,7 @@ interface PostPageProps {
 }
 
 const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) => {
+  const { t } = useLanguage();
   const { postId } = useParams<{ postId: string }>();
   const [remotePost, setRemotePost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,8 +52,8 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
 
   if (loading && !post) {
     return (
-      <div className="py-20 text-center text-slate-400 font-semibold uppercase tracking-widest">
-        Loading post...
+      <div aria-busy="true" aria-label={t('state_loading')} className="mx-auto max-w-5xl">
+        <PostCardSkeleton />
       </div>
     );
   }

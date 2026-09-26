@@ -1,98 +1,57 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Post } from '../types';
-import { MapPin, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '../contexts/useLanguage';
 import { PostTime } from './PostTime';
 
 interface MarketplaceCardProps {
   item: Post;
-  onClick: () => void;
 }
 
-const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item, onClick }) => {
+const CONDITION_KEYS: Readonly<Record<string, string>> = {
+  new: 'condition_new',
+  used: 'condition_used',
+  damaged: 'condition_damaged',
+};
+
+/**
+ * A market listing (F18).
+ *
+ * The price is the card's headline in ink — not green, not monospace: green is
+ * reserved for flight status. The condition is a neutral outline chip for the
+ * same reason. Hover changes the border only; no lift, no image zoom (F12).
+ */
+const MarketplaceCard: React.FC<MarketplaceCardProps> = ({ item }) => {
   const { t } = useLanguage();
-  
-  // ფასი დაფორმატებული
   const priceDisplay = item.price ? `${item.price} ₾` : t('price_negotiable');
-
-  // მდგომარეობის ფერი
-  const getConditionStyle = (cond?: string) => {
-    switch(cond) {
-      case 'new': return 'bg-emerald-500 text-white';
-      case 'used': return 'bg-amber-500 text-white';
-      case 'damaged': return 'bg-rose-500 text-white';
-      default: return 'bg-slate-600 text-slate-200';
-    }
-  };
-
-  const getConditionLabel = (cond?: string) => {
-    switch (cond) {
-      case 'new': return t('condition_new');
-      case 'used': return t('condition_used');
-      case 'damaged': return t('condition_damaged');
-      default: return t('condition_unknown');
-    }
-  };
+  const conditionKey = item.condition ? CONDITION_KEYS[item.condition] : undefined;
 
   return (
-    <div 
-      onClick={onClick}
-      className="group bg-slate-900 border border-white/5 hover:border-white/20 rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+    <Link
+      to={`/post/${item.id}`}
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-colors duration-150 hover:border-white/[0.14]"
     >
-      {/* 1. IMAGE AREA */}
-      <div className="relative h-48 bg-slate-950 overflow-hidden">
-        {item.image ? (
-          <img 
-            src={item.image} 
-            alt={item.title} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" 
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-700">
-            <ImageIcon size={32} />
-          </div>
+      <div className="aspect-[4/3] bg-surface-2">
+        {item.image && (
+          <img src={item.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
         )}
-        
-        {/* Condition Badge (Top Right) */}
-        <div className={`absolute top-3 right-3 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider shadow-lg ${getConditionStyle(item.condition)}`}>
-          {getConditionLabel(item.condition)}
-        </div>
+      </div>
 
-        {/* Price Tag (Bottom Left - Floating) */}
-        <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg shadow-lg">
-          <span className="text-sm font-black text-emerald-400 font-mono tracking-tight">
-            {priceDisplay}
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
+        <span className="text-lg font-extrabold text-ink">{priceDisplay}</span>
+        <h2 className="line-clamp-2 text-sm leading-[1.4] text-[#e2e8f0]">{item.title}</h2>
+        <div className="mt-auto flex items-center justify-between gap-2 text-xs text-ink-3">
+          <span className="flex min-w-0 items-center gap-1">
+            <span className="truncate">{item.location || t('location_default')}</span>
+            <span aria-hidden="true">·</span>
+            <PostTime value={item.createdAt} withIcon={false} className="shrink-0" />
+          </span>
+          <span className="shrink-0 rounded-md border border-white/[0.14] px-2 py-0.5 text-ink-2">
+            {t(conditionKey ?? 'condition_unknown')}
           </span>
         </div>
       </div>
-
-      {/* 2. CONTENT AREA */}
-      <div className="p-4 flex flex-col flex-1">
-        
-        {/* Title */}
-        <h3 className="font-bold text-slate-200 text-sm mb-1 line-clamp-2 leading-snug group-hover:text-white transition-colors">
-          {item.title}
-        </h3>
-
-        {/* Subtitle / Brand */}
-        {item.brand && (
-           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4 block">
-             {item.brand} • {item.subCategory}
-           </span>
-        )}
-
-        {/* Footer Info (Location & Time) */}
-        <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400">
-           <div className="flex items-center gap-1">
-              <MapPin size={12} className="text-slate-400" />
-              <span className="truncate max-w-[80px]">{item.location || t('location_default')}</span>
-           </div>
-           <div className="flex items-center gap-3">
-              <PostTime value={item.createdAt} className="text-slate-400" />
-           </div>
-        </div>
-      </div>
-    </div>
+    </Link>
   );
 };
 

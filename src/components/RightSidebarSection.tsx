@@ -2,21 +2,21 @@ import React from 'react';
 
 interface RightSidebarSectionProps {
   title: string;
-  icon?: React.ReactNode;
+  /** Right-aligned secondary text in the header row (a city, a counter). */
+  meta?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }
 
-const RightSidebarSection: React.FC<RightSidebarSectionProps> = ({ title, icon, children, className }) => {
-  return (
-    <div className={`bg-slate-900 border border-white/5 rounded-2xl p-4 shadow-lg ${className || ''}`}>
-      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2 px-1">
-        {icon}
-        {title}
-      </h3>
-      {children}
+/** A right-sidebar card: 14/700 title, 12px ink-3 meta, `surface` panel. */
+const RightSidebarSection: React.FC<RightSidebarSectionProps> = ({ title, meta, children, className = '' }) => (
+  <section className={`flex flex-col gap-3.5 rounded-2xl border border-line bg-surface p-4 ${className}`}>
+    <div className="flex items-center justify-between gap-2">
+      <h2 className="text-sm font-bold text-ink">{title}</h2>
+      {meta !== undefined && <span className="text-xs text-ink-3">{meta}</span>}
     </div>
-  );
-};
+    {children}
+  </section>
+);
 
 export default RightSidebarSection;

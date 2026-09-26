@@ -117,17 +117,17 @@ const AntennaTuner: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-8 pb-20 animate-in fade-in duration-500">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-8 pb-20 duration-500">
       
       {/* HEADER */}
       <div className="text-center space-y-2 border-b border-white/10 pb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-pink-500/10 text-pink-400 mb-2">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-accent-tint text-accent mb-2">
            <Ruler size={24} />
         </div>
-        <h1 className="text-3xl font-black text-white italic tracking-tighter">
-           ANTENNA <span className="text-pink-400">BUILDER</span>
+        <h1 className="text-3xl font-extrabold text-white">
+           ANTENNA <span className="text-accent">BUILDER</span>
         </h1>
-        <p className="text-slate-400 text-xs max-w-xl mx-auto">
+        <p className="text-ink-3 text-xs max-w-xl mx-auto">
            {t('antenna_subtitle')}
         </p>
       </div>
@@ -137,47 +137,47 @@ const AntennaTuner: React.FC = () => {
         {/* === SECTION 1: DIPOLE CALCULATOR === */}
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
-                <div className="bg-pink-500/20 p-1.5 rounded text-pink-400"><Ruler size={16}/></div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">1. Dipole Calculator</h2>
+                <div className="bg-accent-tint p-1.5 rounded text-accent"><Ruler size={16}/></div>
+                <h2 className="text-sm font-bold text-white">1. Dipole Calculator</h2>
             </div>
 
-            <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-lg space-y-5">
+            <div className="bg-surface border border-white/10 rounded-2xl p-5 shadow-lg space-y-5">
                 {/* Presets */}
                 <div className="flex flex-wrap gap-2">
                     {FREQ_PRESETS.map((p, i) => (
-                        <button key={i} onClick={() => applyPreset(p)} className="text-[10px] bg-slate-950 border border-white/10 text-slate-400 hover:text-pink-300 hover:border-pink-500/30 px-2 py-1 rounded transition-colors">
+                        <button key={i} onClick={() => applyPreset(p)} className="text-xs bg-bg border border-white/10 text-ink-3 hover:text-accent hover:border-accent/30 px-2 py-1 rounded transition-colors">
                             {p.label}
                         </button>
                     ))}
                 </div>
 
                 <div className="space-y-1">
-                    <label htmlFor="antenna-frequency" className="text-[10px] font-bold text-slate-400 uppercase">Frequency</label>
+                    <label htmlFor="antenna-frequency" className="text-xs font-bold text-ink-3">Frequency</label>
                     <div className="flex gap-2">
-                        <input id="antenna-frequency" type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)} className="flex-1 bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-pink-500"/>
-                        <select aria-label={t('unit_frequency')} value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-slate-950 border border-white/10 text-slate-300 text-xs rounded-lg px-2 outline-none">
+                        <input id="antenna-frequency" type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)} className="flex-1 bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-accent/50"/>
+                        <select aria-label={t('unit_frequency')} value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-bg border border-white/10 text-ink-2 text-xs rounded-lg px-2 outline-none">
                             <option value="MHz">MHz</option><option value="GHz">GHz</option>
                         </select>
                     </div>
                 </div>
 
                 {/* Visual Result */}
-                <div className="relative h-32 bg-slate-950 rounded-xl border border-white/5 flex flex-col items-center justify-center overflow-hidden group">
-                    <button onClick={copyResult} aria-label={t('action_copy_result')} className="absolute top-2 right-2 p-1.5 bg-slate-800/80 hover:bg-pink-500 rounded text-white opacity-0 group-hover:opacity-100 transition-all">
+                <div className="relative h-32 bg-bg rounded-[10px] border border-white/5 flex flex-col items-center justify-center overflow-hidden group">
+                    <button onClick={copyResult} aria-label={t('action_copy_result')} className="absolute top-2 right-2 p-1.5 bg-surface-2/80 hover:bg-accent-fill-hover rounded text-white opacity-0 group-hover:opacity-100 transition-all">
                         {copied ? <Check size={12}/> : <Copy size={12}/>}
                     </button>
                     
                     <div className="w-full flex items-center justify-center gap-1">
                         <div className="h-2 bg-emerald-500/50 rounded-l-full w-1/3 relative">
-                            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-emerald-400">{legLength} cm</span>
+                            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-emerald-400">{legLength} cm</span>
                         </div>
                         <div className="w-2 h-2 rounded-full bg-white z-10"></div>
                         <div className="h-2 bg-emerald-500/50 rounded-r-full w-1/3 relative">
-                            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-emerald-400">{legLength} cm</span>
+                            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-emerald-400">{legLength} cm</span>
                         </div>
                     </div>
-                    <div className="mt-4 border-t border-pink-500/30 w-2/3 flex justify-center pt-1">
-                        <span className="text-xs font-bold text-pink-400">Total: {antLength} cm</span>
+                    <div className="mt-4 border-t border-accent/30 w-2/3 flex justify-center pt-1">
+                        <span className="text-xs font-bold text-accent">Total: {antLength} cm</span>
                     </div>
                 </div>
             </div>
@@ -187,39 +187,39 @@ const AntennaTuner: React.FC = () => {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <div className="bg-yellow-500/20 p-1.5 rounded text-yellow-400"><Scissors size={16}/></div>
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">2. SWR Trimmer</h2>
+                <h2 className="text-sm font-bold text-white">2. SWR Trimmer</h2>
             </div>
 
-            <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-lg space-y-5 h-full">
+            <div className="bg-surface border border-white/10 rounded-2xl p-5 shadow-lg space-y-5 h-full">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <label htmlFor="antenna-target-freq" className="text-[10px] font-bold text-slate-400 uppercase">Target (MHz)</label>
-                        <input id="antenna-target-freq" type="number" value={targetFreq} onChange={(e) => setTargetFreq(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
+                        <label htmlFor="antenna-target-freq" className="text-xs font-bold text-ink-3">Target (MHz)</label>
+                        <input id="antenna-target-freq" type="number" value={targetFreq} onChange={(e) => setTargetFreq(e.target.value)} className="w-full bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                     </div>
                     <div className="space-y-1">
-                        <label htmlFor="antenna-measured-freq" className="text-[10px] font-bold text-slate-400 uppercase">Measured (MHz)</label>
-                        <input id="antenna-measured-freq" type="number" value={measuredFreq} onChange={(e) => setMeasuredFreq(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
+                        <label htmlFor="antenna-measured-freq" className="text-xs font-bold text-ink-3">Measured (MHz)</label>
+                        <input id="antenna-measured-freq" type="number" value={measuredFreq} onChange={(e) => setMeasuredFreq(e.target.value)} className="w-full bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                     </div>
                 </div>
                 
                 <div className="space-y-1">
-                    <label htmlFor="antenna-current-length" className="text-[10px] font-bold text-slate-400 uppercase">Current Length (mm)</label>
-                    <input id="antenna-current-length" type="number" value={currentLength} onChange={(e) => setCurrentLength(e.target.value)} className="w-full bg-slate-950 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
+                    <label htmlFor="antenna-current-length" className="text-xs font-bold text-ink-3">Current Length (mm)</label>
+                    <input id="antenna-current-length" type="number" value={currentLength} onChange={(e) => setCurrentLength(e.target.value)} className="w-full bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                 </div>
 
                 {/* Trimmer Result */}
-                <div className="bg-slate-950 border border-white/5 rounded-xl p-4 flex flex-col items-center justify-center min-h-[128px]">
+                <div className="bg-bg border border-white/5 rounded-[10px] p-4 flex flex-col items-center justify-center min-h-[128px]">
                     {warning ? (
                         <div className="text-rose-400 text-xs font-bold flex items-center gap-2 text-center">
                             <AlertTriangle size={16}/> {warning}
                         </div>
                     ) : (
                         <>
-                            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">{t('antenna_trim_amount')}</div>
-                            <div className="text-3xl font-black text-yellow-400 font-mono">
-                                -{cutAmount ? cutAmount.toFixed(2) : "0.00"} <span className="text-sm text-slate-400">mm</span>
+                            <div className="text-xs text-ink-3 font-bold mb-1">{t('antenna_trim_amount')}</div>
+                            <div className="text-3xl font-extrabold text-yellow-400 font-mono">
+                                -{cutAmount ? cutAmount.toFixed(2) : "0.00"} <span className="text-sm text-ink-3">mm</span>
                             </div>
-                            <div className="mt-2 text-[10px] text-slate-400">
+                            <div className="mt-2 text-xs text-ink-3">
                                 New Length: <span className="text-white font-bold">{newLength ? newLength.toFixed(2) : "-"} mm</span>
                             </div>
                         </>

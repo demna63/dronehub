@@ -15,8 +15,8 @@ interface ProfileHeaderProps {
 
 const Stat: React.FC<{ value: number; label: string }> = ({ value, label }) => (
   <div className="flex items-baseline gap-1.5">
-    <span className="text-base font-black text-white tabular-nums">{value}</span>
-    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+    <span className="text-base font-extrabold text-white tabular-nums">{value}</span>
+    <span className="text-xs font-bold text-ink-3">{label}</span>
   </div>
 );
 
@@ -35,8 +35,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const gear = (profileUser.gear ?? []).filter(Boolean);
 
   return (
-    <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden relative shadow-xl">
-      <div className="h-40 md:h-52 bg-gradient-to-br from-emerald-600/20 to-sky-600/20 relative overflow-hidden">
+    <div className="bg-surface border border-white/5 rounded-2xl overflow-hidden relative shadow-xl">
+      <div className="h-40 md:h-52 bg-surface-2 relative overflow-hidden">
         {profileUser.coverImage && (
           <img
             src={profileUser.coverImage}
@@ -47,8 +47,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           />
         )}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-900 to-transparent" />
-      </div>
+              </div>
 
       <div className="px-6 sm:px-10 pb-8 relative">
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 -mt-16 sm:-mt-20 mb-6">
@@ -60,14 +59,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           />
 
           <div className="flex-1 min-w-0 text-center sm:text-left">
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center sm:justify-start gap-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center justify-center sm:justify-start gap-2">
               <span className="truncate">{profileUser.name}</span>
               {profileUser.isVerified && (
-                <BadgeCheck size={20} className="text-sky-400 shrink-0" aria-label={t('profile_verified')} />
+                <BadgeCheck size={20} className="text-accent shrink-0" aria-label={t('profile_verified')} />
               )}
             </h1>
 
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 mt-2 text-xs font-bold text-slate-400">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 mt-2 text-xs font-bold text-ink-3">
               {profileUser.location && (
                 <span className="flex items-center gap-1.5">
                   <MapPin size={14} className="text-emerald-500" aria-hidden="true" />
@@ -76,8 +75,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               )}
               {joined && (
                 <span className="flex items-center gap-1.5">
-                  <Calendar size={14} className="text-sky-500" aria-hidden="true" />
-                  შემოუერთდა {joined}
+                  <Calendar size={14} className="text-accent" aria-hidden="true" />
+                  {t('profile_joined', { date: joined })}
                 </span>
               )}
             </div>
@@ -93,14 +92,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             <button
               type="button"
               onClick={onEditProfile}
-              className="shrink-0 px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-colors flex items-center gap-2"
+              className="shrink-0 px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-[10px] border border-white/10 transition-colors flex items-center gap-2"
             >
               <Settings size={16} aria-hidden="true" /> {t('profile_edit')}
             </button>
           )}
         </div>
 
-        <p className="text-sm text-slate-300 max-w-2xl leading-relaxed text-center sm:text-left whitespace-pre-wrap">
+        <p className="text-sm text-ink-2 max-w-2xl leading-relaxed text-center sm:text-left whitespace-pre-wrap">
           {profileUser.bio || (isOwnProfile
             ? t('profile_bio_empty_own')
             : t('profile_bio_empty_other'))}
@@ -110,11 +109,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             there vanished from the person's point of view. */}
         {gear.length > 0 && (
           <div className="mt-5 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-            <Wrench size={14} className="text-slate-500 shrink-0" aria-hidden="true" />
+            <Wrench size={14} className="text-ink-3 shrink-0" aria-hidden="true" />
             {gear.map((item) => (
               <span
                 key={item}
-                className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] font-bold text-slate-300"
+                className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-ink-2"
               >
                 {item}
               </span>

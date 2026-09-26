@@ -78,14 +78,14 @@ const CommentBody: React.FC<CommentBodyProps> = ({
               void handleSave();
             }
           }}
-          className="w-full bg-slate-950 border border-white/10 rounded-xl p-2 text-sm text-white leading-relaxed focus:outline-none focus:border-sky-500/50 min-h-[64px] resize-y disabled:opacity-50"
+          className="w-full bg-bg border border-white/10 rounded-[10px] p-2 text-sm text-white leading-relaxed focus:outline-none focus:border-accent/50 min-h-[64px] resize-y disabled:opacity-50"
         />
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={handleCancel}
             disabled={isPending}
-            className="text-[10px] font-bold text-slate-400 uppercase tracking-wide hover:text-white transition-colors disabled:opacity-40"
+            className="text-xs font-bold text-ink-3 hover:text-white transition-colors disabled:opacity-40"
           >
             {t('action_cancel')}
           </button>
@@ -93,7 +93,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
             type="button"
             onClick={() => void handleSave()}
             disabled={isPending || !draft.trim()}
-            className="text-[10px] font-bold text-sky-400 uppercase tracking-wide hover:text-sky-300 transition-colors disabled:opacity-40"
+            className="text-xs font-bold text-accent hover:text-accent transition-colors disabled:opacity-40"
           >
             {isPending ? t('action_saving') : t('action_save')}
           </button>
@@ -104,18 +104,18 @@ const CommentBody: React.FC<CommentBodyProps> = ({
 
   return (
     <>
-      <p className={`text-sm text-slate-300 leading-relaxed break-words whitespace-pre-wrap ${isPending ? 'opacity-50' : ''}`}>
+      <p className={`text-sm text-ink-2 leading-relaxed break-words whitespace-pre-wrap ${isPending ? 'opacity-50' : ''}`}>
         {comment.text}
       </p>
       {Boolean(comment.editedAt) && (
-        <span className="text-[9px] text-slate-500 uppercase tracking-wide">{t('comment_edited')}</span>
+        <span className="text-xs text-ink-3">{t('comment_edited')}</span>
       )}
 
       {canManage && (
         <div className="absolute top-1.5 right-2 flex items-center gap-1.5">
           {isConfirmingDelete ? (
             <>
-              <span className="text-[9px] font-bold text-rose-300 uppercase tracking-wide">{t('delete_question')}</span>
+              <span className="text-xs font-bold text-rose-300">{t('delete_question')}</span>
               <button
                 type="button"
                 aria-label={t('delete_confirm_label')}
@@ -135,7 +135,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
                 title={t('action_cancel')}
                 disabled={isPending}
                 onClick={() => setIsConfirmingDelete(false)}
-                className="p-1 text-slate-400 hover:text-white transition-colors disabled:opacity-40"
+                className="p-1 text-ink-3 hover:text-white transition-colors disabled:opacity-40"
               >
                 <X size={12} />
               </button>
@@ -148,7 +148,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
                 title={t('action_edit')}
                 disabled={isPending}
                 onClick={() => setIsEditing(true)}
-                className="p-1 text-slate-400 hover:text-white transition-colors disabled:opacity-40"
+                className="p-1 text-ink-3 hover:text-white transition-colors disabled:opacity-40"
               >
                 <Pencil size={12} />
               </button>
@@ -158,7 +158,7 @@ const CommentBody: React.FC<CommentBodyProps> = ({
                 title={t('action_delete')}
                 disabled={isPending}
                 onClick={() => setIsConfirmingDelete(true)}
-                className="p-1 text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-40"
+                className="p-1 text-ink-3 hover:text-rose-400 transition-colors disabled:opacity-40"
               >
                 <Trash2 size={12} />
               </button>

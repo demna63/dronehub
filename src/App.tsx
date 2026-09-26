@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // --- CONTEXTS ---
 
@@ -19,8 +19,8 @@ const AuthModal = React.lazy(() => import('./components/AuthModal'));
 
 /** A blank fallback made the login button look dead while the chunk loaded. */
 const AuthModalFallback: React.FC = () => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-    <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-bg/80">
+    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
   </div>
 );
 import OfflineStatus from './components/OfflineStatus';
@@ -34,6 +34,7 @@ import { useLanguage } from './contexts/useLanguage';
 const App: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -226,13 +227,19 @@ const App: React.FC = () => {
     onDeleteVlog: (id: string) => setVlogs(prev => prev.filter(v => v.id !== id)),
   };
 
+  /**
+   * The right column belongs to the feed only (F18, F20): market, tools, map
+   * and chat need the width. Map and chat also fill the centre column's
+   * height, so they get no bottom padding to scroll past.
+   */
+  const showRightSidebar = pathname === '/' || pathname.startsWith('/category/');
+  const isFullHeightRoute = pathname === '/map' || pathname === '/chat';
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
-        <div className="mt-4 text-sky-400 font-bold tracking-widest uppercase animate-pulse">
-          Initializing System
-        </div>
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4" role="status">
+        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+        <span className="text-sm text-ink-3">{t('state_loading')}</span>
       </div>
     );
   }
@@ -246,16 +253,16 @@ const App: React.FC = () => {
           normal — pinning the height on a phone stops the browser's address
           bar from collapsing, which costs more screen than it saves.
         */}
-        <div className="min-h-screen md:h-dvh md:overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-sky-500/30 selection:text-sky-200">
+        <div className="min-h-screen md:h-dvh md:overflow-hidden bg-bg text-ink font-sans selection:bg-accent/30 selection:text-ink">
           <a
             href="#main"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-sky-500 focus:text-white focus:font-bold focus:text-sm focus:shadow-lg"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-[10px] focus:bg-accent-fill focus:text-white focus:font-bold focus:text-sm"
           >
             {t('skip_to_content')}
           </a>
 
           <OfflineStatus isOffline={isOffline} hasCachedData={Boolean(posts.length || vlogs.length || meetRooms.length)} />
- 
+
           <Navbar
             currentUser={currentUser}
             onLoginClick={handleLoginRequest}
@@ -266,29 +273,29 @@ const App: React.FC = () => {
             onMarkAllAsRead={handleMarkAllNotificationsRead}
           />
 
-          <div className="pt-20 px-4 md:px-8 max-w-[1600px] mx-auto flex gap-8 md:h-full md:min-h-0">
+          <div className="pt-16 px-4 md:px-8 max-w-[1600px] mx-auto flex gap-8 md:h-full md:min-h-0">
 
-            {/* Left Sidebar — scrolls its own overflow, never the page */}
-            <aside aria-label={t('landmark_navigation')} className="hidden md:block w-64 flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto custom-scrollbar pb-4">
-              <Sidebar currentUser={currentUser} onOpenAuth={handleLoginRequest} />
-            </aside>
+            {/* Left navigation — scrolls its own overflow, never the page.
+                A plain column: the <nav> inside is the landmark. */}
+            <div className="hidden md:block w-[232px] flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto custom-scrollbar pt-6 pb-4">
+              <Sidebar currentUser={currentUser} />
+            </div>
 
             {/* Main Content — the app's scroll container from `md` up.
                 `min-h-0` is what lets a flex child actually scroll: without it
                 the item's min-height is its content, so it grows instead. */}
-            <main id={APP_SCROLL_ID} className="flex-1 min-w-0 pb-20 md:h-full md:min-h-0 md:overflow-y-auto custom-scrollbar">
+            <main
+              id={APP_SCROLL_ID}
+              className={`flex-1 min-w-0 pt-6 md:h-full md:min-h-0 md:overflow-y-auto custom-scrollbar ${isFullHeightRoute ? 'pb-4' : 'pb-20'}`}
+            >
               <AppRoutes {...appRoutesProps} />
             </main>
 
-            {/* Right Sidebar */}
-            <aside aria-label={t('landmark_complementary')} className="hidden xl:block w-72 flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto custom-scrollbar pb-4">
-              <RightSidebar
-                currentUser={currentUser}
-                onOpenAuth={handleLoginRequest}
-                trendingCommunities={categories.slice(0, 5)}
-                onCommunityClick={(id) => navigate(`/category/${id}`)}
-              />
-            </aside>
+            {showRightSidebar && (
+              <aside aria-label={t('landmark_complementary')} className="hidden xl:block w-[280px] flex-shrink-0 md:h-full md:min-h-0 overflow-y-auto pt-6 pb-4">
+                <RightSidebar />
+              </aside>
+            )}
 
           </div>
 

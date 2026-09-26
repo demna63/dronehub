@@ -91,24 +91,24 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
 
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-bg flex flex-col">
       {/* Header */}
-      <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-slate-900">
+      <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-surface">
         <div className="flex items-center gap-4">
-           <div className="w-10 h-10 rounded-xl overflow-hidden">
+           <div className="w-10 h-10 rounded-[10px] overflow-hidden">
              <img src={room.coverImage} className="w-full h-full object-cover" alt="" />
            </div>
            <div>
              <h2 className="text-white font-bold">{room.name}</h2>
              <div className="flex items-center gap-2 text-xs text-emerald-400">
-               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+               <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                Live Connection
              </div>
            </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowChat(!showChat)} aria-label={t('chat_toggle')} aria-expanded={showChat} className={`p-3 rounded-xl transition-colors ${showChat ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>
+          <button onClick={() => setShowChat(!showChat)} aria-label={t('chat_toggle')} aria-expanded={showChat} className={`p-3 rounded-[10px] transition-colors ${showChat ? 'bg-white/10 text-white' : 'text-ink-3 hover:text-white'}`}>
             <MessageSquare className="w-5 h-5" />
           </button>
         </div>
@@ -117,26 +117,26 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Video Area */}
-        <div className="flex-1 p-6 flex items-center justify-center bg-slate-950 relative">
-           <div className="w-full max-w-4xl aspect-video bg-slate-900 rounded-3xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+        <div className="flex-1 p-6 flex items-center justify-center bg-bg relative">
+           <div className="w-full max-w-4xl aspect-video bg-surface rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
               {!isVideoOn && (
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center">
-                    {user ? <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover opacity-50" /> : <VideoOff className="w-10 h-10 text-slate-400" />}
+                  <div className="w-24 h-24 rounded-full bg-surface-2 flex items-center justify-center">
+                    {user ? <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover opacity-50" /> : <VideoOff className="w-10 h-10 text-ink-3" />}
                   </div>
-                  <p className="text-slate-400 font-mono text-sm">Camera is off</p>
+                  <p className="text-ink-3 font-mono text-sm">Camera is off</p>
                 </div>
               )}
               {/* Controls Overlay */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-white/10">
-                 <button onClick={() => setIsMicOn(!isMicOn)} aria-label={isMicOn ? t('mic_off') : t('mic_on')} className={`p-4 rounded-xl transition-all ${isMicOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-surface/90 p-2 rounded-2xl border border-white/10">
+                 <button onClick={() => setIsMicOn(!isMicOn)} aria-label={isMicOn ? t('mic_off') : t('mic_on')} className={`p-4 rounded-[10px] transition-all ${isMicOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
                    {isMicOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                  </button>
-                 <button onClick={() => setIsVideoOn(!isVideoOn)} aria-label={isVideoOn ? t('camera_off') : t('camera_on')} className={`p-4 rounded-xl transition-all ${isVideoOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
+                 <button onClick={() => setIsVideoOn(!isVideoOn)} aria-label={isVideoOn ? t('camera_off') : t('camera_on')} className={`p-4 rounded-[10px] transition-all ${isVideoOn ? 'bg-white/10 text-white' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}>
                    {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
                  </button>
                  <div className="w-px h-8 bg-white/10 mx-2"></div>
-                 <button onClick={onLeave} className="px-6 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold flex items-center gap-2 transition-colors">
+                 <button onClick={onLeave} className="px-6 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-[10px] font-bold flex items-center gap-2 transition-colors">
                    <PhoneOff className="w-5 h-5" />
                    <span>Leave</span>
                  </button>
@@ -148,7 +148,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
         <motion.div 
           initial={false}
           animate={{ width: showChat ? 360 : 0, opacity: showChat ? 1 : 0 }}
-          className="bg-slate-900 border-l border-white/10 flex flex-col"
+          className="bg-surface border-l border-white/10 flex flex-col"
         >
            <div className="p-4 border-b border-white/5">
              <h3 className="text-white font-bold text-sm">Room Chat</h3>
@@ -160,22 +160,22 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                  <img src={msg.avatar} className="w-8 h-8 rounded-full mt-1" alt="" />
                  <div>
                    <div className="flex items-baseline gap-2">
-                     <span className="text-xs font-bold text-slate-300">{msg.authorName}</span>
-                     <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
+                     <span className="text-xs font-bold text-ink-2">{msg.authorName}</span>
+                     <span className="text-xs text-ink-3">{msg.timestamp}</span>
                    </div>
-                   <p className="text-sm text-slate-400 mt-0.5 leading-relaxed">{msg.text}</p>
+                   <p className="text-sm text-ink-3 mt-0.5 leading-relaxed">{msg.text}</p>
                  </div>
                </div>
              ))}
              {listenerError && (
-               <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[11px] font-bold text-rose-300">
+               <p role="alert" className="my-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs font-bold text-rose-300">
                  {listenerError}
                </p>
              )}
              <div ref={chatEndRef} />
            </div>
 
-           <form onSubmit={sendMessage} className="p-4 border-t border-white/5 bg-slate-800/50">
+           <form onSubmit={sendMessage} className="p-4 border-t border-white/5 bg-surface-2/50">
              <input
                type="text"
                name="meet-chat-input"
@@ -186,7 +186,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                maxLength={MESSAGE_MAX_LENGTH}
                placeholder={user ? "Send a message..." : "Login to chat"}
                disabled={!user}
-               className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-sky-500 focus:outline-none"
+               className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-accent/50 focus:outline-none"
              />
            </form>
         </motion.div>

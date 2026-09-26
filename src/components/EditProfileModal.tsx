@@ -151,7 +151,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   src={avatar}
                   name={name || currentUser.name}
                   size={96}
-                  ringClassName="border-2 border-dashed border-white/20 group-hover:border-indigo-500 transition-colors"
+                  ringClassName="border-2 border-dashed border-white/20 group-hover:border-accent transition-colors"
                 />
                 {/* Hover Overlay */}
                 <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -165,9 +165,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   onChange={handleImageUpload}
                 />
               </div>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 text-center">
+              <span className="text-xs font-bold text-ink-3 text-center">
                 დააჭირე ფოტოს შესაცვლელად
-                <span className="block mt-1 normal-case tracking-normal text-slate-600">
+                <span className="block mt-1 normal-case tracking-normal text-ink-3">
                   კვადრატულად ჩამოიჭრება ცენტრიდან
                 </span>
               </span>
@@ -176,49 +176,49 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {/* Fields */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="edit-profile-name" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_name')}</label>
+                <label htmlFor="edit-profile-name" className="text-xs font-bold text-ink-3 ml-1">{t('field_name')}</label>
                 <input 
                   id="edit-profile-name"
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none transition-colors"
+                  className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none transition-colors"
                   placeholder={t('field_your_name')}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="edit-profile-bio" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_bio')}</label>
+                <label htmlFor="edit-profile-bio" className="text-xs font-bold text-ink-3 ml-1">{t('field_bio')}</label>
                 <textarea 
                   id="edit-profile-bio"
                   value={bio} 
                   onChange={(e) => setBio(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none resize-none h-24 text-sm transition-colors"
+                  className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none resize-none h-24 text-sm transition-colors"
                   placeholder={t('field_bio_placeholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="edit-profile-location" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_location')}</label>
+                <label htmlFor="edit-profile-location" className="text-xs font-bold text-ink-3 ml-1">{t('field_location')}</label>
                 <input 
                   id="edit-profile-location"
                   type="text" 
                   value={location} 
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none text-sm transition-colors"
+                  className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none text-sm transition-colors"
                   placeholder={t('field_location_placeholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="edit-profile-gear" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">{t('field_gear')}</label>
+                <label htmlFor="edit-profile-gear" className="text-xs font-bold text-ink-3 ml-1">{t('field_gear')}</label>
                 <input 
                   id="edit-profile-gear"
                   type="text" 
                   value={gear} 
                   onChange={(e) => setGear(e.target.value)}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none text-sm transition-colors"
+                  className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none text-sm transition-colors"
                   placeholder={t('field_gear_placeholder')}
                 />
               </div>
@@ -227,7 +227,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {error && (
               <p
                 role="alert"
-                className="flex items-center gap-2 text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2.5"
+                className="flex items-center gap-2 text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-[10px] px-3 py-2.5"
               >
                 <AlertCircle size={14} className="shrink-0" aria-hidden="true" /> {error}
               </p>
@@ -238,14 +238,14 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <button 
                 type="button" 
                 onClick={onClose}
-                className="flex-1 py-4 bg-white/5 text-slate-400 hover:text-white font-bold rounded-2xl text-[10px] uppercase tracking-widest transition-colors"
+                className="flex-1 py-4 bg-white/5 text-ink-3 hover:text-white font-bold rounded-2xl text-xs transition-colors"
               >
                 {t('action_cancel')}
               </button>
               <button 
                 type="submit" 
                 disabled={isSaving || isUploading}
-                className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-4 bg-accent-fill hover:bg-accent-fill-hover text-white font-bold rounded-2xl text-xs shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSaving ? (
                   <>

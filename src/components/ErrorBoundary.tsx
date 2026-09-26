@@ -22,15 +22,15 @@ interface State {
 const ErrorFallback: React.FC = () => {
   const { t } = useLanguage();
   return (
-    <div className="flex flex-col items-center justify-center py-40 bg-slate-900/30 border border-white/5 rounded-[40px] text-center">
+    <div className="flex flex-col items-center justify-center py-40 bg-surface/30 border border-white/5 rounded-2xl text-center">
       <div className="text-6xl mb-6">🛰️</div>
-      <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">{t('error_title')}</h2>
-      <p className="text-slate-400 max-w-sm mx-auto mb-8 font-medium">
+      <h2 className="text-2xl font-extrabold text-white mb-4">{t('error_title')}</h2>
+      <p className="text-ink-3 max-w-sm mx-auto mb-8 font-medium">
         {t('error_body')}
       </p>
       <button
         onClick={() => window.location.reload()}
-        className="px-10 py-4 bg-sky-500 hover:bg-sky-400 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-sky-500/20 active:scale-95"
+        className="px-10 py-4 bg-accent-fill hover:bg-accent-fill-hover text-white font-extrabold rounded-2xl text-xs transition-all shadow-xl"
       >
         {t('error_reload')}
       </button>

@@ -1,32 +1,33 @@
 import React from 'react';
-import OptimizedImage from './OptimizedImage';
 
 interface LogoProps {
   className?: string;
-  iconOnly?: boolean; 
+  /** Mark only, without the wordmark. */
+  iconOnly?: boolean;
 }
 
-const Logo: React.FC<LogoProps> = ({ className = "" }) => {
-  return (
-    <div className={`relative group flex items-center justify-center ${className}`}>
-      <div className="absolute -inset-2 bg-gradient-to-r from-sky-500/20 to-indigo-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-      <div className="relative h-10 w-36 bg-white border border-white/20 group-hover:border-sky-400/40 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-sky-500/20">
-        <OptimizedImage
-          avifSrc="/brand/dhg-logo.avif"
-          webpSrc="/brand/dhg-logo.webp"
-          fallbackSrc="/brand/dhg-logo.png"
-          alt="DroneHub Georgia DHG"
-          width={144}
-          height={40}
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          className="w-full h-full object-contain p-1 transition-transform duration-500 group-hover:scale-105"
-        />
-      </div>
-    </div>
-  );
-};
+/**
+ * The DroneHub mark plus a text wordmark (F3).
+ *
+ * The old logo was a 144×40 white box around a raster made for a light
+ * ground, with a hover glow. The mark is the square `icon.svg`, which already
+ * carries its own navy ground, so it sits on the dark UI without a plate. The
+ * wordmark is live text: it stays sharp at any zoom and costs no request.
+ */
+const Logo: React.FC<LogoProps> = ({ className = '', iconOnly = false }) => (
+  <span className={`flex items-center gap-2 ${className}`}>
+    <img
+      src="/brand/icon.svg"
+      alt=""
+      width={32}
+      height={32}
+      decoding="async"
+      className="w-8 h-8 rounded-lg shrink-0"
+    />
+    {!iconOnly && (
+      <span className="text-base font-extrabold text-ink leading-none whitespace-nowrap">DroneHub</span>
+    )}
+  </span>
+);
 
 export default Logo;

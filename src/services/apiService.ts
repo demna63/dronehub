@@ -16,6 +16,7 @@ import {
   getPostsByIdsFromFirestore,
   getPostsFromFirestore,
   getPostPageFromFirestore,
+  countPostsByFacetFromFirestore,
   type PostCursor,
   type PostPage,
   type PostSort,
@@ -47,7 +48,7 @@ import type {
 import { ratePost } from './telemetryService';
 import { MARKET_CATEGORY } from '../constants/market';
 import { PRIOR_MEAN } from '../utils/telemetry';
-import { buildFacets } from '../utils/facets';
+import { buildFacets, toFacet } from '../utils/facets';
 
 export const apiService = {
   
@@ -68,6 +69,11 @@ export const apiService = {
     cursor?: PostCursor | null;
   } = {}): Promise<PostPage> {
     return getPostPageFromFirestore(options);
+  },
+
+  /** Number of posts in a facet (category, sub-category or tag). */
+  async countPostsByFacet(facet: string): Promise<number> {
+    return countPostsByFacetFromFirestore(toFacet(facet));
   },
 
   /**

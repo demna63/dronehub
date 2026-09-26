@@ -1,85 +1,24 @@
 /* ========================================
-   DRONEHUB GEORGIA - ENHANCED COLOR SYSTEM
+   DRONEHUB GEORGIA — BASE STYLES
+   ========================================
+   Colour, radius and type tokens live in tailwind.config.js (`bg`, `surface`,
+   `ink-*`, `accent*`, …). The unused `.fb-*` layout classes and the
+   `--primary-*` sky palette were removed in the 2026-09 design pass (F21):
+   nothing referenced them, and the sky palette contradicted the one teal
+   accent the rest of the UI now uses.
    ======================================== */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ========================================
-   CSS VARIABLES - Enhanced Color Palette
-   ======================================== */
-
-:root {
-  /* === PRIMARY COLORS - Sky Blue Palette === */
-  --primary-50: #f0f9ff;
-  --primary-100: #e0f2fe;
-  --primary-200: #bae6fd;
-  --primary-300: #7dd3fc;
-  --primary-400: #38bdf8;
-  --primary-500: #0ea5e9;
-  --primary-600: #0284c7;
-  --primary-700: #0369a1;
-  --primary-800: #075985;
-  --primary-900: #0c4a6e;
-  
-  /* === SLATE PALETTE === */
-  --slate-50: #f8fafc;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --slate-500: #64748b;
-  --slate-600: #475569;
-  --slate-700: #334155;
-  --slate-750: #273548;
-  --slate-800: #1e293b;
-  --slate-850: #1a2234;
-  --slate-900: #0f172a;
-  --slate-950: #020617;
-  
-  /* === ACCENT COLORS === */
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --accent-indigo: #6366f1;
-  
-  /* === BACKGROUND COLORS === */
-  --bg-base: var(--slate-950);
-  --bg-elevated: var(--slate-900);
-  --bg-card: var(--slate-800);
-  --bg-card-hover: var(--slate-750);
-  --bg-input: rgba(255, 255, 255, 0.03);
-  --bg-input-hover: rgba(255, 255, 255, 0.05);
-  
-  /* === TEXT COLORS === */
-  --text-primary: var(--slate-100);
-  --text-secondary: var(--slate-300);
-  --text-tertiary: var(--slate-400);
-  
-  /* === BORDER COLORS === */
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-default: rgba(255, 255, 255, 0.08);
-  --border-primary: rgba(56, 189, 248, 0.3);
-  
-  /* === SHADOWS === */
-  --glow-primary: 0 0 20px rgba(56, 189, 248, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-}
-
-/* ========================================
-   BASE STYLES
-   ======================================== */
-
 @layer base {
   html, body {
-    @apply bg-slate-950 text-slate-200 antialiased;
+    @apply bg-bg text-ink antialiased;
     height: auto;
     min-height: 100%;
     overflow-x: hidden;
     overflow-y: visible;
-    background-color: var(--bg-base);
-    color: var(--text-primary);
     scroll-behavior: smooth;
   }
 
@@ -87,19 +26,49 @@
     @apply min-h-screen flex flex-col relative;
   }
 
+  /* One family for both scripts (F4). */
   body {
-    font-family: 'Plus Jakarta Sans', 'Noto Sans Georgian', sans-serif;
+    font-family: 'Noto Sans Georgian', sans-serif;
   }
 
-  /* Hide scrollbars globally while keeping scroll behaviour */
-  * {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  /* Visible keyboard focus everywhere, in the accent colour. */
+  :focus-visible {
+    outline: 2px solid theme('colors.accent.DEFAULT');
+    outline-offset: 2px;
   }
-  *::-webkit-scrollbar {
+
+  /*
+   * Thin, visible scrollbars on the scrolling columns (F21). They used to be
+   * hidden globally, which left no cue that the sidebars scroll at all.
+   */
+  aside,
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+  aside::-webkit-scrollbar,
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  aside::-webkit-scrollbar-thumb,
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+  aside::-webkit-scrollbar-track,
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /* Horizontal chip/tab rows: scroll by touch, no bar. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
     display: none;
-    width: 0;
-    height: 0;
   }
 }
 
@@ -107,267 +76,26 @@
    TYPOGRAPHY
    ======================================== */
 
+/** Only where Mtavruli is intended — never as a general "uppercase" (F5). */
 .typography-mtavruli {
   font-family: 'Noto Sans Georgian', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 900;
+  font-weight: 800;
   font-feature-settings: "case" on;
 }
 
 /* ========================================
-   LAYOUT SYSTEM
+   MOTION (F12)
    ======================================== */
 
-.fb-container {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
+@media (prefers-reduced-motion: reduce) {
+  .animate-post-enter,
+  .animate-toast-enter {
+    animation: none !important;
+  }
 
-.fb-main-feed {
-  max-width: 680px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.fb-sidebar-left {
-  width: 280px;
-}
-
-.fb-sidebar-right {
-  width: 360px;
-}
-
-/* ========================================
-   NAVBAR
-   ======================================== */
-
-.navbar-container {
-  background: rgba(2, 6, 23, 0.8);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-subtle);
-  height: 60px;
-}
-
-.fb-navbar {
-  height: 60px;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-}
-
-.fb-navbar-content {
-  height: 100%;
-  max-width: 1320px; /* შესწორებულია: სტანდარტული CSS */
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* ========================================
-   SIDEBAR
-   ======================================== */
-
-.sidebar-container {
-  background-color: var(--bg-elevated);
-  border-right: 1px solid var(--border-subtle);
-}
-
-/* ========================================
-   POST CARDS
-   ======================================== */
-
-.fb-post-card {
-  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 41, 59, 0.85) 100%);
-  border: 1px solid var(--border-default);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-lg);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.fb-post-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-primary);
-  background: linear-gradient(135deg, var(--bg-card-hover) 0%, rgba(39, 53, 72, 0.9) 100%);
-}
-
-.fb-post-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.fb-post-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--border-subtle);
-}
-
-.fb-post-author {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.fb-post-meta {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-
-.fb-post-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 8px 0;
-}
-
-.fb-post-content {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0 0 12px 0;
-  line-height: 1.5;
-}
-
-.fb-post-image {
-  width: 100%;
-  border-radius: 12px;
-  margin-top: 12px;
-  object-fit: cover;
-  border: 1px solid var(--border-subtle);
-}
-
-/* ========================================
-   POST ACTIONS
-   ======================================== */
-
-.fb-post-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-top: 12px;
-  margin-top: 12px;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.fb-action-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.fb-action-button:hover {
-  color: var(--primary-400);
-  background: rgba(56, 189, 248, 0.1);
-}
-
-.fb-action-button.active {
-  color: var(--primary-400);
-  background: rgba(56, 189, 248, 0.15);
-}
-
-/* ========================================
-   COMMENTS
-   ======================================== */
-
-.fb-comments {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.fb-comment {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.fb-comment-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.fb-comment-bubble {
-  background: var(--bg-input);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 10px 14px;
-  max-width: 100%;
-}
-
-.fb-comment-author {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.fb-comment-text {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.fb-comment-input {
-  flex: 1;
-  background: var(--bg-input);
-  border: 2px solid var(--border-default);
-  border-radius: 16px;
-  padding: 10px 16px;
-  font-size: 13px;
-  color: var(--text-primary);
-  width: 100%;
-}
-
-.fb-comment-input:focus {
-  outline: none;
-  border-color: var(--border-primary);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
-}
-
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-
-@media (max-width: 1280px) {
-  .fb-sidebar-right { display: none; }
-  .fb-container { max-width: 960px; }
-}
-
-@media (max-width: 1024px) {
-  .fb-sidebar-left { display: none; }
-  .fb-container { max-width: 680px; }
-}
-
-@media (max-width: 768px) {
-  .fb-post-card { border-radius: 0; margin-bottom: 8px; }
-  .fb-container { padding: 0; }
-  .navbar-container, .fb-navbar { height: 56px; }
+  html, body {
+    scroll-behavior: auto;
+  }
 }

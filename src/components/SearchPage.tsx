@@ -4,7 +4,8 @@ import { Search as SearchIcon, X } from 'lucide-react';
 import type { Post, User } from '../types';
 import { apiService } from '../services/apiService';
 import { SEARCH_SCAN_LIMIT } from '../utils/search';
-import PostCard from './PostCard';
+import PostRow from './PostRow';
+import PageHeader from './PageHeader';
 import PostCardSkeleton from './PostCardSkeleton';
 import { useLanguage } from '../contexts/useLanguage';
 
@@ -13,6 +14,7 @@ export interface SearchPageProps {
   onLoginClick: () => void;
   onToggleSave?: (postId: string) => void;
   savedPostIds?: string[];
+  /** Accepted for route compatibility; comments are written on the post page. */
   onAddComment?: (postId: string, text: string) => Promise<void>;
 }
 
@@ -25,11 +27,8 @@ export interface SearchPageProps {
  * else.
  */
 const SearchPage: React.FC<SearchPageProps> = ({
-  currentUser,
-  onLoginClick,
   onToggleSave,
   savedPostIds = [],
-  onAddComment,
 }) => {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,13 +85,17 @@ const SearchPage: React.FC<SearchPageProps> = ({
     setSearchParams({ q: next }, { replace: true });
   };
 
+  const EMPTY_BOX = 'rounded-2xl border border-line bg-surface px-6 py-16 text-center';
+
   return (
-    <div className="max-w-3xl mx-auto pb-20 animate-in fade-in duration-300">
-      <form onSubmit={submit} className="relative mb-6">
+    <div className="mx-auto flex max-w-3xl flex-col gap-5">
+      <PageHeader title={t('route_search')} />
+
+      <form role="search" onSubmit={submit} className="relative">
         <SearchIcon
           size={18}
           aria-hidden="true"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-3"
         />
         <input
           type="search"
@@ -103,44 +106,43 @@ const SearchPage: React.FC<SearchPageProps> = ({
           onChange={(event) => setDraft(event.target.value)}
           placeholder={t('search_page_placeholder')}
           aria-label={t('route_search')}
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-12 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-500/50 focus:ring-2 focus:ring-sky-500/20 transition-all"
+          className="h-11 w-full rounded-[10px] border border-white/10 bg-surface pl-12 pr-12 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-accent/50 focus:outline-none"
         />
         {draft && (
           <button
             type="button"
             aria-label={t('action_clear')}
             onClick={() => { setDraft(''); navigate('/search', { replace: true }); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-white transition-colors"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-ink-3 transition-colors hover:text-ink"
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
           </button>
         )}
       </form>
 
       {query && (
-        <p className="px-1 mb-5 text-xs font-bold text-slate-400">
+        <p aria-live="polite" className="px-1 text-[13px] text-ink-3">
           {isSearching
             ? t('search_searching')
             : failed
               ? t('search_failed_short')
-              : <>„<span className="text-white">{query}</span>" — <span className="text-white">{results.length}</span> {t('search_result_word')}</>}
+              : t('search_result_summary', { query, count: results.length })}
         </p>
       )}
 
       {isSearching && (
-        <div className="space-y-6" aria-hidden="true">
-          <PostCardSkeleton />
-          <PostCardSkeleton />
+        <div aria-hidden="true">
+          <PostCardSkeleton rows={2} />
         </div>
       )}
 
       {!isSearching && failed && (
-        <div className="text-center py-16 border-2 border-dashed border-rose-500/20 rounded-3xl">
-          <p className="text-sm text-rose-400 font-bold mb-4">{t('search_failed')}</p>
+        <div className={`${EMPTY_BOX} border-bad/30`}>
+          <p className="mb-4 text-sm font-bold text-bad">{t('search_failed')}</p>
           <button
             type="button"
             onClick={() => setRetryToken((token) => token + 1)}
-            className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
+            className="h-10 rounded-[10px] border border-white/10 px-[18px] text-sm font-bold text-ink-2 transition-colors hover:bg-white/5"
           >
             {t('action_retry')}
           </button>
@@ -148,35 +150,30 @@ const SearchPage: React.FC<SearchPageProps> = ({
       )}
 
       {!isSearching && !failed && query && results.length === 0 && (
-        <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-3xl px-6">
-          <SearchIcon size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
-          <p className="text-sm font-bold text-slate-300 mb-2">{t('search_no_results')}</p>
-          <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-            სცადე ერთი სიტყვით ძებნა — ყველა სიტყვა უნდა დაემთხვეს.
-            ძებნა ბოლო {SEARCH_SCAN_LIMIT} პოსტში მუშაობს.
+        <div className={EMPTY_BOX}>
+          <p className="mb-2 text-sm font-bold text-ink-2">{t('search_no_results')}</p>
+          <p className="mx-auto max-w-sm text-[13px] leading-relaxed text-ink-3">
+            {t('search_no_results_hint', { limit: SEARCH_SCAN_LIMIT })}
           </p>
         </div>
       )}
 
       {!isSearching && !failed && !query && (
-        <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-3xl">
-          <SearchIcon size={40} className="mx-auto text-slate-700 mb-4" aria-hidden="true" />
-          <p className="text-sm font-bold text-slate-300">{t('search_prompt')}</p>
-          <p className="text-xs text-slate-500 mt-2">{t('search_fields_hint')}</p>
+        <div className={EMPTY_BOX}>
+          <p className="text-sm font-bold text-ink-2">{t('search_prompt')}</p>
+          <p className="mt-2 text-[13px] text-ink-3">{t('search_fields_hint')}</p>
         </div>
       )}
 
       {!isSearching && results.length > 0 && (
-        <div className="space-y-6">
-          {results.map((post) => (
-            <PostCard
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+          {results.map((post, index) => (
+            <PostRow
               key={post.id}
               post={post}
-              currentUser={currentUser}
               isSaved={savedPostIds.includes(post.id)}
               onToggleSave={onToggleSave}
-              onLoginClick={onLoginClick}
-              onAddComment={onAddComment}
+              priority={index === 0}
             />
           ))}
         </div>

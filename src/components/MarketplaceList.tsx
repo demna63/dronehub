@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import MarketplaceCard from './MarketplaceCard';
 import MarketplaceFilters from './MarketplaceFilters';
 import MarketplaceEmptyState from './MarketplaceEmptyState';
+import PageHeader from './PageHeader';
 import { User } from '../types';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useMarketItems } from '../hooks/useMarketItems';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useLanguage } from '../contexts/useLanguage';
@@ -11,6 +12,8 @@ import { useLanguage } from '../contexts/useLanguage';
 interface MarketplaceListProps {
   currentUser?: User | null;
   onLoginRequest?: () => void;
+  /** Opens the new-listing dialog (App routes signed-out users to sign-in). */
+  onCreateListing?: () => void;
 }
 
 /**
@@ -20,14 +23,13 @@ interface MarketplaceListProps {
  * listings that happened to be among the newest 50 posts site-wide — and once
  * the feed was paged, only those inside one 12-post page.
  */
-const MarketplaceList: React.FC<MarketplaceListProps> = () => {
+const MarketplaceList: React.FC<MarketplaceListProps> = ({ onCreateListing }) => {
   const { t } = useLanguage();
   const { items: marketItems, isLoading, isLoadingMore, hasMore, error, loadMore, retry } = useMarketItems();
   const { categoryId } = useParams<{ categoryId: string }>();
   // The /market/category/:id route existed but its param was never read, so the
   // filter always started at "all" no matter which link brought you here.
   const [activeFilter, setActiveFilter] = useState(categoryId ?? 'all');
-  const navigate = useNavigate();
 
   useEffect(() => { setActiveFilter(categoryId ?? 'all'); }, [categoryId]);
 
@@ -44,44 +46,55 @@ const MarketplaceList: React.FC<MarketplaceListProps> = () => {
     [marketItems, activeFilter],
   );
 
+  const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+
   return (
-    <div className="max-w-4xl mx-auto pb-20">
-      
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-white uppercase tracking-wider">{t('route_market')}</h1>
-      </div>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title={t('route_market')}
+        subtitle={t('market_subtitle')}
+        action={onCreateListing && (
+          <button
+            type="button"
+            onClick={onCreateListing}
+            className="flex h-10 items-center rounded-[10px] bg-accent-fill px-4 text-sm font-bold text-white transition-colors duration-150 hover:bg-accent-fill-hover active:bg-accent-fill-active"
+          >
+            {t('market_add_listing')}
+          </button>
+        )}
+      />
 
       <MarketplaceFilters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
       {error && (
-        <div className="mb-6 text-center py-10 border-2 border-dashed border-rose-500/20 rounded-3xl">
-          <p className="text-sm text-rose-400 font-bold mb-4">{error}</p>
+        <div className="rounded-2xl border border-bad/30 bg-surface px-6 py-10 text-center">
+          <p className="mb-4 text-sm font-bold text-bad">{error}</p>
           <button
             type="button"
             onClick={retry}
-            className="px-5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-colors"
+            className="h-10 rounded-[10px] border border-white/10 px-[18px] text-sm font-bold text-ink-2 transition-colors hover:bg-white/5"
           >
             {t('action_retry')}
           </button>
         </div>
       )}
 
-      {/* Items Grid */}
       {isLoading && marketItems.length === 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-hidden="true">
-          {[0, 1, 2].map((index) => (
-            <div key={index} className="h-56 rounded-2xl bg-slate-900 border border-white/5 animate-pulse" />
+        <div className={GRID} aria-hidden="true">
+          {[0, 1, 2, 3].map((index) => (
+            <div key={index} className="overflow-hidden rounded-2xl border border-line bg-surface">
+              <div className="aspect-[4/3] bg-surface-2" />
+              <div className="flex flex-col gap-2 p-3.5">
+                <div className="h-4 w-20 rounded bg-surface-2" />
+                <div className="h-3 w-3/4 rounded bg-surface-2" />
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={GRID}>
           {filteredItems.map((item) => (
-            <MarketplaceCard 
-              key={item.id} 
-              item={item} 
-              onClick={() => navigate(`/post/${item.id}`)} 
-            />
+            <MarketplaceCard key={item.id} item={item} />
           ))}
         </div>
       ) : !error ? (
@@ -91,16 +104,14 @@ const MarketplaceList: React.FC<MarketplaceListProps> = () => {
       {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
 
       {hasMore && (
-        <div className="pt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={isLoadingMore}
-            className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition-colors disabled:opacity-50"
-          >
-            {isLoadingMore ? t('state_loading') : t('action_load_more')}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={isLoadingMore}
+          className="h-10 self-center rounded-[10px] border border-white/10 px-[18px] text-sm font-bold text-ink-2 transition-colors hover:bg-white/5 disabled:opacity-50"
+        >
+          {isLoadingMore ? t('state_loading') : t('action_load_more')}
+        </button>
       )}
     </div>
   );

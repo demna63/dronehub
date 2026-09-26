@@ -20,6 +20,16 @@ export interface ModalProps {
   /** Set while a write is in flight: blocks Escape and backdrop dismissal. */
   busy?: boolean;
   footer?: React.ReactNode;
+  /**
+   * `center` is the ordinary dialog. `fullscreen` fills the viewport and has
+   * no header border — used by the mobile menu, which still needs the focus
+   * trap, Escape and scroll lock this component owns.
+   */
+  variant?: 'center' | 'fullscreen';
+  /** Leading header content (e.g. the logo) in the `fullscreen` variant. */
+  headerStart?: React.ReactNode;
+  /** Control to focus on open instead of the first focusable one. */
+  initialFocusRef?: React.RefObject<HTMLElement>;
 }
 
 /**
@@ -43,6 +53,9 @@ const Modal: React.FC<ModalProps> = ({
   size = 'max-w-lg',
   busy = false,
   footer,
+  variant = 'center',
+  headerStart,
+  initialFocusRef,
 }) => {
   const { t } = useLanguage();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -79,7 +92,7 @@ const Modal: React.FC<ModalProps> = ({
 
     const panel = panelRef.current;
     // Focus the first control, or the panel itself when it has none.
-    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
+    const first = initialFocusRef?.current ?? panel?.querySelector<HTMLElement>(FOCUSABLE);
     (first ?? panel)?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -122,17 +135,21 @@ const Modal: React.FC<ModalProps> = ({
       const opener = openerRef.current;
       if (opener && opener.isConnected) opener.focus();
     };
-  }, [isOpen]);
+  }, [isOpen, initialFocusRef]);
 
   if (!isOpen) return null;
 
+  const isFullscreen = variant === 'fullscreen';
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div
-        aria-hidden="true"
-        onClick={requestClose}
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150"
-      />
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center ${isFullscreen ? '' : 'p-4'}`}>
+      {!isFullscreen && (
+        <div
+          aria-hidden="true"
+          onClick={requestClose}
+          className="absolute inset-0 bg-bg/80"
+        />
+      )}
 
       <div
         ref={panelRef}
@@ -140,14 +157,21 @@ const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`relative w-full ${size} bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] outline-none animate-in fade-in zoom-in-95 duration-200`}
+        className={isFullscreen
+          ? 'relative flex h-full w-full flex-col overflow-hidden bg-bg outline-none'
+          : `relative w-full ${size} bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] outline-none`}
       >
-        <div className="p-6 border-b border-white/5 flex justify-between items-center gap-4 bg-slate-800/50 shrink-0">
+        <div
+          className={isFullscreen
+            ? 'flex h-[60px] shrink-0 items-center gap-2 px-4'
+            : 'p-5 border-b border-line flex justify-between items-center gap-4 shrink-0'}
+        >
+          {headerStart}
           <h2
             id={titleId}
-            className={hideTitle
+            className={hideTitle || isFullscreen
               ? 'sr-only'
-              : 'text-lg font-black text-white uppercase tracking-tight truncate'}
+              : 'text-lg font-extrabold text-ink truncate'}
           >
             {title}
           </h2>
@@ -156,15 +180,15 @@ const Modal: React.FC<ModalProps> = ({
             onClick={requestClose}
             disabled={busy}
             aria-label={t('action_close')}
-            className="ml-auto shrink-0 text-slate-400 hover:text-white transition-colors disabled:opacity-40"
+            className={`ml-auto shrink-0 flex items-center justify-center rounded-[10px] text-ink-2 hover:bg-white/5 hover:text-ink transition-colors disabled:opacity-40 ${isFullscreen ? 'h-11 w-11' : 'h-9 w-9'}`}
           >
-            <X size={20} aria-hidden="true" />
+            <X size={isFullscreen ? 22 : 20} aria-hidden="true" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">{children}</div>
 
-        {footer && <div className="shrink-0 border-t border-white/5 p-4">{footer}</div>}
+        {footer && <div className="shrink-0 border-t border-line p-4">{footer}</div>}
       </div>
     </div>
   );

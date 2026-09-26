@@ -82,11 +82,8 @@ interface AppRoutesProps {
   onDeleteVlog: (id: string) => void;
 }
 
-const RouteFallback: React.FC = () => (
-  <div className="py-10 text-center text-slate-400 font-semibold uppercase tracking-widest">
-    Loading...
-  </div>
-);
+/** Blank on purpose: a text flash on every lazy route reads as jank. */
+const RouteFallback: React.FC = () => <div aria-busy="true" className="min-h-[50vh]" />;
 
 const MeetRoomPage: React.FC<{ rooms: MeetRoomData[]; user: User | null; onLoginRequest: () => void }> = ({ rooms, user, onLoginRequest }) => {
   const navigate = useNavigate();
@@ -131,7 +128,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
   feedProps,
   onLoginRequest,
   onOpenCreatePost: _onOpenCreatePost,
-  onOpenMarketModal: _onOpenMarketModal,
+  onOpenMarketModal,
   onCreatePostModalClose,
   onMarketModalClose,
   onCreatePostSuccess,
@@ -199,8 +196,8 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           {/* The marketplace runs its own paged query — see useMarketItems.
               It used to filter the shared feed array, which showed only the
               listings that happened to be in the currently loaded posts. */}
-          <Route path="/market" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
-          <Route path="/market/category/:categoryId" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} />} />
+          <Route path="/market" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} onCreateListing={onOpenMarketModal} />} />
+          <Route path="/market/category/:categoryId" element={<MarketplaceList currentUser={currentUser} onLoginRequest={onLoginRequest} onCreateListing={onOpenMarketModal} />} />
           <Route path="/map" element={<SpotMap currentUser={currentUser} onLoginClick={onLoginRequest} />} />
           <Route path="/chat" element={currentUser ? <GlobalChat currentUser={currentUser} onUserClick={(id) => navigate(`/u/${id}`)} onLoginClick={onLoginRequest} /> : <Navigate to="/" replace />} />
           <Route path="/meet" element={<OnRouteMount run={fetchMeetRooms}><MeetSection rooms={meetRooms} user={currentUser} onOpenRoom={(id) => navigate(`/meet/${id}`)} onLoginClick={onLoginRequest} /></OnRouteMount>} />

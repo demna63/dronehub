@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { User, Post } from '../types';
 import { apiService } from '../services/apiService';
-import PostCard from './PostCard';
-import { Bookmark, Loader2 } from 'lucide-react';
+import PostRow from './PostRow';
+import PageHeader from './PageHeader';
+import PostCardSkeleton from './PostCardSkeleton';
 import { useLanguage } from '../contexts/useLanguage';
 
 interface SavedPostsProps {
@@ -52,64 +53,69 @@ const SavedPosts: React.FC<SavedPostsProps> = ({ currentUser, onToggleSave, onLo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, savedIds?.join(',')]);
 
-  if (loading) {
+  if (!currentUser) {
     return (
-      <div className="flex flex-col items-center justify-center p-20 min-h-[50vh]">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
-        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">{t('saved_loading')}</p>
+      <div className="flex flex-col gap-5">
+        <PageHeader title={t('saved_title')} subtitle={t('saved_subtitle')} />
+        <div className="rounded-2xl border border-line bg-surface px-6 py-16 text-center">
+          <p className="mb-4 text-sm font-bold text-ink-2">{t('saved_needs_auth')}</p>
+          <button
+            type="button"
+            onClick={onLoginClick}
+            className="h-10 rounded-[10px] bg-accent-fill px-4 text-sm font-bold text-white transition-colors hover:bg-accent-fill-hover"
+          >
+            {t('action_sign_in')}
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (!currentUser) {
-    return (
-      <div className="text-center py-20 bg-slate-900/50 rounded-3xl border border-white/5 border-dashed">
-        <Bookmark className="mx-auto text-slate-700 mb-4" size={48} />
-        <p className="text-slate-400 mb-4 font-bold">{t('saved_needs_auth')}</p>
-        <button onClick={onLoginClick} className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold">{t('action_sign_in')}</button>
+  let body: React.ReactNode;
+  if (loading) {
+    body = (
+      <div aria-busy="true" aria-label={t('saved_loading')}>
+        <PostCardSkeleton rows={3} />
+      </div>
+    );
+  } else if (error) {
+    body = (
+      <p role="alert" className="rounded-2xl border border-bad/30 bg-surface px-6 py-10 text-center text-sm font-bold text-bad">
+        {error}
+      </p>
+    );
+  } else if (savedPosts.length === 0) {
+    body = (
+      <div className="rounded-2xl border border-line bg-surface px-6 py-16 text-center">
+        <p className="text-sm font-bold text-ink-2">{t('saved_empty')}</p>
+      </div>
+    );
+  } else {
+    body = (
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+        {savedPosts.map((post, index) => (
+          <PostRow
+            key={post.id}
+            post={post}
+            isSaved={currentUser.savedPosts?.includes(post.id) ?? true}
+            onToggleSave={onToggleSave}
+            priority={index === 0}
+          />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between border-b border-white/5 pb-4">
-        <div>
-          <h1 className="text-2xl font-black text-white italic uppercase flex items-center gap-3">
-            <Bookmark className="text-indigo-500" /> {t('saved_title')}
-          </h1>
-          <p className="text-xs text-slate-500 font-bold tracking-tight">{t('saved_subtitle')}</p>
-        </div>
-        <div className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
-          {savedPosts.length} POSTS
-        </div>
-      </div>
-
-      {error && (
-        <p role="alert" className="text-center py-10 text-sm font-bold text-rose-400 border-2 border-dashed border-rose-500/20 rounded-3xl">
-          {error}
-        </p>
-      )}
-
-      {!error && savedPosts.length > 0 ? (
-        <div className="space-y-4">
-          {savedPosts.map(post => (
-            <PostCard 
-              key={post.id} 
-              post={post} 
-              currentUser={currentUser}
-              onToggleSave={onToggleSave}
-              isSaved={true}
-              onLoginClick={onLoginClick}
-            />
-          ))}
-        </div>
-      ) : !error ? (
-        <div className="text-center py-32 bg-slate-900/30 rounded-3xl border border-white/5 border-dashed">
-          <Bookmark className="mx-auto text-slate-800 mb-4" size={40} />
-          <p className="text-slate-500 font-bold text-sm">{t('saved_empty')}</p>
-        </div>
-      ) : null}
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title={t('saved_title')}
+        subtitle={t('saved_subtitle')}
+        action={!loading && !error ? (
+          <span className="text-[13px] text-ink-3">{t('saved_count', { count: savedPosts.length })}</span>
+        ) : undefined}
+      />
+      {body}
     </div>
   );
 };

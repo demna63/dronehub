@@ -39,14 +39,14 @@ const StarRating: React.FC<StarRatingProps> = ({
 
   if (!isInteractive) {
     const fillPercent = Math.max(0, Math.min(100, (value / RATING_STARS) * 100));
-    const fillColor = tone === 'muted' ? 'text-slate-400' : 'text-amber-400';
+    const fillColor = tone === 'muted' ? 'text-ink-3' : 'text-amber-400';
     return (
       <span
         role="img"
         aria-label={`${label}: ${value.toFixed(1)} / ${RATING_STARS}`}
         className={`relative inline-flex leading-none shrink-0 ${className}`}
       >
-        <span className="flex gap-0.5 text-slate-700">
+        <span className="flex gap-0.5 text-ink-3">
           {INDEXES.map((index) => <Star key={index} size={size} fill="currentColor" strokeWidth={0} />)}
         </span>
         <span
@@ -83,8 +83,8 @@ const StarRating: React.FC<StarRatingProps> = ({
               event.stopPropagation();
               onChange?.(stars);
             }}
-            className={`p-0.5 rounded transition-transform hover:scale-110 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 ${
-              isLit ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400/60'
+            className={`p-0.5 rounded transition-transform disabled:opacity-40 ${
+              isLit ? 'text-amber-400' : 'text-ink-3 hover:text-amber-400/60'
             }`}
           >
             <Star size={size} fill="currentColor" strokeWidth={0} />
