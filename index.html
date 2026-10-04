@@ -4,26 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     
-    <meta name="description" content="DroneHub Georgia — ქართული FPV/დრონების საზოგადოება: რუკა, პოსტები, ხელსაწყოები და რესურსები პილოტებისთვის." />
+    <title>DroneHub Georgia | დრონები, აქსესუარები და სერვისი საქართველოში</title>
+    
+    <meta name="description" content="DroneHub Georgia — დრონები, FPV სისტემები, აქსესუარები, საფრენი ლოკაციები და სერვისი საქართველოში. The leading drone community, pilot tools, marketplace, and service in Georgia (country)." />
     <meta name="author" content="DroneHub Georgia" />
-    <meta name="keywords" content="drone, fpv, dronehub, Georgia, UAV, community, maps, tools" />
+    <meta name="keywords" content="დრონები საქართველოში, FPV საქართველო, დრონების შეკეთება, დრონის ნაწილები, dronehub georgia, drones in georgia, fpv drone georgia, drone repair tbilisi, UAV community Georgia, დრონის სერვისი, დრონები თბილისი" />
     <meta name="color-scheme" content="dark" />
-    <meta property="og:title" content="DroneHub Georgia" />
-    <meta property="og:description" content="ქართული დრონების საზოგადოება, პოსტები, რუკა, ხელსაწყოები და პილოტებისთვის საჭირო რესურსები." />
+
+    <!-- Geographic targeting: Georgia (Country, Caucasus) -->
+    <meta name="geo.region" content="GE" />
+    <meta name="geo.placename" content="Tbilisi, Georgia" />
+    <meta name="geo.position" content="41.7151;44.8271" />
+    <meta name="ICBM" content="41.7151, 44.8271" />
+
+    <meta property="og:site_name" content="DroneHub Georgia" />
+    <meta property="og:title" content="DroneHub Georgia | დრონები, აქსესუარები და სერვისი საქართველოში" />
+    <meta property="og:description" content="DroneHub Georgia — დრონები, FPV სისტემები, აქსესუარები, საფრენი ლოკაციები და სერვისი საქართველოში. Drone community, pilot tools, marketplace and services in Georgia." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://dronehub.ge/og-image.webp" />
+    <meta property="og:locale" content="ka_GE" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:image" content="https://dronehub.ge/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:url" content="https://dronehub.ge" />
+
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="DroneHub Georgia" />
-    <meta name="twitter:description" content="ქართული დრონების საზოგადოება, პოსტები, რუკა, ხელსაწყოები და პილოტებისთვის საჭირო რესურსები." />
-    <meta name="twitter:image" content="https://dronehub.ge/og-image.webp" />
+    <meta name="twitter:title" content="DroneHub Georgia | დრონები, აქსესუარები და სერვისი საქართველოში" />
+    <meta name="twitter:description" content="DroneHub Georgia — დრონები, FPV სისტემები, აქსესუარები, საფრენი ლოკაციები და სერვისი საქართველოში. Drone community, pilot tools, marketplace and services in Georgia." />
+    <meta name="twitter:image" content="https://dronehub.ge/og-image.png" />
+
     <link rel="icon" href="/brand/favicon.ico" sizes="any" />
     <link rel="icon" href="/brand/icon.svg" type="image/svg+xml" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="/brand/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/brand/favicon-180.png" />
     <link rel="canonical" href="https://dronehub.ge/" />
     <meta name="robots" content="index, follow" />
-    
+
     <!-- Fallback only. The authoritative policy is served as a real
          Content-Security-Policy response header from firebase.json — a meta CSP
          silently ignores frame-ancestors, so it cannot stop clickjacking. -->
@@ -41,10 +58,71 @@
       " 
     />
 
-    <title>DroneHub Georgia — ქართული FPV და დრონების საზოგადოება</title>
+    <!-- Structured Data (JSON-LD) for Search Engines (Entity disambiguation: Georgia the country) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://dronehub.ge/#organization",
+          "name": "DroneHub Georgia",
+          "alternateName": ["DroneHub GE", "დრონჰაბ საქართველო"],
+          "url": "https://dronehub.ge",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://dronehub.ge/brand/icon.svg"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Tbilisi",
+            "addressCountry": "GE"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "Georgia"
+          },
+          "description": "საქართველოს FPV და დრონების საზოგადოების პლატფორმა: დრონები, აქსესუარები, საფრენი ლოკაციების რუკა და სერვისი საქართველოში."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://dronehub.ge/#website",
+          "url": "https://dronehub.ge",
+          "name": "DroneHub Georgia",
+          "publisher": {
+            "@id": "https://dronehub.ge/#organization"
+          },
+          "inLanguage": ["ka-GE", "en-US"],
+          "description": "DroneHub Georgia — დრონები, აქსესუარები და სერვისი საქართველოში. The leading drone community, pilot tools, marketplace, and drone services in Georgia.",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://dronehub.ge/search?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://dronehub.ge/#tools",
+          "name": "DroneHub Georgia Pilot Tools",
+          "url": "https://dronehub.ge/tools",
+          "applicationCategory": "UtilitiesApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "GEL"
+          },
+          "description": "დრონის საინჟინრო და ფრენის ონლაინ ხელსაწყოები: FPV მანძილის კალკულატორი, სიხშირეების განბლოკვა, Fresnel ზონა, ბატარეის გათვლა და 3D STL მოდელების კატალოგი საქართველოში."
+        }
+      ]
+    }
+    </script>
     
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#020617" />
+    <meta name="theme-color" content="#06111F" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -64,13 +142,12 @@
        * downloading, and hand it to React (useAppData reads
        * window.__DHG_FIRST_PAGE__, or listens for "dhg:first-page" if this
        * lands after mount). Same order as the app's default query —
-       * telemetryScore desc, createdAt desc — so the SDK result that follows
-       * replaces these rows with identical ones and nothing moves.
+       * createdAt desc — so the SDK result that follows replaces these rows
+       * with identical ones and nothing moves.
        *
        * No image preload any more: the feed shows 120px thumbnails, and
        * preloading the newest post's full-size image at high priority spent
-       * ~150 KB on something that is neither the LCP element nor, in the
-       * rated order, necessarily the first row.
+       * ~150 KB on something that is not the LCP element.
        */
       (async function preloadFirstPage() {
         try {
@@ -78,7 +155,7 @@
           if (!projectId || projectId.includes("%")) return;
 
           const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/posts`
-            + '?orderBy=' + encodeURIComponent('telemetryScore desc, createdAt desc')
+            + '?orderBy=' + encodeURIComponent('createdAt desc')
             + '&pageSize=12';
           const response = await fetch(url);
           if (!response.ok) return;

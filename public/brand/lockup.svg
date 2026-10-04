@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 280" width="1000" height="280">
+  <g transform="translate(40,40)">
+    <path fill="#FFFFFF" d="M0 0h58c45 0 82 34 82 82s-37 82-82 82H0V0z"/>
+    <path fill="#06111F" d="M58 32h12c28 0 50 21 50 50s-22 50-50 50H58V32z"/>
+    <polygon fill="#2EC4B6" points="48,52 48,112 98,82"/>
+  </g>
+  <text x="250" y="150" font-family="Arial, Helvetica, sans-serif" font-size="86" font-weight="700" fill="#FFFFFF">DroneHub</text>
+  <text x="250" y="210" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="10" fill="#2EC4B6">GEORGIA</text>
+</svg>

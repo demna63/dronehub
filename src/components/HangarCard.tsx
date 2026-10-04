@@ -1,5 +1,7 @@
 import React from 'react';
 import { Settings, Zap, Aperture, Cpu, Edit2, Trash2 } from 'lucide-react';
+import { useLanguage } from '../contexts/useLanguage';
+import { DRONE_STATUS_KEY } from '../constants/profile';
 
 export interface DroneBuild {
   id: string;
@@ -21,6 +23,8 @@ interface HangarCardProps {
 }
 
 const HangarCard: React.FC<HangarCardProps> = ({ build, isOwner, onEdit, onDelete }) => {
+  const { t } = useLanguage();
+  const statusKey = DRONE_STATUS_KEY[build.status];
   const statusColors = {
     flying: 'bg-emerald-500 text-emerald-950',
     broken: 'bg-rose-500 text-rose-950',
@@ -62,7 +66,7 @@ const HangarCard: React.FC<HangarCardProps> = ({ build, isOwner, onEdit, onDelet
         <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
           <h3 className="font-extrabold text-lg text-white truncate pr-2">{build.name}</h3>
           <span className={`px-2 py-0.5 rounded text-xs font-bold shrink-0 ${statusColors[build.status]}`}>
-            {build.status}
+            {statusKey ? t(statusKey) : build.status}
           </span>
         </div>
       </div>

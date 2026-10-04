@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/useLanguage';
 import {
-  Map, Signal, Unlock, Activity, Box,
+  Map, Signal, Unlock, Activity, Box, Crosshair,
   ArrowLeft, Ruler, BatteryCharging, Radio, ArrowRightLeft, type LucideIcon,
 } from 'lucide-react';
 import PageHeader from './PageHeader';
@@ -17,6 +17,7 @@ const BatteryCalculator = lazy(() => import('./BatteryCalculator'));
 const ChannelTuner = lazy(() => import('./ChannelTuner'));
 const AntennaTuner = lazy(() => import('./AntennaTuner'));
 const UnitConverter = lazy(() => import('./RFTools').then((module) => ({ default: module.UnitConverter })));
+const FpvRangeCalculator = lazy(() => import('./FpvRangeCalculator'));
 
 // დატვირთვის ინდიკატორი კომპონენტი
 const ToolLoader = () => {
@@ -43,6 +44,7 @@ const tools: ReadonlyArray<{ id: string; titleKey: string; descKey: string; icon
   { id: 'stl', titleKey: 'tool_title_stl', descKey: 'tool_desc_stl', icon: Box },
   { id: 'zone-check', titleKey: 'tool_title_zone', descKey: 'tool_desc_zone', icon: Map },
   { id: 'converter', titleKey: 'tool_title_rf', descKey: 'tool_desc_rf', icon: ArrowRightLeft },
+  { id: 'fpv-range', titleKey: 'tool_title_range', descKey: 'tool_desc_range', icon: Crosshair },
 ];
 
 const ToolsHub = () => {
@@ -105,6 +107,7 @@ const ToolsHub = () => {
               <Route path="harmonics" element={<HarmonicsCalculator />} />
               <Route path="stl" element={<STLCatalog />} />
               <Route path="converter" element={<UnitConverter />} />
+              <Route path="fpv-range" element={<FpvRangeCalculator />} />
             </Routes>
           </Suspense>
         </>

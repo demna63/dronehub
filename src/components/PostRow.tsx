@@ -5,6 +5,7 @@ import type { Post } from '../types';
 import { useLanguage } from '../contexts/useLanguage';
 import { useToast } from '../contexts/useToast';
 import { telemetryDisplay } from '../utils/telemetry';
+import { feedExcerpt } from '../utils/feedExcerpt';
 import { postCategoryLabel } from '../utils/postCategory';
 import { PostTime } from './PostTime';
 import OptimizedImage from './OptimizedImage';
@@ -26,6 +27,10 @@ const STAT = 'flex min-h-9 items-center gap-1.5 px-2.5 text-[13px] text-ink-2';
 /** 36px action-row control (F14). */
 const ACTION =
   'relative z-10 flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] text-ink-2 transition-colors duration-150 hover:bg-white/5';
+
+/** Sits above the row's stretched title link, so it receives the click. */
+const META_LINK =
+  'relative z-10 rounded-sm hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
 /**
  * The compact post row (2c, F14, F15), used by the feed, saved posts, the
@@ -63,7 +68,9 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
   }, [isMenuOpen]);
 
   const href = `/post/${post.id}`;
+  const categoryId = (post.subCategory || post.category || '').trim();
   const category = postCategoryLabel(post, t);
+  const excerpt = feedExcerpt(post.content, post.title);
   const { stars, count, isConfirmed } = telemetryDisplay(post.telemetry);
 
   const handleShare = () => {
@@ -102,9 +109,19 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs text-ink-3">
-          {category && <span className="font-bold text-accent">{category}</span>}
+          {category && (
+            <Link to={`/category/${categoryId}`} className={`${META_LINK} font-bold text-accent`}>
+              {category}
+            </Link>
+          )}
           {category && <span aria-hidden="true">·</span>}
-          <span className="truncate">{post.author}</span>
+          {post.authorId ? (
+            <Link to={`/u/${post.authorId}`} className={`${META_LINK} min-w-0 max-w-full truncate`}>
+              {post.author}
+            </Link>
+          ) : (
+            <span className="truncate">{post.author}</span>
+          )}
           <span aria-hidden="true">·</span>
           <PostTime value={post.createdAt} withIcon={false} />
         </p>
@@ -115,12 +132,23 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
           </Link>
         </h2>
 
+        {excerpt && (
+          <p className="line-clamp-2 text-[13px] leading-snug text-ink-2">{excerpt}</p>
+        )}
+
         <div className="-ml-2.5 flex flex-wrap items-center gap-1">
           <span className={STAT}>
             <span aria-hidden="true" className="text-rating">★</span>
-            <span className={count > 0 && !isConfirmed ? 'text-ink-3' : ''}>
-              {count === 0 ? t('rating_none') : `${stars.toFixed(1)} (${count})`}
-            </span>
+            {count === 0 ? (
+              <>
+                <span aria-hidden="true">—</span>
+                <span className="sr-only">{t('rating_none')}</span>
+              </>
+            ) : (
+              <span className={!isConfirmed ? 'text-ink-3' : ''}>
+                {`${stars.toFixed(1)} (${count})`}
+              </span>
+            )}
           </span>
 
           <Link to={`${href}#comments`} className={ACTION} aria-label={t('comments_count_aria', { count: post.commentsCount || 0 })}>
@@ -136,7 +164,7 @@ const PostRow: React.FC<PostRowProps> = ({ post, isSaved, onToggleSave, canManag
               className={`${ACTION} ${isSaved ? 'text-accent' : ''}`}
             >
               <Bookmark size={16} aria-hidden="true" fill={isSaved ? 'currentColor' : 'none'} />
-              {isSaved ? t('action_saved') : t('action_save')}
+              <span className="max-sm:sr-only">{isSaved ? t('action_saved') : t('action_save')}</span>
             </button>
           )}
 

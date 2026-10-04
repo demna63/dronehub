@@ -37,7 +37,7 @@ export interface User {
   // FPV Profile
   droneSetup?: string;
   favoriteSpot?: string;
-  experienceLevel?: 'beginner' | 'intermediate' | 'pro' | 'experienced'; 
+  experienceLevel?: 'beginner' | 'intermediate' | 'pro' | 'experienced' | ''; 
   droneInterests?: string[];
   socialLinks?: SocialLinks;
 }
@@ -351,6 +351,12 @@ export interface StlFile {
    * timestamp. Read-only: nothing writes this field any more.
    */
   date?: string;
+  description?: string;
+  material?: string;
+  walls?: number | string;
+  infill?: string;
+  supports?: string;
+  vtxMount?: string;
 }
 
 /** The admin-supplied half of an STL upload; the URLs are filled in server-side. */
@@ -364,18 +370,29 @@ export type DroneBuildDraft = Omit<DroneBuild, 'id' | 'userId' | 'createdAt'>;
 // =====================
 
 /** Spot categories the map knows how to colour; anything else falls back to the default pin. */
-export type SpotType = 'bando' | 'cinematic' | 'racing' | 'open';
+export type SpotType = 'bando' | 'cinematic' | 'freestyle' | 'racing' | 'open';
+
+/** Absent on older documents, which stay flyable. */
+export type SpotStatus = 'open' | 'closed';
 
 /** A flying location pinned on the community map. */
 export interface Spot {
   id: string;
   name: string;
+  /** Primary type. The first of `types` when a pin fits more than one. */
   type: SpotType | string;
+  /** Every type that fits this pin. Absent on spots saved before multi-type. */
+  types?: SpotType[];
   /** Current field name. */
   description?: string;
   /** Legacy field name kept for documents written before the rename. */
   desc?: string;
   warnings?: string;
+  /** Public download URL. Empty or absent means no photo. */
+  image?: string;
+  status?: SpotStatus;
+  parking?: boolean;
+  power?: boolean;
   /** Display name of the submitter. */
   author?: string;
   /** Firestore uid of the submitter; the security rules pin this to the caller. */
@@ -385,16 +402,26 @@ export interface Spot {
   createdAt?: TimestampLike;
 }
 
-/** The user-supplied half of a spot; ownership and timestamp are set server-side. */
-export type SpotDraft = Pick<Spot, 'name' | 'type' | 'description' | 'warnings' | 'author' | 'lat' | 'lng'>;
+/** The user-supplied half of a new spot; ownership and timestamp are set server-side. */
+export type SpotDraft = Pick<
+  Spot,
+  'name' | 'type' | 'types' | 'description' | 'warnings' | 'author' | 'lat' | 'lng' | 'image' | 'status' | 'parking' | 'power'
+>;
+
+/** What the owner may change. `authorId` stays put; the rules reject anything else. */
+export type SpotUpdate = Pick<
+  Spot,
+  'name' | 'type' | 'types' | 'description' | 'warnings' | 'lat' | 'lng' | 'image' | 'status' | 'parking' | 'power'
+>;
 
 // =====================
 // 11. ამინდი (Flight weather)
 // =====================
 
 /**
- * Flight-relevant weather for Tbilisi, normalised from the Open-Meteo
- * response. Every field is already rounded for display.
+ * Flight-relevant weather normalised from an Open-Meteo response.
+ * The feed asks for Tbilisi. The map asks for a pin or the pilot's position.
+ * Every field is already rounded for display.
  */
 export interface FlightWeather {
   /** Celsius. */

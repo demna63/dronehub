@@ -3,7 +3,10 @@ import { BadgeCheck, Calendar, MapPin, Settings, Wrench } from 'lucide-react';
 import type { User } from '../types';
 import Avatar from './Avatar';
 import { formatMonthYear } from '../utils/dates';
+import { normalizeSocialUrl } from '../utils/socialUrl';
 import { useLanguage } from '../contexts/useLanguage';
+import { SIDEBAR_CATEGORIES } from '../constants/navigation';
+import { SOCIAL_FIELDS, experienceLevelKey, isExperienceLevel } from '../constants/profile';
 
 interface ProfileHeaderProps {
   profileUser: User;
@@ -11,14 +14,21 @@ interface ProfileHeaderProps {
   onEditProfile: () => void;
   postsCount?: number;
   buildsCount?: number;
+  /** Mean stars across rated posts. Null when nobody has rated any of them. */
+  rating?: number | null;
 }
 
-const Stat: React.FC<{ value: number; label: string }> = ({ value, label }) => (
+const Stat: React.FC<{ value: string; label: string }> = ({ value, label }) => (
   <div className="flex items-baseline gap-1.5">
     <span className="text-base font-extrabold text-white tabular-nums">{value}</span>
     <span className="text-xs font-bold text-ink-3">{label}</span>
   </div>
 );
+
+const interestLabel = (id: string, t: (key: string) => string): string => {
+  const known = SIDEBAR_CATEGORIES.find((category) => category.id === id);
+  return known ? t(known.labelKey) : id;
+};
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   profileUser,
@@ -26,28 +36,33 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onEditProfile,
   postsCount = 0,
   buildsCount = 0,
+  rating = null,
 }) => {
   const { t } = useLanguage();
-  // `createdAt` is a Firestore Timestamp, which `new Date(...)` cannot read —
-  // that is where the "Joined NaN" came from. Missing dates are now omitted
-  // rather than replaced by today's year, which was simply a wrong fact.
   const joined = formatMonthYear(profileUser.createdAt);
   const gear = (profileUser.gear ?? []).filter(Boolean);
+  const level = profileUser.experienceLevel && isExperienceLevel(profileUser.experienceLevel)
+    ? t(experienceLevelKey(profileUser.experienceLevel))
+    : '';
+  const interests = (profileUser.droneInterests ?? []).map((id) => id.trim()).filter(Boolean);
+  const links = SOCIAL_FIELDS.flatMap((field) => {
+    const href = normalizeSocialUrl(profileUser.socialLinks?.[field.id]);
+    return href ? [{ ...field, href }] : [];
+  });
 
   return (
     <div className="bg-surface border border-white/5 rounded-2xl overflow-hidden relative shadow-xl">
       <div className="h-40 md:h-52 bg-surface-2 relative overflow-hidden">
-        {profileUser.coverImage && (
+        {profileUser.coverImage ? (
           <img
             src={profileUser.coverImage}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
           />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/30 via-surface-2 to-surface" />
         )}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-              </div>
+      </div>
 
       <div className="px-6 sm:px-10 pb-8 relative">
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 -mt-16 sm:-mt-20 mb-6">
@@ -73,6 +88,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   {profileUser.location}
                 </span>
               )}
+              {level && <span>{level}</span>}
               {joined && (
                 <span className="flex items-center gap-1.5">
                   <Calendar size={14} className="text-accent" aria-hidden="true" />
@@ -82,9 +98,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-5 mt-3">
-              <Stat value={postsCount} label={t('profile_stat_posts')} />
-              <Stat value={buildsCount} label={t('profile_stat_drones')} />
-              <Stat value={profileUser.reputation ?? 0} label={t('profile_stat_reputation')} />
+              <Stat value={String(postsCount)} label={t('profile_stat_posts')} />
+              <Stat value={String(buildsCount)} label={t('profile_stat_drones')} />
+              <Stat value={rating == null ? '—' : rating.toFixed(1)} label={t('profile_stat_rating')} />
             </div>
           </div>
 
@@ -99,16 +115,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           )}
         </div>
 
-        <p className="text-sm text-ink-2 max-w-2xl leading-relaxed text-center sm:text-left whitespace-pre-wrap">
+        <p className="text-sm text-ink-2 leading-relaxed text-center sm:text-left whitespace-pre-wrap">
           {profileUser.bio || (isOwnProfile
             ? t('profile_bio_empty_own')
             : t('profile_bio_empty_other'))}
         </p>
 
-        {/* `gear` was editable but never rendered anywhere, so anything typed
-            there vanished from the person's point of view. */}
+        {interests.length > 0 && (
+          <ul className="mt-5 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            {interests.map((id) => (
+              <li
+                key={id}
+                className="px-2.5 py-1 rounded-lg bg-accent-tint text-xs font-bold text-accent"
+              >
+                {interestLabel(id, t)}
+              </li>
+            ))}
+          </ul>
+        )}
+
         {gear.length > 0 && (
-          <div className="mt-5 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <Wrench size={14} className="text-ink-3 shrink-0" aria-hidden="true" />
             {gear.map((item) => (
               <span
@@ -117,6 +144,23 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               >
                 {item}
               </span>
+            ))}
+          </div>
+        )}
+
+        {links.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            {links.map((link) => (
+              <a
+                key={link.id}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1 rounded-lg border border-white/10 text-xs font-bold text-ink-2 hover:text-white hover:bg-white/5"
+              >
+                {t(link.labelKey)}
+                <span className="sr-only"> {t('link_opens_new_tab')}</span>
+              </a>
             ))}
           </div>
         )}

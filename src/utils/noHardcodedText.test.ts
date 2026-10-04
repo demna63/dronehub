@@ -18,7 +18,11 @@ const SRC = resolve(__dirname, '..');
 const GEORGIAN = /[\u10A0-\u10FF]/;
 
 /** Files that legitimately contain Georgian. */
-const ALLOWED = new Set(['utils/translations.ts']);
+const ALLOWED = new Set([
+  'utils/translations.ts',
+  'constants/stlCatalogData.ts',
+  'constants/droneRegulations.ts',
+]);
 
 /**
  * Test files are exempt. They carry Georgian fixtures on purpose — a query for

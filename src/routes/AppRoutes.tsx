@@ -178,7 +178,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
               />
             )}
           />
-          <Route path="/u/:userId" element={<ProfilePage currentUser={currentUser} onToggleSave={feedProps.onToggleSave} onLoginClick={onLoginRequest} />} />
+          <Route path="/u/:userId" element={<ProfilePage currentUser={currentUser} authPending={authPending} onToggleSave={feedProps.onToggleSave} onLoginClick={onLoginRequest} />} />
           <Route path="/regulations" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />
           <Route path="/wiki" element={<RegulationsWiki onBack={() => navigate('/')} currentUser={currentUser} />} />
           <Route path="/wiki/:articleId" element={<RegulationsWiki onBack={() => navigate('/regulations')} currentUser={currentUser} />} />
@@ -194,6 +194,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({
           <Route path="/tools/rates" element={<ExternalRedirect to="https://pid-dronehub.ge" />} />
           <Route path="/tools/*" element={<ToolsHub />} />
           <Route path="/vlogs/*" element={<OnRouteMount run={fetchVlogs}><VlogSection vlogs={vlogs} currentUser={currentUser} onLoginClick={onLoginRequest} onOpenRoom={(id) => navigate(`/vlogs/${id}`)} onAddVlog={onAddVlog} onUpdateVlog={onUpdateVlog} onDeleteVlog={onDeleteVlog} /></OnRouteMount>} />
+          <Route path="/blogs/*" element={<Navigate to="/vlogs" replace />} />
           {/* The marketplace runs its own paged query — see useMarketItems.
               It used to filter the shared feed array, which showed only the
               listings that happened to be in the currently loaded posts. */}

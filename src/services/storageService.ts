@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
+import { COVER_HEIGHT, COVER_WIDTH, coverCropRect } from '../utils/coverCrop';
 
 /** Intrinsic pixel dimensions of a raster image. */
 export interface ImageDimensions {
@@ -179,6 +180,54 @@ export const prepareAvatarFile = async (file: File): Promise<ProcessedImage> => 
       file: new File([blob], name, { type: 'image/webp' }),
       width: AVATAR_SIZE,
       height: AVATAR_SIZE,
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+};
+
+/**
+ * Centre-crop a cover to 3:1 and re-encode it.
+ *
+ * Stored under `avatars/`, which the live storage rules already allow for
+ * images under 5MB. A dedicated `covers/` path would need a rules deploy
+ * before the first upload could succeed.
+ */
+export const prepareCoverFile = async (file: File): Promise<ProcessedImage> => {
+  assertUploadable(file);
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const probe = new Image();
+      probe.onload = () => resolve(probe);
+      probe.onerror = () => reject(new Error('image_read_failed'));
+      probe.src = objectUrl;
+    });
+
+    if (!img.naturalWidth || !img.naturalHeight) throw new Error('image_read_failed');
+
+    const crop = coverCropRect(img.naturalWidth, img.naturalHeight);
+    const canvas = document.createElement('canvas');
+    canvas.width = COVER_WIDTH;
+    canvas.height = COVER_HEIGHT;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('image_canvas_failed');
+
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, COVER_WIDTH, COVER_HEIGHT);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, 'image/webp', AVATAR_QUALITY);
+    });
+    if (!blob) throw new Error('image_process_failed');
+
+    const name = `${file.name.replace(/\.[^/.]+$/, '') || 'cover'}.webp`;
+    return {
+      file: new File([blob], name, { type: 'image/webp' }),
+      width: COVER_WIDTH,
+      height: COVER_HEIGHT,
     };
   } finally {
     URL.revokeObjectURL(objectUrl);

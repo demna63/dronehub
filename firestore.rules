@@ -40,6 +40,59 @@ service cloud.firestore {
         || (request.resource.data[field] is string && request.resource.data[field].size() <= max);
     }
 
+    // A pin may carry several of the five types. Older documents have only
+    // `type`, and a cached client still creates them that way, so `types` stays
+    // optional. Once it is present it has to be a short list of known ids and
+    // the primary `type` has to be one of them.
+    function spotTypesOk() {
+      return (!('types' in request.resource.data)
+          && (!('type' in request.resource.data)
+            || (request.resource.data.type is string
+              && request.resource.data.type.size() > 0
+              && request.resource.data.type.size() <= 40)))
+        || (('types' in request.resource.data)
+          && request.resource.data.types is list
+          && request.resource.data.types.size() >= 1
+          && request.resource.data.types.size() <= 5
+          && request.resource.data.types.hasOnly(['bando', 'cinematic', 'freestyle', 'racing', 'open'])
+          && request.resource.data.type is string
+          && request.resource.data.type in request.resource.data.types);
+    }
+
+    function spotStatusOk() {
+      return !('status' in request.resource.data)
+        || request.resource.data.status == 'open'
+        || request.resource.data.status == 'closed';
+    }
+
+    function spotFlagOk(field) {
+      return !(field in request.resource.data) || request.resource.data[field] is bool;
+    }
+
+    function spotImageOk() {
+      return !('image' in request.resource.data)
+        || (request.resource.data.image is string && request.resource.data.image.size() <= 2000);
+    }
+
+    function spotDocumentOk() {
+      return request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 200
+        && withinSize('description', 2000)
+        && withinSize('warnings', 1000)
+        && request.resource.data.lat is number
+        && request.resource.data.lat >= -90
+        && request.resource.data.lat <= 90
+        && request.resource.data.lng is number
+        && request.resource.data.lng >= -180
+        && request.resource.data.lng <= 180
+        && spotTypesOk()
+        && spotStatusOk()
+        && spotFlagOk('parking')
+        && spotFlagOk('power')
+        && spotImageOk();
+    }
+
     // An author edits their own content; they do not get to hand it to someone
     // else, and they do not get to move server-owned counters under cover of an
     // edit. `keys` is the allowlist of what an edit may touch.
@@ -210,10 +263,15 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated()
         && request.resource.data.authorId == request.auth.uid
-        && withinSize('name', 200)
-        && withinSize('description', 2000);
+        && spotDocumentOk();
+      // Warnings, extra types, open/closed, parking, power and the photo URL
+      // are how the pilot keeps their own pin current. `authorId` is not on
+      // the list, so an edit cannot hand the pin to someone else.
       allow update: if isAdmin()
-        || isOwnerEdit('authorId', ['name', 'description', 'lat', 'lng', 'type', 'image', 'updatedAt']);
+        || (isOwnerEdit('authorId', [
+              'name', 'description', 'warnings', 'lat', 'lng', 'type', 'types',
+              'image', 'status', 'parking', 'power', 'updatedAt'
+            ]) && spotDocumentOk());
       allow delete: if isOwner(resource.data.authorId) || isAdmin();
     }
 

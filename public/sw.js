@@ -1,7 +1,9 @@
 // v5: v4's cache served the HTML shell cache-first, which pinned returning
 // visitors to whatever build they first loaded. Bumping the name drops those
 // poisoned entries on activate.
-const CACHE_NAME = 'dronehub-shell-v5';
+// v6: brand v2 — every icon and the header lockup changed under the same URLs,
+// and APP_SHELL serves them cache-first.
+const CACHE_NAME = 'dronehub-shell-v6';
 
 /**
  * Paths that are precached for offline use but must NEVER be served from the
@@ -15,7 +17,7 @@ const CACHE_NAME = 'dronehub-shell-v5';
  */
 const NETWORK_FIRST = ['/', '/index.html'];
 
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/brand/dhg-logo.webp', '/brand/dhg-logo.avif', '/brand/dhg-logo.png', '/brand/favicon.ico', '/brand/icon.svg', '/brand/icon-192.png', '/brand/icon-512.png'];
+const APP_SHELL = ['/', '/index.html', '/manifest.json', '/brand/dronehub-lockup.webp', '/brand/dronehub-lockup.png', '/brand/dhg-logo.webp', '/brand/dhg-logo.png', '/brand/favicon.ico', '/brand/icon.svg', '/brand/icon-192.png', '/brand/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -52,6 +54,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Bypass service worker for robots.txt and sitemap.xml
+  if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml') {
+    return;
+  }
 
   const isShellDocument =
     request.mode === 'navigate' ||

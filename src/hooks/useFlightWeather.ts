@@ -16,8 +16,18 @@ interface OpenMeteoForecast {
   };
 }
 
-const FORECAST_URL =
-  'https://api.open-meteo.com/v1/forecast?latitude=41.7151&longitude=44.8271&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability&daily=sunrise,sunset&timezone=auto&wind_speed_unit=kmh';
+/** Tbilisi. The feed's shared request stays on this point. */
+const TBILISI_LAT = 41.7151;
+const TBILISI_LNG = 44.8271;
+
+/**
+ * Open-Meteo current conditions for any point.
+ * `timezone=auto` makes sunrise and sunset local to that point.
+ */
+export const flightForecastUrl = (lat: number, lng: number): string =>
+  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability&daily=sunrise,sunset&timezone=auto&wind_speed_unit=kmh`;
+
+const FORECAST_URL = flightForecastUrl(TBILISI_LAT, TBILISI_LNG);
 
 export type FlightVerdict = 'FLY' | 'CAUTION' | 'NO_FLY' | 'UNKNOWN';
 
@@ -110,6 +120,63 @@ export const useFlightWeather = (): FlightWeatherState => {
       cancelled = true;
     };
   }, []);
+
+  return { weather, loading, verdict: flightVerdict(weather) };
+};
+
+/**
+ * Conditions at a pin or at the pilot.
+ *
+ * Successes are remembered for the page session, rounded to two decimals
+ * (about a kilometre), so flipping between nearby spots does not refetch.
+ * A failure is not remembered: the next open tries again. `null` is never
+ * turned into a flyable reading.
+ */
+const pointCache = new Map<string, FlightWeather>();
+
+export const fetchFlightWeather = async (lat: number, lng: number): Promise<FlightWeather | null> => {
+  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+  const cached = pointCache.get(key);
+  if (cached) return cached;
+  try {
+    const [latKey, lngKey] = key.split(',');
+    const response = await fetch(flightForecastUrl(Number(latKey), Number(lngKey)));
+    if (!response.ok) throw new Error(`Open-Meteo responded ${response.status}`);
+    const weather = parseForecast((await response.json()) as OpenMeteoForecast);
+    pointCache.set(key, weather);
+    return weather;
+  } catch (error: unknown) {
+    console.error('Weather fetch failed:', error);
+    return null;
+  }
+};
+
+const pointIsSet = (lat: number | null, lng: number | null): boolean =>
+  lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng);
+
+/** Weather for one point. Passing null clears the previous reading. */
+export const usePointWeather = (lat: number | null, lng: number | null): FlightWeatherState => {
+  const [weather, setWeather] = useState<FlightWeather | null>(null);
+  const [loading, setLoading] = useState(() => pointIsSet(lat, lng));
+
+  useEffect(() => {
+    if (lat === null || lng === null || Number.isNaN(lat) || Number.isNaN(lng)) {
+      setWeather(null);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setWeather(null);
+    setLoading(true);
+    void fetchFlightWeather(lat, lng).then((result) => {
+      if (cancelled) return;
+      setWeather(result);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lat, lng]);
 
   return { weather, loading, verdict: flightVerdict(weather) };
 };

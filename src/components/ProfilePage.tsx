@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Post, DroneBuild } from '../types';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
@@ -14,19 +14,26 @@ import { Plus, Check, X, Save, Camera, Loader2 } from 'lucide-react';
 import EditProfileModal from './EditProfileModal';
 import Modal from './Modal';
 import { useLanguage } from '../contexts/useLanguage';
+import { profileAverageStars } from '../utils/profileRating';
+import { shouldOpenProfileEditor } from '../utils/profileSettings';
+import { DRONE_STATUS_KEY } from '../constants/profile';
 
 interface ProfilePageProps {
   currentUser?: User | null;
   onToggleSave?: (id: string) => void;
   onLoginClick?: () => void;
+  /** Firebase Auth has not settled. `?edit=1` waits rather than being dropped. */
+  authPending?: boolean;
 }
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ 
   currentUser, 
   onToggleSave,
+  authPending = false,
 }) => {
   const { t } = useLanguage();
   const { userId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [userBuilds, setUserBuilds] = useState<DroneBuild[]>([]);
@@ -97,6 +104,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
 
     fetchProfileData();
   }, [userId, currentUser?.id]);
+
+  // The account menu links here with `?edit=1`. Open the existing editor once
+  // the profile on screen is the signed-in pilot, then drop the flag so a
+  // refresh does not open it again. A stale profile from the previous route
+  // stays mounted until its replacement arrives — ignore that frame.
+  useEffect(() => {
+    if (authPending || loading) return;
+    if (searchParams.get('edit') !== '1') return;
+    if (profileUser && profileUser.id !== userId) return;
+
+    if (shouldOpenProfileEditor(searchParams.get('edit'), currentUser?.id, profileUser?.id)) {
+      setIsEditProfileOpen(true);
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete('edit');
+    setSearchParams(next, { replace: true });
+  }, [authPending, loading, currentUser?.id, profileUser, userId, searchParams, setSearchParams]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -210,7 +234,39 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
         onEditProfile={() => setIsEditProfileOpen(true)}
         postsCount={userPosts.length}
         buildsCount={userBuilds.length}
+        rating={profileAverageStars(userPosts)}
       />
+
+      {userBuilds.length > 0 && (
+        <div className="flex gap-3 overflow-x-auto pb-1" aria-label={t('profile_tab_hangar')}>
+          {userBuilds.map((build) => {
+            const statusKey = DRONE_STATUS_KEY[build.status];
+            return (
+              <button
+                key={build.id}
+                type="button"
+                onClick={() => setActiveTab('hangar')}
+                className="flex min-w-[240px] max-w-xs items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-left transition-colors hover:bg-white/5"
+              >
+                {build.image ? (
+                  <img src={build.image} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover bg-surface-2" />
+                ) : (
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-ink-3">
+                    <Camera size={18} aria-hidden="true" />
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-white">{build.name}</span>
+                  {build.frame && <span className="block truncate text-xs text-ink-3">{build.frame}</span>}
+                  <span className="mt-1 inline-block text-[11px] font-bold text-accent">
+                    {statusKey ? t(statusKey) : build.status}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {pendingDelete && (
         <div

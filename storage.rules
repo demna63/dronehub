@@ -49,6 +49,16 @@ service firebase.storage {
       allow write: if isAuthenticated() && isStl() && underSize(50);
     }
 
+    // One folder per pilot. The map is public, so the read is public; the
+    // write is not, or any signed-in user could replace someone else's photo.
+    match /spots/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+        && request.auth.uid == userId
+        && isImage()
+        && underSize(10);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

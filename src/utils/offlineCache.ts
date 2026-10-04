@@ -1,4 +1,4 @@
-export type OfflineCacheKey = 'posts' | 'vlogs' | 'meetRooms';
+export type OfflineCacheKey = 'posts' | 'feed' | 'vlogs' | 'meetRooms';
 
 const OFFLINE_CACHE_PREFIX = 'dronehub-offline-cache';
 const OFFLINE_CACHE_TTL_MS = 1000 * 60 * 60 * 24;

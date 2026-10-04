@@ -42,8 +42,8 @@ export interface FeedProps {
  * follow the language switch.
  */
 const SORT_OPTIONS: { value: PostSort; labelKey: string; hintKey: string }[] = [
-  { value: 'rated', labelKey: 'feed_sort_rated', hintKey: 'feed_sort_rated_hint' },
   { value: 'new', labelKey: 'feed_sort_new', hintKey: 'feed_sort_new_hint' },
+  { value: 'rated', labelKey: 'feed_sort_rated', hintKey: 'feed_sort_rated_hint' },
 ];
 
 const SECONDARY_BUTTON =
@@ -58,7 +58,7 @@ const SECONDARY_BUTTON =
  */
 const Feed: React.FC<FeedProps> = ({
   user, isFetching, onToggleSave, posts, savedPostIds = [], onDeletePost, error, onRetry,
-  postSort = 'rated', onChangeSort,
+  postSort = 'new', onChangeSort,
   onFacetChange, onLoadMore, hasMore = false, isLoadingMore = false,
 }) => {
   const { t } = useLanguage();

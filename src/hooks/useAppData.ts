@@ -10,7 +10,7 @@ import type { PostCursor, PostSort } from '../services/firestoreRepository';
 import { readCachedData, writeCachedData } from '../utils/offlineCache';
 import { useLanguage } from '../contexts/useLanguage';
 
-const readStaleCache = <T,>(key: 'posts' | 'vlogs' | 'meetRooms') =>
+const readStaleCache = <T,>(key: 'posts' | 'feed' | 'vlogs' | 'meetRooms') =>
   readCachedData<T>(key, { allowStale: true });
 
 /** Event the index.html probe dispatches when its REST page arrives. */
@@ -56,8 +56,8 @@ export const useAppData = () => {
    * memoised with an empty dependency list — making it depend on the sort would
    * recreate it on every change and re-trigger every effect that consumes it.
    */
-  const postSortRef = useRef<PostSort>('rated');
-  const [postSort, setPostSortState] = useState<PostSort>('rated');
+  const postSortRef = useRef<PostSort>('new');
+  const [postSort, setPostSortState] = useState<PostSort>('new');
 
   /**
    * Active category filter, as a lowercased facet. Held in a ref for the same
@@ -105,14 +105,15 @@ export const useAppData = () => {
    *
    * On the home route the list starts from, in order: the first page cached by
    * the last visit, or the page the inline probe in index.html fetched over
-   * REST (`window.__DHG_FIRST_PAGE__`). Both hold the default `rated` order, so
-   * fetchPosts() below replaces them with the same rows and nothing shifts.
-   * Category routes start empty: an unfiltered list there would flash the
-   * wrong posts before the facet query lands.
+   * REST (`window.__DHG_FIRST_PAGE__`). Both hold the default newest-first
+   * order, so fetchPosts() below replaces them with the same rows and nothing
+   * shifts. The cache key is `feed`, not the older `posts` entry, which stored
+   * the rated order. Category routes start empty: an unfiltered list there
+   * would flash the wrong posts before the facet query lands.
    */
   const [posts, setPosts] = useState<Post[]>(() => {
     if (typeof window === 'undefined' || window.location.pathname !== '/') return [];
-    const cached = readStaleCache<Post[]>('posts');
+    const cached = readStaleCache<Post[]>('feed');
     if (cached && cached.length > 0) return cached;
     return readFirstPageProbe() ?? [];
   });
@@ -180,13 +181,13 @@ export const useAppData = () => {
         setPosts(nextPosts);
         // Only the first page is cached. Caching an accumulated feed would
         // grow without bound and restore a scroll position nobody asked for.
-        // `rated` only: it is the order a fresh visit starts in, so the cached
-        // rows seed the first paint without being reshuffled a moment later.
-        if (!postFacetRef.current && sort === 'rated') writeCachedData('posts', nextPosts);
+        // Newest-first only: it is the order a fresh visit starts in, so the
+        // cached rows seed the first paint without being reshuffled a moment later.
+        if (!postFacetRef.current && sort === 'new') writeCachedData('feed', nextPosts);
       } else {
         const cachedPosts = postFacetRef.current
           ? null
-          : readCachedData<Post[]>('posts') || readStaleCache<Post[]>('posts');
+          : readCachedData<Post[]>('feed') || readStaleCache<Post[]>('feed');
         if (cachedPosts && cachedPosts.length > 0) {
           setPosts(cachedPosts);
         } else {
@@ -195,7 +196,7 @@ export const useAppData = () => {
       }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
-      const cachedPosts = readStaleCache<Post[]>('posts');
+      const cachedPosts = readStaleCache<Post[]>('feed');
       if (cachedPosts && cachedPosts.length > 0) {
         // Stale content beats an error screen, but say so rather than passing
         // it off as fresh.

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Maskable: full-bleed background; mark sits safely inside 80% circle -->
+  <rect width="512" height="512" fill="#06111F"/>
+  <g transform="translate(46.4, 51.2) scale(0.8)">
+    <path fill="#FFFFFF" d="M118 86h120c92 0 168 70 168 170s-76 170-168 170H118V86z"/>
+    <path fill="#06111F" d="M236 150h28c58 0 104 44 104 106s-46 106-104 106h-28V150z"/>
+    <polygon fill="#2EC4B6" points="214,196 214,316 318,256"/>
+  </g>
+</svg>

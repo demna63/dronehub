@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, Bell, Search, LogOut, ChevronDown, ChevronRight, Plus, Settings, UserCircle, ArrowRight,
@@ -16,6 +17,7 @@ import { SIDEBAR_CATEGORIES } from '../constants/navigation';
 import { isUserAdmin } from '../utils/authUtils';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import { profileSettingsPath } from '../utils/profileSettings';
 
 interface NavbarProps {
   currentUser?: User | null;
@@ -115,23 +117,48 @@ const Navbar: React.FC<NavbarProps> = ({
   const navigate = useNavigate();
 
   const profileRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const [menuBox, setMenuBox] = useState<{ top: number; right: number } | null>(null);
   /** Set when the menu is opened from the search icon, so search gets focus. */
   const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false);
 
+  const placeAccountMenu = useCallback(() => {
+    const rect = profileRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuBox({
+      top: rect.bottom + 8,
+      right: Math.max(16, window.innerWidth - rect.right),
+    });
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideAccount = Boolean(
+        profileRef.current?.contains(target) || menuRef.current?.contains(target),
+      );
+      if (!insideAccount) setIsProfileOpen(false);
+      if (notificationsRef.current && !notificationsRef.current.contains(target)) {
         setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // The panel is portaled to the body, so it has to follow the avatar itself.
+  useEffect(() => {
+    if (!isProfileOpen) return;
+    placeAccountMenu();
+    window.addEventListener('resize', placeAccountMenu);
+    window.addEventListener('scroll', placeAccountMenu, true);
+    return () => {
+      window.removeEventListener('resize', placeAccountMenu);
+      window.removeEventListener('scroll', placeAccountMenu, true);
+    };
+  }, [isProfileOpen, placeAccountMenu]);
 
   // A route change from anywhere (back button, a link inside the menu) closes it.
   useEffect(() => {
@@ -255,15 +282,29 @@ const Navbar: React.FC<NavbarProps> = ({
                     type="button"
                     aria-label={t('user_menu')}
                     aria-expanded={isProfileOpen}
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    onClick={() => {
+                      if (isProfileOpen) {
+                        setIsProfileOpen(false);
+                        return;
+                      }
+                      placeAccountMenu();
+                      setIsProfileOpen(true);
+                    }}
                     className="flex h-10 items-center gap-1.5 rounded-[10px] pr-1.5 transition-colors hover:bg-white/5"
                   >
                     <Avatar src={currentUser.avatar} name={currentUser.name} size={40} className="rounded-[10px]" />
                     <ChevronDown size={14} aria-hidden="true" className={`text-ink-3 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {isProfileOpen && (
-                    <div className="absolute right-0 top-full z-[100] mt-2 w-56 overflow-hidden rounded-2xl border border-white/10 bg-surface py-1.5 shadow-2xl">
+                  {/* The header is only h-16. A menu drawn inside it paints over the
+                      feed but the rows below the bar can miss the click. The
+                      panel is portaled so it sits above the page. */}
+                  {isProfileOpen && menuBox && createPortal(
+                    <div
+                      ref={menuRef}
+                      style={{ top: menuBox.top, right: menuBox.right }}
+                      className="fixed z-[80] w-56 overflow-hidden rounded-2xl border border-white/10 bg-surface py-1.5 shadow-2xl"
+                    >
                       <div className="mb-1 border-b border-line px-4 py-3">
                         <p className="truncate text-sm font-bold text-ink">{currentUser.name}</p>
                         <p className="text-xs text-ink-3">{t('nav_reputation', { count: currentUser.reputation || 0 })}</p>
@@ -279,7 +320,7 @@ const Navbar: React.FC<NavbarProps> = ({
                       />
                       <ProfileMenuItem
                         onClick={() => {
-                          navigate(`/u/${currentUser.id}`);
+                          navigate(profileSettingsPath(currentUser.id));
                           setIsProfileOpen(false);
                         }}
                         icon={<Settings size={16} aria-hidden="true" />}
@@ -293,7 +334,8 @@ const Navbar: React.FC<NavbarProps> = ({
                       >
                         <LogOut size={16} aria-hidden="true" /> <StableLabel tKey="action_sign_out" align="start" />
                       </button>
-                    </div>
+                    </div>,
+                    document.body,
                   )}
                 </div>
               </>
@@ -356,6 +398,9 @@ const Navbar: React.FC<NavbarProps> = ({
             )}
             {currentUser && (
               <MobileNavTile to={`/u/${currentUser.id}`} onClick={closeMenu} active={isActive(`/u/${currentUser.id}`)} tKey="nav_profile" />
+            )}
+            {currentUser && (
+              <MobileNavTile to={profileSettingsPath(currentUser.id)} onClick={closeMenu} active={false} tKey="nav_settings" />
             )}
           </nav>
 

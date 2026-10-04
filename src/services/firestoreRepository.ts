@@ -146,7 +146,7 @@ export interface PostPageOptions {
  * anyway — two independently ordered result sets have no single cursor.
  */
 export const getPostPageFromFirestore = async ({
-  sort = 'rated',
+  sort = 'new',
   facet = null,
   cursor = null,
   pageSize = FEED_PAGE_SIZE,
@@ -463,6 +463,16 @@ export const addSpotToFirestore = async (spotData: DocumentData): Promise<{ id: 
   const payload = sanitizeFirestoreData(spotData);
   const docRef = await addDoc(collection(db, 'spots'), payload);
   return { id: docRef.id, data: payload };
+};
+
+export const updateSpotInFirestore = async (spotId: string, data: DocumentData): Promise<void> => {
+  if (!isValidId(spotId)) return;
+  await updateDoc(doc(db, 'spots', spotId), sanitizeFirestoreData(data));
+};
+
+export const deleteSpotFromFirestore = async (spotId: string): Promise<void> => {
+  if (!isValidId(spotId)) return;
+  await deleteDoc(doc(db, 'spots', spotId));
 };
 
 export const deleteDroneBuildFromFirestore = async (buildId: string): Promise<void> => {

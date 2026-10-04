@@ -6,6 +6,8 @@ import {
   addDroneBuildToFirestore,
   addPostToFirestore,
   addSpotToFirestore,
+  deleteSpotFromFirestore,
+  updateSpotInFirestore,
   addSTLItemToFirestore,
   addVlogToFirestore,
   createNotificationInFirestore,
@@ -42,6 +44,7 @@ import type {
   DroneBuild,
   Spot,
   SpotDraft,
+  SpotUpdate,
   StlFile,
   StlFileDraft,
 } from '../types';
@@ -481,6 +484,24 @@ try {
       return { id: createdSpot.id, ...newSpot };
     } catch (error) {
       console.error("Error adding spot:", error);
+      throw error;
+    }
+  },
+
+  async updateSpot(spotId: string, data: SpotUpdate): Promise<void> {
+    try {
+      await updateSpotInFirestore(spotId, { ...data, updatedAt: serverTimestamp() });
+    } catch (error) {
+      console.error("Error updating spot:", error);
+      throw error;
+    }
+  },
+
+  async deleteSpot(spotId: string): Promise<void> {
+    try {
+      await deleteSpotFromFirestore(spotId);
+    } catch (error) {
+      console.error("Error deleting spot:", error);
       throw error;
     }
   },

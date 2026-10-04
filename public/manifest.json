@@ -6,8 +6,8 @@
   "orientation": "portrait",
   "scope": "/",
   "id": "/",
-  "background_color": "#020617",
-  "theme_color": "#0f172a",
+  "background_color": "#06111F",
+  "theme_color": "#06111F",
   "description": "DroneHub Georgia - ქართული დრონების საზოგადოება, პოსტები, რუკა, ხელსაწყოები და სხვადასხვა რესურსები პილოტებისთვის.",
   "icons": [
     {
@@ -32,6 +32,24 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/brand/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/icon-monochrome.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "monochrome"
     }
   ]
 }

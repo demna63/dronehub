@@ -1,26 +1,69 @@
-
 import React, { useState } from 'react';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import BackButton from './BackButton';
+import PageHeader from './PageHeader';
 import { useLanguage } from '../contexts/useLanguage';
 import { geminiService } from '../services/geminiService';
-import { User } from '../types'; // ✅ დაამატე ეს ხაზი
+import type { User } from '../types';
+import {
+  REG_CERTIFIED_BODY,
+  REG_CERTIFIED_TITLE,
+  REG_CLASSES,
+  REG_DEFAULT_CLASS_ID,
+  REG_GEORGIA,
+  REG_GEORGIA_LEAD,
+  REG_GEORGIA_TITLE,
+  REG_INTRO,
+  REG_OPEN_LEAD,
+  REG_OPEN_RULES,
+  REG_OPEN_TITLE,
+  REG_REMOTE_BODY,
+  REG_REMOTE_TITLE,
+  REG_SOURCES,
+  REG_SOURCES_TITLE,
+  REG_SPECIFIC_ITEMS,
+  REG_SPECIFIC_LEAD,
+  REG_SPECIFIC_TITLE,
+  REG_STEPS,
+  REG_STEPS_TITLE,
+  regText,
+  type Copy,
+} from '../constants/droneRegulations';
 
 interface RegulationsWikiProps {
   onBack: () => void;
   currentUser?: User | null;
 }
 
-type Category = 'OPEN' | 'SPECIFIC' | 'CERTIFIED';
-type WeightClass = '< 250G' | '250G - 2KG' | '> 2KG';
+type ZoneStatus = 'CLEAR' | 'RESTRICTED' | 'IDLE' | 'CAUTION';
+
+const sectionTitle = 'text-lg font-extrabold text-ink';
+const prose = 'text-sm leading-relaxed text-ink-2';
+
+const ExternalLink: React.FC<{ href: string; label: string; newTab: string }> = ({ href, label, newTab }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    title={newTab}
+    className="text-[13px] font-bold text-accent hover:underline"
+  >
+    {label}
+    <span className="sr-only"> {newTab}</span>
+  </a>
+);
+
+const CopyParagraph: React.FC<{ copy: Copy; language: 'ka' | 'en'; className?: string }> = ({ copy, language, className = prose }) => (
+  <p className={className}>{regText(copy, language)}</p>
+);
 
 const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: _currentUser }) => {
-  const [activeCategory, setActiveCategory] = useState<Category>('OPEN');
-  const [activeWeight, setActiveWeight] = useState<WeightClass>('< 250G');
+  const [classId, setClassId] = useState(REG_DEFAULT_CLASS_ID);
   const [zoneQuery, setZoneQuery] = useState('');
-  const [zoneResult, setZoneResult] = useState<{ status: 'CLEAR' | 'RESTRICTED' | 'IDLE' | 'CAUTION'; message: string }>({ status: 'IDLE', message: '' });
+  const [zoneResult, setZoneResult] = useState<{ status: ZoneStatus; message: string }>({ status: 'IDLE', message: '' });
   const [isChecking, setIsChecking] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const selected = REG_CLASSES.find((card) => card.id === classId) ?? REG_CLASSES[0];
 
   const handleZoneCheck = async () => {
     if (!zoneQuery.trim()) {
@@ -34,240 +77,174 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: 
     try {
       const result = await geminiService.checkRestrictedZone(zoneQuery);
       setZoneResult(result);
-    } catch (error) {
+    } catch {
       setZoneResult({ status: 'IDLE', message: t('wiki_lookup_failed') });
     } finally {
       setIsChecking(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleZoneCheck();
-    }
-  };
-
-  const getRules = () => {
-    if (activeCategory === 'SPECIFIC') {
-      return {
-        'AUTHORIZATION': 'MANDATORY (GCAA PERMIT REQUIRED)',
-        'RISK ASSESSMENT': 'SORA REQUIRED',
-        'REMOTE PILOT': 'COMPETENCY CERTIFICATE',
-        'ALTITUDE': 'AS AUTHORIZED (>120M POSSIBLE)',
-        'BVLOS': 'PERMITTED WITH AUTHORIZATION',
-        'DROP OPERATIONS': 'PERMITTED WITH AUTHORIZATION'
-      };
-    }
-    if (activeCategory === 'CERTIFIED') {
-      return {
-        'CERTIFICATION': 'AIRCRAFT & OPERATOR CERTIFICATION REQUIRED',
-        'PILOT LICENSE': 'LICENSED REMOTE PILOT',
-        'OPERATIONS': 'TRANSPORT OF PEOPLE / DANGEROUS GOODS',
-        'OVERSIGHT': 'STRICT GCAA OVERSIGHT'
-      };
-    }
-
-    const common = {
-      'MAX ALTITUDE': '120M (AGL)',
-      'VISUAL CONTACT': 'VLOS MANDATORY',
-      'DROP OPERATIONS': 'STRICTLY PROHIBITED',
-    };
-
-    if (activeWeight === '< 250G') {
-      return {
-        ...common,
-        'REGISTRATION': 'MANDATORY IF CAMERA EQUIPPED',
-        'PILOT COMPETENCY': 'READ MANUAL (A1/A3 TRAINING RECOMMENDED)',
-        'MINIMUM AGE': 'NO LIMIT (SUPERVISION RECOMMENDED)',
-        'FLIGHT OVER PEOPLE': 'PERMITTED (NOT CROWDS)',
-        'REMOTE ID': 'NOT REQUIRED'
-      };
-    }
-    if (activeWeight === '250G - 2KG') {
-      return {
-        ...common,
-        'REGISTRATION': 'MANDATORY (OPERATOR ID)',
-        'PILOT COMPETENCY': 'A1/A3 CERTIFICATE REQUIRED',
-        'MINIMUM AGE': '16 YEARS',
-        'FLIGHT OVER PEOPLE': 'PROHIBITED (50M DISTANCE)',
-        'REMOTE ID': 'MANDATORY (AFTER 2024)'
-      };
-    }
-    return { 
-      ...common,
-      'REGISTRATION': 'MANDATORY (OPERATOR ID)',
-      'PILOT COMPETENCY': 'A2 CERTIFICATE REQUIRED',
-      'MINIMUM AGE': '16 YEARS',
-      'FLIGHT OVER PEOPLE': 'PROHIBITED (150M DISTANCE)',
-      'REMOTE ID': 'MANDATORY'
-    };
-  };
-
-  const rules = getRules();
+  const zoneMessage = zoneResult.message === 'ai_check_failed'
+    ? t('ai_check_failed')
+    : (zoneResult.message || t('waiting_input'));
 
   return (
-    <div className="min-h-screen bg-bg text-white font-sans p-6 lg:p-12 duration-500 selection-sky">
-      <div className="max-w-4xl mx-auto space-y-16">
-        
-        {/* WikiGE INDUSTRIAL HEADER */}
-        <div className="flex flex-col items-center gap-6 border-b border-white/5 pb-12 text-center">
-          <div className="w-full flex justify-start">
-            <BackButton onClick={onBack} className="!bg-transparent !border-transparent !px-0 hover:text-accent transition-colors" />
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-6xl md:text-8xl font-extrabold typography-mtavruli text-white flex items-center justify-center gap-4">
-              {t('reg_title')} <span className="text-5xl md:text-7xl">🇬🇪</span>
-            </h1>
-            <p className="text-xs font-extrabold text-accent tracking-[0.5em]">
-              OFFICIAL DRONE REGULATIONS DATABASE / GCAA SYNC / v4.2
-            </p>
-          </div>
-          <div className="h-px w-24 bg-accent-fill shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+    <div className="mx-auto max-w-4xl space-y-8 pb-16">
+      <BackButton onClick={onBack} className="!border-transparent !bg-transparent !px-0 hover:text-accent" />
+      <PageHeader title={t('reg_title')} subtitle={t('reg_subtitle')} />
+      <CopyParagraph copy={REG_INTRO} language={language} />
+
+      <section aria-labelledby="reg-steps" className="space-y-3">
+        <h2 id="reg-steps" className={sectionTitle}>{regText(REG_STEPS_TITLE, language)}</h2>
+        <ol className="space-y-2">
+          {REG_STEPS.map((step, index) => (
+            <li key={step.id} className="flex gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-tint text-[12px] font-extrabold text-accent">
+                {index + 1}
+              </span>
+              <p className={prose}>{regText(step.body, language)}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="reg-georgia" className="space-y-3">
+        <h2 id="reg-georgia" className={sectionTitle}>{regText(REG_GEORGIA_TITLE, language)}</h2>
+        <CopyParagraph copy={REG_GEORGIA_LEAD} language={language} className="text-[13px] leading-relaxed text-ink-3" />
+        <div className="grid gap-3 md:grid-cols-2">
+          {REG_GEORGIA.map((fact) => (
+            <article key={fact.id} className="rounded-2xl border border-line bg-surface p-4">
+              <h3 className="text-sm font-bold text-ink">{regText(fact.title, language)}</h3>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">{regText(fact.body, language)}</p>
+              {fact.links && fact.links.length > 0 && (
+                <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                  {fact.links.map((link) => (
+                    <ExternalLink key={link.href} href={link.href} label={link.label} newTab={t('link_opens_new_tab')} />
+                  ))}
+                </p>
+              )}
+            </article>
+          ))}
         </div>
+      </section>
 
-        {/* FILTERS CONTAINER */}
-        <div className="space-y-12">
-          {/* CATEGORY FILTERS */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-1 h-3 bg-surface-2"></div>
-              <span className="text-xs font-extrabold text-ink-3 tracking-[0.2em] typography-mtavruli">{t('reg_cat_mission')}</span>
-            </div>
-            <LayoutGroup id="category-filters">
-              <div className="flex flex-wrap gap-10 border-b border-white/5 pb-0">
-                {(['OPEN', 'SPECIFIC', 'CERTIFIED'] as Category[]).map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className="relative pb-5 group outline-none"
-                  >
-                    <span className={`text-[13px] font-extrabold tracking-[0.15em] transition-all duration-300 ${activeCategory === cat ? 'text-white' : 'text-ink-3 group-hover:text-ink-2'}`}>
-                      {cat}
-                    </span>
-                    {activeCategory === cat && (
-                      <motion.div 
-                        layoutId="cat-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-accent-fill shadow-[0_0_20px_rgba(14,165,233,0.8)] rounded-t z-10"
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </LayoutGroup>
-          </div>
+      <section aria-labelledby="reg-open" className="space-y-3">
+        <h2 id="reg-open" className={sectionTitle}>{regText(REG_OPEN_TITLE, language)}</h2>
+        <CopyParagraph copy={REG_OPEN_LEAD} language={language} />
+        <ul className="space-y-2">
+          {REG_OPEN_RULES.map((rule) => (
+            <li key={rule.en} className="rounded-2xl border border-line bg-surface px-4 py-3 text-sm leading-relaxed text-ink-2">
+              {regText(rule, language)}
+            </li>
+          ))}
+        </ul>
 
-          {/* WEIGHT CLASS FILTERS */}
-          <AnimatePresence mode="wait">
-            {activeCategory === 'OPEN' && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
+        <div role="tablist" aria-label={regText(REG_OPEN_TITLE, language)} className="flex flex-wrap gap-2 pt-2">
+          {REG_CLASSES.map((card) => {
+            const active = card.id === selected.id;
+            return (
+              <button
+                key={card.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setClassId(card.id)}
+                className={`rounded-full border px-3 py-1.5 text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${active ? 'border-accent/40 bg-accent-tint text-accent' : 'border-line bg-surface text-ink-2 hover:text-ink'}`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-1 h-3 bg-surface-2"></div>
-                  <span className="text-xs font-extrabold text-ink-3 tracking-[0.2em] typography-mtavruli">{t('reg_cat_mass')}</span>
-                </div>
-                <LayoutGroup id="weight-filters">
-                  <div className="flex flex-wrap gap-10 border-b border-white/5 pb-0">
-                    {(['< 250G', '250G - 2KG', '> 2KG'] as WeightClass[]).map(weight => (
-                      <button
-                        key={weight}
-                        onClick={() => setActiveWeight(weight)}
-                        className="relative pb-5 group outline-none"
-                      >
-                        <span className={`text-[13px] font-extrabold tracking-[0.15em] transition-all duration-300 ${activeWeight === weight ? 'text-white' : 'text-ink-3 group-hover:text-ink-2'}`}>
-                          {weight}
-                        </span>
-                        {activeWeight === weight && (
-                          <motion.div 
-                            layoutId="weight-indicator"
-                            className="absolute bottom-0 left-0 right-0 h-[3px] bg-accent-fill shadow-[0_0_20px_rgba(14,165,233,0.8)] rounded-t z-10"
-                            transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </LayoutGroup>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* RULES TELEMETRY DISPLAY */}
-        <div className="relative group">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 bg-surface border border-white/5 p-10 lg:p-14 rounded-2xl relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-              <svg className="w-32 h-32 text-accent" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v8h-2zm0 10h2v2h-2z"/></svg>
-            </div>
-            {Object.entries(rules).map(([key, value]) => {
-              const isRestricted = value.includes('PROHIBITED') || value.includes('MANDATORY');
-              return (
-                <div key={key} className="flex flex-col gap-2 border-b border-white/5 pb-5 last:border-0 group/item">
-                  <span className="text-xs font-extrabold text-ink-3 tracking-[0.25em] typography-mtavruli group-hover/item:text-slate-300 transition-colors">{key}</span>
-                  <span className={`font-mono text-[13px] font-bold ${isRestricted ? 'text-rose-500' : 'text-accent'}`}>
-                    {value}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ZONE SCANNER */}
-        <div className="space-y-8 pt-10 border-t border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent-fill"></div>
-            <h2 className="text-xs font-extrabold text-ink-3 tracking-[0.3em] typography-mtavruli">{t('restricted_zone_check')}</h2>
-          </div>
-          <p className="text-xs text-amber-300/80">
-            {t('wiki_ai_disclaimer')}
-          </p>
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            <div className="w-full md:flex-1 relative flex items-center gap-4">
-               <span className="text-accent font-bold">&gt;</span>
-               <input 
-                type="text" 
-                value={zoneQuery}
-                onChange={(e) => setZoneQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('enter_location')}
-                className="flex-1 bg-transparent border-b border-white/10 py-3 text-sm font-mono text-white placeholder:text-ink-3 outline-none focus:border-accent/50 transition-colors"
-              />
-              <button 
-                onClick={handleZoneCheck}
-                disabled={isChecking || !zoneQuery.trim()}
-                className="px-6 py-2 bg-accent-fill hover:bg-accent-fill-hover disabled:opacity-50 text-white rounded-[10px] text-xs font-extrabold transition-all shadow-lg"
-              >
-                {isChecking ? t('reg_scanning') : t('reg_scan_btn')}
+                {regText(card.chip, language)}
               </button>
-            </div>
-            <div className={`w-full md:w-80 p-6 border rounded-2xl font-mono text-xs leading-relaxed transition-all duration-500 shadow-sm ${
-              zoneResult.status === 'RESTRICTED' ? 'text-rose-500 border-rose-500/20 bg-rose-500/10' : 
-              zoneResult.status === 'CLEAR' ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10' : 
-              zoneResult.status === 'CAUTION' ? 'text-amber-400 border-amber-500/20 bg-amber-500/10' :
-              'text-ink-3 border-white/10 bg-white/5'
-            }`}>
-              <div className="flex items-center gap-2 mb-2 opacity-50">
-                 <div className={`w-1.5 h-1.5 rounded-full ${zoneResult.status === 'IDLE' ? 'bg-slate-500' : ' bg-current'}`}></div>
-                 <span>GCAA_AI_SCAN_RESULT</span>
+            );
+          })}
+        </div>
+
+        <article role="tabpanel" className="rounded-2xl border border-line bg-surface p-4 md:p-5">
+          <h3 className="text-base font-extrabold text-ink">{regText(selected.title, language)}</h3>
+          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+            {selected.rows.map((item) => (
+              <div key={item.id} className={item.id === 'georgia' ? 'rounded-xl bg-accent-tint px-3 py-2 sm:col-span-2' : ''}>
+                <dt className="text-[13px] font-bold text-ink-3">{regText(item.label, language)}</dt>
+                <dd className="mt-1 text-sm leading-relaxed text-ink">{regText(item.value, language)}</dd>
               </div>
-              <p className="font-bold">{zoneResult.message || t('waiting_input')}</p>
-            </div>
+            ))}
+          </dl>
+        </article>
+      </section>
+
+      <section aria-labelledby="reg-remote" className="space-y-2 rounded-2xl border border-line bg-surface p-4">
+        <h2 id="reg-remote" className="text-sm font-bold text-ink">{regText(REG_REMOTE_TITLE, language)}</h2>
+        <CopyParagraph copy={REG_REMOTE_BODY} language={language} />
+      </section>
+
+      <section aria-labelledby="reg-specific" className="space-y-3">
+        <h2 id="reg-specific" className={sectionTitle}>{regText(REG_SPECIFIC_TITLE, language)}</h2>
+        <CopyParagraph copy={REG_SPECIFIC_LEAD} language={language} />
+        <ul className="grid gap-3 md:grid-cols-2">
+          {REG_SPECIFIC_ITEMS.map((item) => (
+            <li key={item.en} className="rounded-2xl border border-line bg-surface p-4 text-sm leading-relaxed text-ink-2">
+              {regText(item, language)}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="reg-certified" className="space-y-2">
+        <h2 id="reg-certified" className={sectionTitle}>{regText(REG_CERTIFIED_TITLE, language)}</h2>
+        <CopyParagraph copy={REG_CERTIFIED_BODY} language={language} />
+      </section>
+
+      <section aria-labelledby="reg-zone" className="space-y-3 border-t border-line pt-8">
+        <h2 id="reg-zone" className={sectionTitle}>{t('restricted_zone_check')}</h2>
+        <p className="text-[13px] leading-relaxed text-warn">{t('wiki_ai_disclaimer')}</p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start">
+          <div className="flex w-full flex-1 items-center gap-3">
+            <label className="sr-only" htmlFor="reg-zone-query">{t('enter_location')}</label>
+            <input
+              id="reg-zone-query"
+              type="text"
+              value={zoneQuery}
+              onChange={(event) => setZoneQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') handleZoneCheck();
+              }}
+              placeholder={t('enter_location')}
+              className="min-w-0 flex-1 border-b border-line bg-transparent py-3 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-accent"
+            />
+            <button
+              type="button"
+              onClick={handleZoneCheck}
+              disabled={isChecking || !zoneQuery.trim()}
+              className="shrink-0 rounded-[10px] bg-accent-fill px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-accent-fill-hover disabled:opacity-50"
+            >
+              {isChecking ? t('reg_scanning') : t('reg_scan_btn')}
+            </button>
+          </div>
+          <div
+            className={`w-full rounded-2xl border p-4 text-sm leading-relaxed md:w-80 ${
+              zoneResult.status === 'RESTRICTED' ? 'border-bad/30 bg-bad/10 text-bad'
+                : zoneResult.status === 'CLEAR' ? 'border-ok/30 bg-ok/10 text-ok'
+                  : zoneResult.status === 'CAUTION' ? 'border-warn/30 bg-warn/10 text-warn'
+                    : 'border-line bg-surface text-ink-2'
+            }`}
+          >
+            <p className="text-[12px] font-bold text-ink-3">{t('reg_zone_result')}</p>
+            <p className="mt-1 font-bold">{zoneMessage}</p>
           </div>
         </div>
+      </section>
 
-        {/* FOOTER NOTICE */}
-        <div className="pt-10 flex flex-col items-center gap-4 text-center">
-          <p className="text-xs text-ink-3 font-medium tracking-[0.2em] max-w-lg leading-relaxed">
-            {t('reg_footer_notice')}
-          </p>
-        </div>
+      <section aria-labelledby="reg-sources" className="space-y-3">
+        <h2 id="reg-sources" className={sectionTitle}>{regText(REG_SOURCES_TITLE, language)}</h2>
+        <ul className="space-y-2">
+          {REG_SOURCES.map((source) => (
+            <li key={source.href} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <ExternalLink href={source.href} label={source.label} newTab={t('link_opens_new_tab')} />
+              <span className="text-[13px] text-ink-3">{regText(source.note, language)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      </div>
+      <p className="text-[13px] leading-relaxed text-ink-3">{t('reg_footer_notice')}</p>
     </div>
   );
 };
