@@ -71,15 +71,49 @@ export const VTX_ALL_BANDS: VTXBandGroup[] = [
   {
     name: "Band 3.3G-A",
     channels: [
-      { id: 1, name: "A1", freq: 3310 }, { id: 2, name: "A2", freq: 3330 }, { id: 3, name: "A3", freq: 3355 }, { id: 4, name: "A4", freq: 3380 },
-      { id: 5, name: "A5", freq: 3405 }, { id: 6, name: "A6", freq: 3430 }, { id: 7, name: "A7", freq: 3455 }, { id: 8, name: "A8", freq: 3480 }
+      { id: 1, name: "3.3G-A1", freq: 3360 }, { id: 2, name: "3.3G-A2", freq: 3380 }, { id: 3, name: "3.3G-A3", freq: 3400 }, { id: 4, name: "3.3G-A4", freq: 3420 }, { id: 5, name: "3.3G-A5", freq: 3440 }, { id: 6, name: "3.3G-A6", freq: 3460 }, { id: 7, name: "3.3G-A7", freq: 3480 }, { id: 8, name: "3.3G-A8", freq: 3500 }
     ]
   },
   {
     name: "Band 3.3G-B",
     channels: [
-      { id: 1, name: "B1", freq: 3310 }, { id: 2, name: "B2", freq: 3330 }, { id: 3, name: "B3", freq: 3355 }, { id: 4, name: "B4", freq: 3380 },
-      { id: 5, name: "B5", freq: 3405 }, { id: 6, name: "B6", freq: 3430 }, { id: 7, name: "B7", freq: 3455 }, { id: 8, name: "B8", freq: 3480 }
+      { id: 1, name: "3.3G-B1", freq: 3200 }, { id: 2, name: "3.3G-B2", freq: 3220 }, { id: 3, name: "3.3G-B3", freq: 3240 }, { id: 4, name: "3.3G-B4", freq: 3260 }, { id: 5, name: "3.3G-B5", freq: 3280 }, { id: 6, name: "3.3G-B6", freq: 3300 }, { id: 7, name: "3.3G-B7", freq: 3320 }, { id: 8, name: "3.3G-B8", freq: 3340 }
+    ]
+  },
+  {
+    name: "Band 3.3G-E",
+    channels: [
+      { id: 1, name: "3.3G-E1", freq: 3330 }, { id: 2, name: "3.3G-E2", freq: 3350 }, { id: 3, name: "3.3G-E3", freq: 3370 }, { id: 4, name: "3.3G-E4", freq: 3390 }, { id: 5, name: "3.3G-E5", freq: 3410 }, { id: 6, name: "3.3G-E6", freq: 3430 }, { id: 7, name: "3.3G-E7", freq: 3450 }, { id: 8, name: "3.3G-E8", freq: 3470 }
+    ]
+  },
+  {
+    name: "Band 3.3G-F",
+    channels: [
+      { id: 1, name: "3.3G-F1", freq: 3170 }, { id: 2, name: "3.3G-F2", freq: 3190 }, { id: 3, name: "3.3G-F3", freq: 3210 }, { id: 4, name: "3.3G-F4", freq: 3230 }, { id: 5, name: "3.3G-F5", freq: 3250 }, { id: 6, name: "3.3G-F6", freq: 3270 }, { id: 7, name: "3.3G-F7", freq: 3290 }, { id: 8, name: "3.3G-F8", freq: 3310 }
+    ]
+  },
+  {
+    name: "Band 3.3G-R",
+    channels: [
+      { id: 1, name: "3.3G-R1", freq: 3320 }, { id: 2, name: "3.3G-R2", freq: 3345 }, { id: 3, name: "3.3G-R3", freq: 3370 }, { id: 4, name: "3.3G-R4", freq: 3395 }, { id: 5, name: "3.3G-R5", freq: 3420 }, { id: 6, name: "3.3G-R6", freq: 3445 }, { id: 7, name: "3.3G-R7", freq: 3470 }, { id: 8, name: "3.3G-R8", freq: 3495 }
+    ]
+  },
+  {
+    name: "Band 3.3G-L",
+    channels: [
+      { id: 1, name: "3.3G-L1", freq: 3310 }, { id: 2, name: "3.3G-L2", freq: 3330 }, { id: 3, name: "3.3G-L3", freq: 3355 }, { id: 4, name: "3.3G-L4", freq: 3380 }, { id: 5, name: "3.3G-L5", freq: 3405 }, { id: 6, name: "3.3G-L6", freq: 3430 }, { id: 7, name: "3.3G-L7", freq: 3455 }, { id: 8, name: "3.3G-L8", freq: 3480 }
+    ]
+  },
+  {
+    name: "Band 3.3G-X",
+    channels: [
+      { id: 1, name: "3.3G-X1", freq: 3220 }, { id: 2, name: "3.3G-X2", freq: 3240 }, { id: 3, name: "3.3G-X3", freq: 3260 }, { id: 4, name: "3.3G-X4", freq: 3280 }, { id: 5, name: "3.3G-X5", freq: 3300 }, { id: 6, name: "3.3G-X6", freq: 3320 }, { id: 7, name: "3.3G-X7", freq: 3340 }, { id: 8, name: "3.3G-X8", freq: 3360 }
+    ]
+  },
+  {
+    name: "Band 3.3G-Y",
+    channels: [
+      { id: 1, name: "3.3G-Y1", freq: 3060 }, { id: 2, name: "3.3G-Y2", freq: 3080 }, { id: 3, name: "3.3G-Y3", freq: 3100 }, { id: 4, name: "3.3G-Y4", freq: 3120 }, { id: 5, name: "3.3G-Y5", freq: 3140 }, { id: 6, name: "3.3G-Y6", freq: 3160 }, { id: 7, name: "3.3G-Y7", freq: 3180 }, { id: 8, name: "3.3G-Y8", freq: 3200 }
     ]
   }
 ];
@@ -105,5 +139,6 @@ export const STL_FRAMES = [
 ];
 
 export const STL_AUTHORS = [
-  'Craft', 'Barvinok', 'Berlin', 'dmytr0', 'FPV Mafia', 'Geprc', 'Kemp'
+  'DronehubGe'
 ];
+

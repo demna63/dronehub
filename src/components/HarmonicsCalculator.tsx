@@ -1,61 +1,30 @@
 import React, { useState, useMemo } from 'react';
 import { Activity, AlertTriangle, CheckCircle2, Waves, Radio, ArrowRight, Gauge } from 'lucide-react';
 import { VTX_ALL_BANDS } from '../constants/toolsData';
+import { useLanguage } from '../contexts/useLanguage';
+import { analyzeHarmonics, isValidInput } from '../utils/harmonics';
+import LinkInterferencePanel from './LinkInterferencePanel';
+
+const fmt = (n: number) => String(parseFloat(n.toFixed(2)));
 
 const HarmonicsCalculator: React.FC = () => {
-  // --- STATE ---
+  const { t } = useLanguage();
   const [centerFreq, setCenterFreq] = useState<number>(915);
   const [bandwidth, setBandwidth] = useState<number>(30);
 
-  // --- CALCULATIONS ---
-  const startFreq = centerFreq - (bandwidth / 2);
-  const endFreq = centerFreq + (bandwidth / 2);
+  const valid = isValidInput(centerFreq, bandwidth);
+  const startFreq = centerFreq - bandwidth / 2;
+  const endFreq = centerFreq + bandwidth / 2;
 
-  const harmonics = useMemo(() => {
-    const res = [];
-    for (let i = 1; i <= 7; i++) {
-      res.push({
-        order: i,
-        min: startFreq * i,
-        max: endFreq * i,
-        center: centerFreq * i
-      });
-    }
-    return res;
-  }, [centerFreq, startFreq, endFreq]);
-
-  // --- ANALYSIS ---
-  const analysis = useMemo(() => {
-    const affected: Record<string, string[]> = {};
-    const unaffected: Record<string, string[]> = {};
-
-    VTX_ALL_BANDS.forEach(band => {
-      band.channels.forEach(ch => {
-        let isHit = false;
-        let hitInfo = '';
-
-        for (const h of harmonics) {
-          if (h.order === 1) continue;
-          // +/- 1 MHz tolerance
-          if (ch.freq >= h.min - 1 && ch.freq <= h.max + 1) {
-            isHit = true;
-            hitInfo = `${ch.name} (${ch.freq} MHz) - Hit by #${h.order} (${h.min.toFixed(1)}-{${h.max.toFixed(1)}})`;
-            break;
-          }
-        }
-
-        if (isHit) {
-          if (!affected[band.name]) affected[band.name] = [];
-          affected[band.name].push(hitInfo);
-        } else {
-          if (!unaffected[band.name]) unaffected[band.name] = [];
-          unaffected[band.name].push(`${ch.name} (${ch.freq} MHz)`);
-        }
-      });
-    });
-
-    return { affected, unaffected };
-  }, [harmonics]);
+  const { harmonics, affected, unaffected } = useMemo(
+    () => analyzeHarmonics(centerFreq, bandwidth, VTX_ALL_BANDS),
+    [centerFreq, bandwidth],
+  );
+  const hitCount = useMemo(() => [...affected.values()].reduce((n, l) => n + l.length, 0), [affected]);
+  const orderTitle = (order: number) => {
+    const h = harmonics.find((x) => x.order === order)!;
+    return t(order === 1 ? 'harm_fund_title' : 'harm_order_title', { order, min: fmt(h.min), max: fmt(h.max) });
+  };
 
   return (
     <div className="p-6 space-y-8 duration-500">
@@ -66,8 +35,8 @@ const HarmonicsCalculator: React.FC = () => {
           <Activity size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-white">Harmonics Calculator</h2>
-          <p className="text-sm text-ink-3 font-medium">Analyze RF interference across all VTX bands</p>
+          <h2 className="text-2xl font-extrabold text-white">{t('harm_title')}</h2>
+          <p className="text-sm text-ink-3 font-medium">{t('harm_subtitle')}</p>
         </div>
       </div>
 
@@ -78,7 +47,7 @@ const HarmonicsCalculator: React.FC = () => {
           {/* Input: Center Freq */}
           <div className="space-y-2">
             <label htmlFor="harmonics-center-freq" className="text-xs font-extrabold text-ink-3 flex items-center gap-2">
-              <Radio size={14} /> Central Freq (MHz)
+              <Radio size={14} /> {t('harm_center')}
             </label>
             <div className="relative group">
               <input 
@@ -94,7 +63,7 @@ const HarmonicsCalculator: React.FC = () => {
           {/* Input: Bandwidth */}
           <div className="space-y-2">
             <label htmlFor="harmonics-bandwidth" className="text-xs font-extrabold text-ink-3 flex items-center gap-2">
-              <Waves size={14} /> Channel Width (MHz)
+              <Waves size={14} /> {t('harm_width')}
             </label>
             <div className="relative group">
               <input 
@@ -110,21 +79,23 @@ const HarmonicsCalculator: React.FC = () => {
           {/* Output: Start Freq */}
           <div className="bg-white/5 rounded-[10px] p-3 border border-white/5 flex flex-col justify-center h-[50px]">
              <div className="flex justify-between items-center">
-               <span className="text-xs text-ink-3 font-bold">Start Freq</span>
-               <span className="text-sm font-mono font-bold text-white">{startFreq.toFixed(2)} MHz</span>
+               <span className="text-xs text-ink-3 font-bold">{t('harm_start')}</span>
+               <span className="text-sm font-mono font-bold text-white">{valid ? fmt(startFreq) : '—'} MHz</span>
              </div>
           </div>
 
           {/* Output: End Freq */}
           <div className="bg-white/5 rounded-[10px] p-3 border border-white/5 flex flex-col justify-center h-[50px]">
              <div className="flex justify-between items-center">
-               <span className="text-xs text-ink-3 font-bold">End Freq</span>
-               <span className="text-sm font-mono font-bold text-white">{endFreq.toFixed(2)} MHz</span>
+               <span className="text-xs text-ink-3 font-bold">{t('harm_end')}</span>
+               <span className="text-sm font-mono font-bold text-white">{valid ? fmt(endFreq) : '—'} MHz</span>
              </div>
           </div>
 
         </div>
       </div>
+
+      <LinkInterferencePanel txFreq={centerFreq} txBw={bandwidth} />
 
       {/* 3. Analysis Results (Middle Section) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -133,26 +104,30 @@ const HarmonicsCalculator: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-rose-500/20">
             <AlertTriangle className="text-rose-500" size={18} />
-            <h3 className="text-sm font-extrabold text-rose-100">Affected Channels</h3>
+            <h3 className="text-sm font-extrabold text-rose-100">{t('harm_affected')}</h3>
           </div>
           
           <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-            {Object.keys(analysis.affected).length === 0 ? (
+            {!valid ? (
+              <div role="alert" className="p-8 text-center text-amber-300 text-xs bg-amber-500/5 rounded-[10px] border border-amber-500/20">
+                {t('harm_invalid')}
+              </div>
+            ) : hitCount === 0 ? (
               <div className="p-8 text-center text-ink-3 text-xs bg-bg/30 rounded-[10px] border border-white/5">
-                No interference detected. Safe to fly!
+                {t('harm_no_hits')}
               </div>
             ) : (
-              Object.entries(analysis.affected).map(([bandName, hits]) => (
-                <div key={bandName} className="bg-rose-950/10 border border-rose-500/20 rounded-[10px] overflow-hidden">
-                  <div className="bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-200 flex justify-between">
-                    <span>{bandName}</span>
-                    <span className="bg-rose-500/20 px-2 rounded-full text-xs">{hits.length} Hits</span>
+              [...affected.entries()].map(([order, hits]) => (
+                <div key={order} className="bg-rose-950/10 border border-rose-500/20 rounded-[10px] overflow-hidden">
+                  <div className="bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-200 flex justify-between gap-2">
+                    <span>{orderTitle(order)}</span>
+                    <span className="bg-rose-500/20 px-2 rounded-full text-xs whitespace-nowrap">{t('harm_hits', { count: hits.length })}</span>
                   </div>
-                  <div className="p-3 space-y-2">
-                    {hits.map((hit, i) => (
-                      <div key={i} className="text-xs text-rose-300 font-mono break-words flex items-start gap-2">
-                        <ArrowRight size={12} className="mt-0.5 flex-shrink-0 opacity-50" />
-                        {hit}
+                  <div className="p-3 flex flex-wrap gap-2">
+                    {hits.map((hit) => (
+                      <div key={`${hit.band}-${hit.name}`} className="text-xs text-rose-300 font-mono flex items-center gap-1 bg-rose-500/5 border border-rose-500/10 rounded px-2 py-1">
+                        <ArrowRight size={12} className="opacity-50" />
+                        {hit.name} ({hit.freq} MHz)
                       </div>
                     ))}
                   </div>
@@ -166,25 +141,28 @@ const HarmonicsCalculator: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20">
             <CheckCircle2 className="text-emerald-500" size={18} />
-            <h3 className="text-sm font-extrabold text-emerald-100">Unaffected Channels</h3>
+            <h3 className="text-sm font-extrabold text-emerald-100">{t('harm_unaffected')}</h3>
           </div>
 
           <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-            {Object.entries(analysis.unaffected).map(([bandName, channels]) => (
+            {valid && [...unaffected.entries()].map(([bandName, channels]) => (
               <div key={bandName} className="bg-emerald-950/10 border border-emerald-500/10 rounded-[10px] overflow-hidden">
                 <div className="bg-emerald-500/5 px-4 py-2 text-xs font-bold text-emerald-200 flex justify-between">
-                   <span>{bandName}</span>
-                   <span className="bg-emerald-500/10 px-2 rounded-full text-xs">{channels.length} Clear</span>
+                  <span>{bandName}</span>
+                  <span className="bg-emerald-500/10 px-2 rounded-full text-xs">{t('harm_clear', { count: channels.length })}</span>
                 </div>
                 <div className="p-3 flex flex-wrap gap-2">
-                  {channels.map((ch, i) => (
-                    <div key={i} className="text-xs text-emerald-400/80 font-mono bg-emerald-500/5 border border-emerald-500/10 rounded px-2 py-1">
-                      {ch}
+                  {channels.map((ch) => (
+                    <div key={ch.name} className="text-xs text-emerald-400/80 font-mono bg-emerald-500/5 border border-emerald-500/10 rounded px-2 py-1">
+                      {ch.name} ({ch.freq} MHz)
                     </div>
                   ))}
                 </div>
               </div>
             ))}
+            {valid && unaffected.size === 0 && (
+              <div className="p-8 text-center text-ink-3 text-xs bg-bg/30 rounded-[10px] border border-white/5">{t('harm_all_hit')}</div>
+            )}
           </div>
         </div>
       </div>
@@ -193,17 +171,17 @@ const HarmonicsCalculator: React.FC = () => {
       <div className="bg-[#0d1117] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
         <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
           <Gauge size={16} className="text-accent" />
-          <h3 className="text-xs font-extrabold text-ink-2">Calculated Harmonics Table</h3>
+          <h3 className="text-xs font-extrabold text-ink-2">{t('harm_table_title')}</h3>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="text-xs font-extrabold text-ink-3 bg-white/[0.02]">
               <tr>
-                <th className="p-4 w-24">Order</th>
-                <th className="p-4">Central Freq</th>
-                <th className="p-4">Range (Min - Max)</th>
-                <th className="p-4">Bandwidth</th>
+                <th className="p-4 w-24">{t('harm_col_order')}</th>
+                <th className="p-4">{t('harm_col_center')}</th>
+                <th className="p-4">{t('harm_col_range')}</th>
+                <th className="p-4">{t('harm_col_width')}</th>
               </tr>
             </thead>
             <tbody className="text-sm font-mono text-ink-2 divide-y divide-white/5">
@@ -211,15 +189,15 @@ const HarmonicsCalculator: React.FC = () => {
                 <tr key={h.order} className="hover:bg-white/[0.02] transition-colors">
                   <td className="p-4">
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-extrabold ${h.order === 1 ? 'bg-accent-tint text-accent border border-accent/30' : 'bg-surface-2 text-ink-3 border border-white/10'}`}>
-                      {h.order === 1 ? 'Fund.' : `#${h.order}`}
+                      {h.order === 1 ? t('harm_fund') : `#${h.order}`}
                     </span>
                   </td>
-                  <td className="p-4 font-bold text-white">{h.center.toFixed(2)} MHz</td>
+                  <td className="p-4 font-bold text-white">{fmt(h.center)} MHz</td>
                   <td className="p-4 text-ink-3">
-                    {h.min.toFixed(2)} <span className="text-ink-3 mx-1">-</span> {h.max.toFixed(2)} MHz
+                    {fmt(h.min)} <span className="text-ink-3 mx-1">-</span> {fmt(h.max)} MHz
                   </td>
                   <td className="p-4 text-ink-3">
-                    {(h.max - h.min).toFixed(2)} MHz
+                    {fmt(h.max - h.min)} MHz
                   </td>
                 </tr>
               ))}
@@ -227,6 +205,8 @@ const HarmonicsCalculator: React.FC = () => {
           </table>
         </div>
       </div>
+
+      <p className="text-xs text-ink-3">{t('harm_note')}</p>
 
     </div>
   );
