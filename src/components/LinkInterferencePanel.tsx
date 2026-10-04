@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Antenna, Glasses, Radio, Satellite, Ruler, SlidersHorizontal, ShieldAlert } from 'lucide-react';
+import { Antenna, Glasses, Radio, Satellite, Ruler, SlidersHorizontal, ShieldAlert, Users } from 'lucide-react';
 import { VTX_ALL_BANDS } from '../constants/toolsData';
 import { useLanguage } from '../contexts/useLanguage';
 import {
@@ -92,16 +92,23 @@ const LinkInterferencePanel: React.FC<Props> = ({ txFreq, txBw }) => {
   const [vrxNoiseBw, setVrxNoiseBw] = useState(20);
   const [vrxRej, setVrxRej] = useState(20);
 
+  const [group, setGroup] = useState(false);
+  const [vtx2Freq, setVtx2Freq] = useState(5740);
+  const [vtx2Bw, setVtx2Bw] = useState(20);
+  const [vtx2Mw, setVtx2Mw] = useState(400);
+  const [otherDroneM, setOtherDroneM] = useState(30);
+
   const [pilotM, setPilotM] = useState(0.5);
   const [droneM, setDroneM] = useState(200);
   const [onboardCm, setOnboardCm] = useState(5);
   const [suppression, setSuppression] = useState(40);
   const [maxOrder, setMaxOrder] = useState(5);
 
-  const values = [txFreq, txBw, txMw, vtxFreq, vtxBw, vtxMw, rxNf, rxNoiseBw, vrxNf, vrxNoiseBw, pilotM, droneM, onboardCm];
+  const values = [txFreq, txBw, txMw, vtxFreq, vtxBw, vtxMw, rxNf, rxNoiseBw, vrxNf, vrxNoiseBw, pilotM, droneM, onboardCm,
+    ...(group ? [vtx2Freq, vtx2Bw, vtx2Mw, otherDroneM] : [])];
   const valid = values.every((v) => Number.isFinite(v) && v > 0)
     && [rxIip3, rxRej, vrxIip3, vrxRej, suppression].every(Number.isFinite)
-    && txBw < txFreq * 2 && vtxBw < vtxFreq * 2;
+    && txBw < txFreq * 2 && vtxBw < vtxFreq * 2 && (!group || vtx2Bw < vtx2Freq * 2);
 
   const victims = useMemo<Victim[]>(() => [
     { id: 'rx', freq: txFreq, bw: txBw, noiseBw: rxNoiseBw, iip3Dbm: rxIip3, nfDb: rxNf, rejectionDb: rxRej },
@@ -114,14 +121,15 @@ const LinkInterferencePanel: React.FC<Props> = ({ txFreq, txBw }) => {
       { id: 'tx', freq: txFreq, bw: txBw, powerDbm: mwToDbm(txMw) },
       { id: 'vtx', freq: vtxFreq, bw: vtxBw, powerDbm: mwToDbm(vtxMw) },
     ];
-    return analyzeLinks(emitters, victims, { pilotM, droneM, onboardM: onboardCm / 100 }, {
+    if (group) emitters.push({ id: 'vtx2', freq: vtx2Freq, bw: vtx2Bw, powerDbm: mwToDbm(vtx2Mw) });
+    return analyzeLinks(emitters, victims, { pilotM, droneM, onboardM: onboardCm / 100, otherDroneM }, {
       harmonicSuppressionDb: suppression,
       maxIntermodOrder: maxOrder,
     });
-  }, [valid, txFreq, txBw, txMw, vtxFreq, vtxBw, vtxMw, victims, pilotM, droneM, onboardCm, suppression, maxOrder]);
+  }, [valid, txFreq, txBw, txMw, vtxFreq, vtxBw, vtxMw, group, vtx2Freq, vtx2Bw, vtx2Mw, otherDroneM, victims, pilotM, droneM, onboardCm, suppression, maxOrder]);
 
   const shown = findings.filter((f) => f.severity !== 'ok');
-  const names = { tx: 'TX', vtx: 'VTX' } as const;
+  const names = { tx: 'TX', vtx: 'VTX', vtx2: 'VTX2' } as const;
   const victimName = (v: VictimId) => (v === 'rx' ? t('link_rx') : t('link_vrx'));
 
   const worst = (v: VictimId): Severity =>
@@ -182,6 +190,32 @@ const LinkInterferencePanel: React.FC<Props> = ({ txFreq, txBw }) => {
           <Field id="geo-pilot" label={t('link_pilot_m')} unit="m" value={pilotM} onChange={setPilotM} step={0.1} />
           <Field id="geo-drone" label={t('link_drone_m')} unit="m" value={droneM} onChange={setDroneM} />
           <Field id="geo-onboard" label={t('link_onboard_cm')} unit="cm" value={onboardCm} onChange={setOnboardCm} />
+        </Card>
+        <Card icon={<Users size={16} />} title={t('link_group')} hint={t('link_group_hint')}>
+          <label htmlFor="group-on" className="col-span-full flex items-center gap-2 text-xs font-bold text-ink-2 cursor-pointer">
+            <input id="group-on" type="checkbox" checked={group} onChange={(e) => setGroup(e.target.checked)} className="accent-rose-500" />
+            {t('link_group_on')}
+          </label>
+          {group && (
+            <>
+              <label htmlFor="vtx2-ch" className="col-span-full block space-y-1">
+                <span className="text-[11px] font-bold text-ink-3">{t('link_channel')}</span>
+                <select
+                  id="vtx2-ch"
+                  value={VTX_OPTIONS.some((o) => o.freq === vtx2Freq) ? vtx2Freq : ''}
+                  onChange={(e) => setVtx2Freq(Number(e.target.value))}
+                  className="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-rose-500"
+                >
+                  <option value="" disabled>{t('link_custom')}</option>
+                  {VTX_OPTIONS.map((o) => <option key={o.label} value={o.freq}>{o.label}</option>)}
+                </select>
+              </label>
+              <Field id="vtx2-freq" label={t('link_freq')} unit="MHz" value={vtx2Freq} onChange={setVtx2Freq} />
+              <Field id="vtx2-bw" label={t('link_bw')} unit="MHz" value={vtx2Bw} onChange={setVtx2Bw} />
+              <Field id="vtx2-mw" label={t('link_power')} unit="mW" value={vtx2Mw} onChange={setVtx2Mw} />
+              <Field id="vtx2-m" label={t('link_other_drone_m')} unit="m" value={otherDroneM} onChange={setOtherDroneM} />
+            </>
+          )}
         </Card>
         <Card icon={<SlidersHorizontal size={16} />} title={t('link_model')} hint={t('link_model_hint')}>
           <Field id="opt-supp" label={t('link_suppression')} unit="dBc" value={suppression} onChange={setSuppression} />
@@ -250,7 +284,7 @@ const LinkInterferencePanel: React.FC<Props> = ({ txFreq, txBw }) => {
                         <td className="p-3">
                           <span className="text-white">{formatTerms(f.terms, names)}</span>
                           <span className="block text-[11px] text-ink-3">
-                            {f.mechanism === 'harmonic' ? t('link_harmonic', { n: f.order }) : t('link_intermod', { k: f.order })}
+                            {f.mechanism === 'fundamental' ? t('link_fundamental') : f.mechanism === 'harmonic' ? t('link_harmonic', { n: f.order }) : t('link_intermod', { k: f.order })}
                           </span>
                         </td>
                         <td className="p-3">{f.freq.toFixed(1)} <span className="text-ink-3">±{(f.bw / 2).toFixed(1)}</span></td>
@@ -276,6 +310,7 @@ const LinkInterferencePanel: React.FC<Props> = ({ txFreq, txBw }) => {
           <li>{t('link_method_products')}</li>
           <li>{t('link_method_level')}</li>
           <li>{t('link_method_harmonic')}</li>
+          <li>{t('link_method_group')}</li>
           <li>{t('link_method_noise')}</li>
           <li>{t('link_method_caveat')}</li>
         </ul>

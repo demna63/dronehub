@@ -30,6 +30,9 @@ export const SUPPRESSION_SLOPE_DB = 3;
 
 export const mwToDbm = (mw: number): number => 10 * Math.log10(mw);
 
+/** The emitter each receiver is meant to hear; its fundamental is the wanted signal, not interference. */
+const OWN_SOURCE: Record<VictimId, EmitterId> = { rx: 'tx', vrx: 'vtx' };
+
 /** Free-space path loss in dB for a distance in metres and a frequency in MHz. */
 export const fsplDb = (distanceM: number, freqMHz: number): number =>
   20 * Math.log10(Math.max(distanceM, MIN_DISTANCE_M) / 1000) + 20 * Math.log10(freqMHz) + 32.44;
@@ -38,7 +41,7 @@ export const fsplDb = (distanceM: number, freqMHz: number): number =>
 export const noiseFloorDbm = (bwMHz: number, nfDb: number): number =>
   -174 + 10 * Math.log10(bwMHz * 1e6) + nfDb;
 
-export type EmitterId = 'tx' | 'vtx';
+export type EmitterId = 'tx' | 'vtx' | 'vtx2';
 export type VictimId = 'rx' | 'vrx';
 export type Severity = 'critical' | 'warning' | 'marginal' | 'ok';
 
@@ -68,6 +71,8 @@ export interface Geometry {
   droneM: number;
   /** VTX ↔ control RX on the same airframe. */
   onboardM: number;
+  /** A second pilot's drone ↔ our goggles and our drone's RX (group flight). */
+  otherDroneM: number;
 }
 
 export interface Options {
@@ -83,7 +88,7 @@ export interface Term {
 }
 
 export interface Finding {
-  mechanism: 'harmonic' | 'intermod';
+  mechanism: 'fundamental' | 'harmonic' | 'intermod';
   victim: VictimId;
   /** Harmonic number n, or the product order K. */
   order: number;
@@ -104,6 +109,8 @@ const DISTANCE_KEY: Record<`${EmitterId}-${VictimId}`, keyof Geometry> = {
   'tx-rx': 'droneM',
   'vtx-vrx': 'droneM',
   'vtx-rx': 'onboardM',
+  'vtx2-vrx': 'otherDroneM',
+  'vtx2-rx': 'otherDroneM',
 };
 
 export const pathLossDb = (emitter: EmitterId, victim: VictimId, freqMHz: number, geo: Geometry): number =>
@@ -115,6 +122,23 @@ const overlaps = (centerA: number, bwA: number, centerB: number, bwB: number): b
 export const iipFor = (iip3Dbm: number, order: number): number =>
   order <= 2 ? iip3Dbm + IIP2_OFFSET_DB : order === 3 ? iip3Dbm : iip3Dbm + IIP_HIGH_ORDER_OFFSET_DB;
 
+const factorial = (n: number): number => (n <= 1 ? 1 : n * factorial(n - 1));
+
+/** K! / Π|m_i|! — how many ways the a_K·v^K term produces this product. */
+const multinomial = (ms: number[]): number =>
+  factorial(ms.reduce((n, m) => n + Math.abs(m), 0)) / ms.reduce((p, m) => p * factorial(Math.abs(m)), 1);
+
+/**
+ * Gain of a product over the two-tone reference that IIP_K is specified with
+ * (2f1−f2 for K=3). Expanding (A1cos ω1t + A2cos ω2t + A3cos ω3t)³ gives 3/4 for
+ * 2f1−f2 but 3/2 for f1+f2−f3, so the three-tone product is +6.02 dB.
+ */
+export const productGainDb = (ms: number[]): number => {
+  const order = ms.reduce((n, m) => n + Math.abs(m), 0);
+  const ref = multinomial([Math.ceil(order / 2), Math.floor(order / 2)]);
+  return 20 * Math.log10(multinomial(ms) / ref);
+};
+
 /** Input-referred level of an order-K product given the tone powers at the nonlinear stage. */
 export const intermodLevelDbm = (
   tones: { powerDbm: number; m: number }[],
@@ -122,7 +146,7 @@ export const intermodLevelDbm = (
 ): number => {
   const order = tones.reduce((n, t) => n + Math.abs(t.m), 0);
   const sum = tones.reduce((s, t) => s + Math.abs(t.m) * t.powerDbm, 0);
-  return sum - (order - 1) * iipFor(iip3Dbm, order);
+  return sum - (order - 1) * iipFor(iip3Dbm, order) + productGainDb(tones.map((t) => t.m));
 };
 
 /** Every integer vector with Σ|m| ≤ maxOrder and at least two non-zero entries. */
@@ -158,6 +182,16 @@ export const analyzeLinks = (
 
   for (const victim of victims) {
     const noiseDbm = noiseFloorDbm(victim.noiseBw ?? victim.bw, victim.nfDb);
+
+    // Another emitter's own signal sitting in the victim's channel (co- or adjacent channel).
+    for (const e of emitters) {
+      if (e.id === OWN_SOURCE[victim.id] || !overlaps(e.freq, e.bw, victim.freq, victim.bw)) continue;
+      findings.push(finish({
+        mechanism: 'fundamental', victim: victim.id, order: 1,
+        terms: [{ emitter: e.id, m: 1 }], freq: e.freq, bw: e.bw,
+        levelDbm: e.powerDbm - pathLossDb(e.id, victim.id, e.freq, geo), noiseDbm,
+      }));
+    }
 
     // Harmonics of each emitter radiated straight into the victim's band.
     for (const e of emitters) {
