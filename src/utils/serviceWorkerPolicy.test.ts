@@ -32,6 +32,13 @@ describe('service worker caching policy', () => {
     expect(sw).toContain("NETWORK_FIRST.includes(url.pathname)");
   });
 
+  it('revalidates the shell instead of trusting the HTTP cache', () => {
+    // Deep links are rewritten to index.html but only /index.html is served
+    // no-cache, so a bare fetch(request) returned a stale shell for an hour.
+    const shellBranch = sw.slice(sw.indexOf('if (isShellDocument)'), sw.indexOf('// Everything below is cache-first'));
+    expect(shellBranch).toMatch(/fetch\(request,\s*\{\s*cache:\s*'no-cache'\s*\}\)/);
+  });
+
   it('only writes a shell into the cache when the response was ok', () => {
     // Firebase rewrites ** -> /index.html, so an error page during a bad deploy
     // would otherwise be cached and then served as the offline fallback.

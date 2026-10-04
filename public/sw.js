@@ -67,7 +67,13 @@ self.addEventListener('fetch', (event) => {
 
   if (isShellDocument) {
     event.respondWith(
-      fetch(request)
+      // `cache: 'no-cache'` revalidates against the server (a cheap 304). Plain
+      // fetch(request) is still answered by the HTTP cache, and Firebase serves
+      // rewritten deep links like /tools/harmonics with max-age=3600 — only
+      // /index.html carries no-cache — so "network-first" kept returning the
+      // previous deploy's shell for up to an hour, and that shell names hashed
+      // chunks the new deploy no longer hosts.
+      fetch(request, { cache: 'no-cache' })
         .then((response) => {
           // Only cache a GOOD shell. Firebase Hosting rewrites ** -> /index.html,
           // so without this check a 500 or an error page returned during a bad
