@@ -1,14 +1,14 @@
 import { SitemapStream, streamToPromise } from 'sitemap';
-import { createWriteStream } from 'fs';
+import { createWriteStream, existsSync } from 'fs';
 import { resolve } from 'path';
 
 const BASE_URL = 'https://dronehub.ge';
+const OUTPUT = resolve('./public/sitemap.xml');
 
 // 1. სტატიკური გვერდები
 const staticPages = [
   { url: '/', changefreq: 'daily', priority: 1.0 },
   { url: '/market', changefreq: 'daily', priority: 0.9 },
-  { url: '/blogs', changefreq: 'daily', priority: 0.8 },
   { url: '/vlogs', changefreq: 'daily', priority: 0.8 },
   { url: '/tools', changefreq: 'weekly', priority: 0.8 },
   { url: '/tools/fpv-range', changefreq: 'monthly', priority: 0.8 },
@@ -29,27 +29,36 @@ async function generateSitemap() {
   const dynamicPages = [];
 
   // დინამიკური პოსტების წამოღება (თუ ქსელი ხელმისაწვდომია)
+  // ყველა გვერდი nextPageToken-ით — ადრე მხოლოდ პირველი 100 პოსტი ხვდებოდა.
   try {
-    const res = await fetch('https://firestore.googleapis.com/v1/projects/dronehubgeorgia-a7bd5/databases/(default)/documents/posts?pageSize=100');
-    if (res.ok) {
+    const endpoint = 'https://firestore.googleapis.com/v1/projects/dronehubgeorgia-a7bd5/databases/(default)/documents/posts';
+    let pageToken = '';
+    do {
+      const url = `${endpoint}?pageSize=300&mask.fieldPaths=createdAt${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Firestore ${res.status}`);
       const data = await res.json();
-      if (data.documents) {
-        for (const doc of data.documents) {
-          const id = doc.name.split('/').pop();
-          if (id) {
-            dynamicPages.push({ url: `/post/${id}`, changefreq: 'weekly', priority: 0.6 });
-          }
+      for (const doc of data.documents ?? []) {
+        const id = doc.name.split('/').pop();
+        if (id) {
+          dynamicPages.push({ url: `/post/${id}`, changefreq: 'weekly', priority: 0.6, lastmod: doc.updateTime });
         }
       }
+      pageToken = data.nextPageToken ?? '';
+    } while (pageToken);
+  } catch (err) {
+    // ოფლაინ ბილდისას არსებულ sitemap-ს არ ვეხებით: პოსტების გარეშე
+    // გადაწერა Google-ს ყველა პოსტის URL-ს დაუკარგავდა.
+    if (existsSync(OUTPUT)) {
+      console.warn(`⚠️ პოსტები ვერ წამოვიღე (${err.message}) — public/sitemap.xml უცვლელი დარჩა.`);
+      return;
     }
-  } catch (_err) {
-    // მშვიდი fallback ოფლაინ ბილდის დროს
   }
 
   const allPages = [...staticPages, ...dynamicPages];
 
   const sitemapStream = new SitemapStream({ hostname: BASE_URL });
-  const writeStream = createWriteStream(resolve('./public/sitemap.xml'));
+  const writeStream = createWriteStream(OUTPUT);
 
   sitemapStream.pipe(writeStream);
 

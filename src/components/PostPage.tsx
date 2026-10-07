@@ -6,6 +6,7 @@ import SinglePostPage from './SinglePostPage';
 import PageMeta from './PageMeta';
 import type { FeedProps } from './Feed';
 import PostCardSkeleton from './PostCardSkeleton';
+import NotFound from './NotFound';
 import { useLanguage } from '../contexts/useLanguage';
 
 interface PostPageProps {
@@ -17,28 +18,33 @@ interface PostPageProps {
 const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) => {
   const { t } = useLanguage();
   const { postId } = useParams<{ postId: string }>();
-  const [remotePost, setRemotePost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(false);
+  /**
+   * The fetch result is keyed by the id it was fetched for. A `loading` flag
+   * set inside the effect is still `false` on the first render, which used to
+   * send every deep link to a post outside the cached feed straight to `/` —
+   * Google saw each such post as a redirect to the homepage.
+   */
+  const [remote, setRemote] = useState<{ id: string; post: Post | null; failed: boolean } | null>(null);
 
   const cachedPost = useMemo(
     () => posts.find((post) => post.id === postId) || null,
     [posts, postId]
   );
 
-  const post = cachedPost || remotePost;
+  const resolved = remote !== null && remote.id === postId;
+  const post = cachedPost || (resolved ? remote.post : null);
 
   useEffect(() => {
     if (!postId || cachedPost) return;
 
     let cancelled = false;
-    setLoading(true);
 
     getPostByIdFromFirestore(postId)
       .then((fetchedPost) => {
-        if (!cancelled) setRemotePost(fetchedPost);
+        if (!cancelled) setRemote({ id: postId, post: fetchedPost, failed: false });
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+      .catch(() => {
+        if (!cancelled) setRemote({ id: postId, post: null, failed: true });
       });
 
     return () => {
@@ -50,7 +56,7 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
     return <Navigate to="/" replace />;
   }
 
-  if (loading && !post) {
+  if (!post && !resolved) {
     return (
       <div aria-busy="true" aria-label={t('state_loading')} >
         <PostCardSkeleton />
@@ -59,7 +65,9 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
   }
 
   if (!post) {
-    return <Navigate to="/" replace />;
+    // A deleted post is a 404, not a redirect to the feed. A failed fetch is
+    // not evidence the post is gone, so it must not tell crawlers to drop it.
+    return <NotFound noindex={!remote?.failed} />;
   }
 
   return (

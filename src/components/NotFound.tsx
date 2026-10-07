@@ -1,10 +1,30 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/useLanguage';
 
-const NotFound: React.FC = () => {
+interface NotFoundProps {
+  /**
+   * Hosting rewrites every path to index.html with a 200, so this tag is the
+   * only signal that keeps a missing page out of Google's index (otherwise it
+   * is reported as a soft 404 or "crawled - currently not indexed").
+   */
+  noindex?: boolean;
+}
+
+const NotFound: React.FC<NotFoundProps> = ({ noindex = true }) => {
   const { t } = useLanguage();
+
+  useEffect(() => {
+    if (!noindex) return;
+    const robots = document.querySelector('meta[name="robots"]');
+    if (!robots) return;
+    const previous = robots.getAttribute('content');
+    robots.setAttribute('content', 'noindex, follow');
+    return () => {
+      if (previous !== null) robots.setAttribute('content', previous);
+    };
+  }, [noindex]);
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-6 space-y-8 duration-700">
