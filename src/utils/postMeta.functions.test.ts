@@ -4,9 +4,10 @@ import { describe, expect, it } from 'vitest';
 // CommonJS module from the Cloud Functions source; tested here because the
 // functions package has no test runner of its own.
 import postMeta from '../../functions/postMeta.js';
-import { summarize as routeSummarize } from './routeMeta';
+import { summarize as routeSummarize, pageTitle as routePageTitle } from './routeMeta';
 
-const { POST_ID, renderPostShell, templateHost, summarize } = postMeta as {
+const { POST_ID, renderPostShell, templateHost, summarize, pageTitle } = postMeta as {
+  pageTitle: (title: string) => string;
   POST_ID: RegExp;
   renderPostShell: (template: string, postId: string, post: Record<string, unknown> | null) => string;
   templateHost: (forwardedHost: string | undefined) => string;
@@ -112,5 +113,17 @@ describe('POST_ID', () => {
     expect(POST_ID.test('XdBQWreoF1mWa7HvPjH9')).toBe(true);
     expect(POST_ID.test('../users')).toBe(false);
     expect(POST_ID.test('')).toBe(false);
+  });
+});
+
+describe('pageTitle mirror', () => {
+  it.each(['მოკლე', 'x'.repeat(41), 'x'.repeat(42), 'დრონების ინჟინერიის ყოველდღიური ტექნიკური დაიჯესტი'])(
+    'matches routeMeta for %s',
+    (title) => expect(pageTitle(title)).toBe(routePageTitle(title)),
+  );
+
+  it('names an untitled post after its body', () => {
+    const html = renderPostShell(template, 'abc123', { title: '', content: 'FPV  დრონის აწყობა' });
+    expect(html).toContain('<title>FPV დრონის აწყობა | DroneHub Georgia</title>');
   });
 });

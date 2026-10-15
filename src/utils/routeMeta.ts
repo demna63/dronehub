@@ -14,6 +14,22 @@ export const BASE_TITLE = 'DroneHub Georgia';
 /** Upper bound for meta descriptions; Google truncates around here anyway. */
 export const META_DESCRIPTION_MAX = 160;
 
+/**
+ * Google shows roughly 60 characters of a title. Past that, the
+ * ` | DroneHub Georgia` suffix is what gets cut, and it crowds out the words
+ * that describe the page — so a long page title goes out without it.
+ */
+export const TITLE_MAX = 60;
+
+/** A post with no title is named after the start of its body, not "Post". */
+const UNTITLED_POST_MAX = 60;
+
+/** `Title | DroneHub Georgia`, or just `Title` when the pair would be too long. */
+export const pageTitle = (title: string): string => {
+  const full = `${title} | ${BASE_TITLE}`;
+  return Array.from(full).length <= TITLE_MAX ? full : title;
+};
+
 export type Translate = (key: string) => string;
 
 export interface RouteMeta {
@@ -123,7 +139,9 @@ export const resolveRouteMeta = (
   let description = override.description ? summarize(override.description) : '';
 
   if (override.title) {
-    title = `${override.title} | ${BASE_TITLE}`;
+    title = pageTitle(override.title);
+  } else if (first === 'post' && override.description) {
+    title = pageTitle(summarize(override.description, UNTITLED_POST_MAX));
   } else if (first === '' || first === 'feed') {
     title = t('home_page_title');
   } else if (first === 'tools' && second && TOOL_TITLE_KEYS[second]) {

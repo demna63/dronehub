@@ -20,6 +20,8 @@
 const SITE = 'https://dronehub.ge';
 const BASE_TITLE = 'DroneHub Georgia';
 const DESCRIPTION_MAX = 160;
+const TITLE_MAX = 60;
+const UNTITLED_POST_MAX = 60;
 
 /** Firestore auto-ids; anything else cannot be a post and skips the lookup. */
 const POST_ID = /^[A-Za-z0-9]{1,128}$/;
@@ -47,10 +49,16 @@ const templateHost = (forwardedHost) => {
 };
 
 /** Same rule as `summarize` in src/utils/routeMeta.ts, counted in code points. */
-const summarize = (content) => {
+const summarize = (content, max = DESCRIPTION_MAX) => {
   const chars = Array.from(String(content || '').replace(/\s+/g, ' ').trim());
-  if (chars.length <= DESCRIPTION_MAX) return chars.join('');
-  return `${chars.slice(0, DESCRIPTION_MAX - 1).join('').trimEnd()}…`;
+  if (chars.length <= max) return chars.join('');
+  return `${chars.slice(0, max - 1).join('').trimEnd()}…`;
+};
+
+const pageTitle = (title) => {
+  if (title === BASE_TITLE) return title;
+  const full = `${title} | ${BASE_TITLE}`;
+  return Array.from(full).length <= TITLE_MAX ? full : title;
 };
 
 /** Only absolute https images: crawlers resolve nothing else reliably. */
@@ -90,8 +98,12 @@ const renderPostShell = (template, postId, post) => {
     return setMeta(html, 'robots', 'noindex, follow');
   }
 
-  const title = String(post.title || '').trim() || BASE_TITLE;
-  const fullTitle = title === BASE_TITLE ? title : `${title} | ${BASE_TITLE}`;
+  // Same rules as resolveRouteMeta/pageTitle in src/utils/routeMeta.ts (a
+  // test pins them together): an untitled post is named after its body, and
+  // the site suffix is dropped when the pair would exceed TITLE_MAX.
+  const rawTitle = String(post.title || '').trim();
+  const title = rawTitle || summarize(post.content, UNTITLED_POST_MAX) || BASE_TITLE;
+  const fullTitle = pageTitle(title);
   const description = summarize(post.content);
   const image = httpsUrl(post.image);
 
@@ -125,4 +137,4 @@ const renderPostShell = (template, postId, post) => {
   return html;
 };
 
-module.exports = { POST_ID, renderPostShell, templateHost, escapeHtml, summarize };
+module.exports = { POST_ID, renderPostShell, templateHost, escapeHtml, summarize, pageTitle };

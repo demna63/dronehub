@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalPath, canonicalUrl, resolveRouteMeta, summarize } from './routeMeta';
+import { canonicalPath, canonicalUrl, pageTitle, resolveRouteMeta, summarize, TITLE_MAX } from './routeMeta';
 
 const t = (key: string) => `«${key}»`;
 
@@ -63,5 +63,22 @@ describe('resolveRouteMeta', () => {
   it('keeps curated route descriptions whole', () => {
     const long = (key: string) => (key === 'meta_desc_default' ? 'y'.repeat(300) : key);
     expect(resolveRouteMeta('/', long).description).toHaveLength(300);
+  });
+});
+
+describe('post titles', () => {
+  const t = (key: string) => key;
+
+  it('names an untitled post after the start of its body, never "Post"', () => {
+    const meta = resolveRouteMeta('/post/abc', t, { description: 'FPV  დრონის აწყობა\nნაბიჯ-ნაბიჯ' });
+    expect(meta.title).toBe('FPV დრონის აწყობა ნაბიჯ-ნაბიჯ | DroneHub Georgia');
+    expect(meta.title).not.toMatch(/^Post\b/);
+  });
+
+  it('drops the site suffix when the pair would exceed TITLE_MAX', () => {
+    const long = 'დრონების ინჟინერიის ყოველდღიური ტექნიკური დაიჯესტი — ნომერი 12';
+    expect(pageTitle(long)).toBe(long);
+    expect(pageTitle('მოკლე სათაური')).toBe('მოკლე სათაური | DroneHub Georgia');
+    expect(Array.from(pageTitle('x'.repeat(41))).length).toBeLessThanOrEqual(TITLE_MAX);
   });
 });
