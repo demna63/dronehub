@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  analyzeLinks, coefficientVectors, formatTerms, fsplDb, intermodLevelDbm, mwToDbm, noiseFloorDbm, severityOf,
+  analyzeLinks, coefficientVectors, spectrumDomain, formatTerms, fsplDb, intermodLevelDbm, mwToDbm, noiseFloorDbm, severityOf,
   type Emitter, type Geometry, type Options, type Victim,
 } from './rfInterference';
 
@@ -128,5 +128,27 @@ describe('analyzeLinks', () => {
   it('sorts the worst margin first', () => {
     const out = analyzeLinks([tx(915), vtx(5584)], [rx(915), vrx(5584)], geo, opts);
     for (let i = 1; i < out.length; i++) expect(out[i - 1].marginDb).toBeGreaterThanOrEqual(out[i].marginDb);
+  });
+});
+
+describe('spectrumDomain', () => {
+  it('contains every product and the noise floor', () => {
+    const v = vrx(5584);
+    const findings = analyzeLinks([tx(915), vtx(5584)], [v], geo, opts);
+    const d = spectrumDomain(v, findings);
+    for (const f of findings) {
+      expect(f.freq - f.bw / 2).toBeGreaterThanOrEqual(d.x0);
+      expect(f.freq + f.bw / 2).toBeLessThanOrEqual(d.x1);
+      expect(f.levelDbm).toBeLessThanOrEqual(d.yMax);
+      expect(f.levelDbm).toBeGreaterThanOrEqual(d.yMin);
+    }
+    expect(d.noiseDbm).toBeGreaterThan(d.yMin);
+    expect(d.noiseDbm).toBeLessThan(d.yMax);
+  });
+
+  it('stays usable when nothing lands on the victim', () => {
+    const d = spectrumDomain(vrx(5800), []);
+    expect(d.x1 - d.x0).toBeGreaterThan(0);
+    expect(d.yMax - d.yMin).toBeGreaterThan(0);
   });
 });
