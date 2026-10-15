@@ -58,9 +58,9 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
           <Target size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-white">
+          <h1 className="text-2xl font-extrabold text-white">
             {t('ant_title') || 'The closest channel by frequency'}
-          </h2>
+          </h1>
           <p className="text-sm text-ink-3 font-medium">
             {t('ant_desc') || 'Find the most productive video channel for a particular antenna'}
           </p>

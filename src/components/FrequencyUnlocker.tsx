@@ -17,9 +17,9 @@ const FrequencyUnlocker: React.FC = () => {
           <Unlock size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-white">
+          <h1 className="text-2xl font-extrabold text-white">
             {t('unlock_title') || 'Unlock BF Frequency Limit'}
-          </h2>
+          </h1>
           <p className="text-sm text-ink-3 font-medium">
             {t('unlock_desc') || 'Remove the maximum frequency limit for VTX tables'}
           </p>

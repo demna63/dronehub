@@ -114,9 +114,9 @@ const FpvRangeCalculator: React.FC = () => {
           <Crosshair size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-white">
+          <h1 className="text-2xl font-extrabold text-white">
             {t('range_title') || 'FPV Range Calculator'}
-          </h2>
+          </h1>
           <p className="text-sm text-ink-3 font-medium">
             {t('range_subtitle') || 'Estimate the maximum range of your FPV system based on the link budget'}
           </p>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalPath, canonicalUrl, resolveRouteMeta, summarize } from './routeMeta';
+import { canonicalPath, canonicalUrl, pageTitle, resolveRouteMeta, summarize, TITLE_MAX } from './routeMeta';
 
 const t = (key: string) => `«${key}»`;
 
@@ -45,12 +45,20 @@ describe('resolveRouteMeta', () => {
     });
   });
 
-  it('resolves a tool with its own description and one without', () => {
+  it('gives every tool its own description', () => {
     expect(resolveRouteMeta('/tools/fpv-range', t).description).toBe('«meta_desc_range»');
     expect(resolveRouteMeta('/tools/fresnel', t)).toMatchObject({
       title: '«tool_title_fresnel» | DroneHub Georgia',
-      description: '«meta_desc_tools»',
+      description: '«meta_desc_fresnel»',
     });
+    const tools = ['fpv-range', 'stl', 'battery-calc', 'channel-tuner', 'antenna-tuner', 'fresnel', 'unlocker', 'harmonics', 'zone-check', 'converter'];
+    const descriptions = tools.map((tool) => resolveRouteMeta(`/tools/${tool}`, t).description);
+    expect(new Set(descriptions).size).toBe(tools.length);
+    expect(descriptions).not.toContain('«meta_desc_tools»');
+  });
+
+  it('falls back to the tools description for an unknown tool', () => {
+    expect(resolveRouteMeta('/tools/unknown', t).description).toBe('«meta_desc_tools»');
   });
 
   it('uses an override title and summarizes an override description', () => {
@@ -63,5 +71,22 @@ describe('resolveRouteMeta', () => {
   it('keeps curated route descriptions whole', () => {
     const long = (key: string) => (key === 'meta_desc_default' ? 'y'.repeat(300) : key);
     expect(resolveRouteMeta('/', long).description).toHaveLength(300);
+  });
+});
+
+describe('post titles', () => {
+  const t = (key: string) => key;
+
+  it('names an untitled post after the start of its body, never "Post"', () => {
+    const meta = resolveRouteMeta('/post/abc', t, { description: 'FPV  დრონის აწყობა\nნაბიჯ-ნაბიჯ' });
+    expect(meta.title).toBe('FPV დრონის აწყობა ნაბიჯ-ნაბიჯ | DroneHub Georgia');
+    expect(meta.title).not.toMatch(/^Post\b/);
+  });
+
+  it('drops the site suffix when the pair would exceed TITLE_MAX', () => {
+    const long = 'დრონების ინჟინერიის ყოველდღიური ტექნიკური დაიჯესტი — ნომერი 12';
+    expect(pageTitle(long)).toBe(long);
+    expect(pageTitle('მოკლე სათაური')).toBe('მოკლე სათაური | DroneHub Georgia');
+    expect(Array.from(pageTitle('x'.repeat(41))).length).toBeLessThanOrEqual(TITLE_MAX);
   });
 });

@@ -51,7 +51,10 @@ const ZoneChecker = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-accent-tint text-accent mb-2">
           <MapPin size={24} />
         </div>
-        <h2 className="text-2xl font-extrabold text-white">ZONE <span className="text-accent">CHECKER</span></h2>
+        <h1 className="text-2xl font-extrabold text-white">
+          <span className="sr-only">{t('tool_title_zone')}</span>
+          <span aria-hidden="true">ZONE <span className="text-accent">CHECKER</span></span>
+        </h1>
         <p className="text-ink-3 text-sm">{t('zone_subtitle')}</p>
         <p className="text-xs text-amber-300/80 max-w-md mx-auto">
           {t('zone_disclaimer')}

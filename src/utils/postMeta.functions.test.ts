@@ -4,9 +4,10 @@ import { describe, expect, it } from 'vitest';
 // CommonJS module from the Cloud Functions source; tested here because the
 // functions package has no test runner of its own.
 import postMeta from '../../functions/postMeta.js';
-import { summarize as routeSummarize } from './routeMeta';
+import { summarize as routeSummarize, pageTitle as routePageTitle } from './routeMeta';
 
-const { POST_ID, renderPostShell, templateHost, summarize } = postMeta as {
+const { POST_ID, renderPostShell, templateHost, summarize, pageTitle } = postMeta as {
+  pageTitle: (title: string) => string;
   POST_ID: RegExp;
   renderPostShell: (template: string, postId: string, post: Record<string, unknown> | null) => string;
   templateHost: (forwardedHost: string | undefined) => string;
@@ -71,10 +72,45 @@ describe('renderPostShell', () => {
     expect(meta(html, 'og:title')).toBe(meta(template, 'og:title'));
   });
 
-  it('touches nothing but <head>', () => {
+  it('changes <body> only inside #root', () => {
     const html = renderPostShell(template, 'abc123', post);
-    const body = (s: string) => s.slice(s.indexOf('<body'));
-    expect(body(html)).toBe(body(template));
+    const outsideRoot = (s: string) => s.slice(s.indexOf('<body')).replace(/<div id="root">(?:(?!<div)[\s\S])*?<\/div>/, '');
+    expect(outsideRoot(html)).toBe(outsideRoot(template));
+  });
+
+  it('puts the post into #root for crawlers that do not run JS', () => {
+    const html = renderPostShell(template, 'abc123', { ...post, author: 'Dimitri', createdAt: new Date('2026-03-20T20:05:26Z') });
+    const root = html.match(/<div id="root">([\s\S]*?)<\/main><\/div>/)?.[1] ?? '';
+    expect(root).toContain('<h1');
+    expect(root).toContain('ჩემი 5&quot; freestyle build');
+    expect(root).toContain('Dimitri · 2026-03-20');
+    expect(root).toContain('&lt;b&gt;bold&lt;/b&gt;');
+  });
+
+  it('adds DiscussionForumPosting structured data', () => {
+    const html = renderPostShell(template, 'abc123', {
+      ...post, author: 'Dimitri', authorId: 'u1', createdAt: new Date('2026-03-20T20:05:26Z'), commentsCount: 3,
+    });
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]));
+    const posting = blocks.find((b) => b['@type'] === 'DiscussionForumPosting');
+    expect(posting).toMatchObject({
+      headline: 'ჩემი 5" freestyle build',
+      url: 'https://dronehub.ge/post/abc123',
+      datePublished: '2026-03-20T20:05:26.000Z',
+      author: { '@type': 'Person', name: 'Dimitri', url: 'https://dronehub.ge/u/u1' },
+      image: [post.image],
+      interactionStatistic: { userInteractionCount: 3 },
+    });
+  });
+
+  it('cannot be broken out of by a post containing </script>', () => {
+    const html = renderPostShell(template, 'abc123', { title: 'x', content: '</script><script>alert(1)</script>' });
+    expect(html).not.toContain('<script>alert(1)</script>');
+  });
+
+  it('clears the home page body from a 404', () => {
+    const withHome = template.replace('<div id="root"></div>', '<div id="root"><main><h1>Home</h1></main></div>');
+    expect(renderPostShell(withHome, 'gone', null)).toContain('<div id="root"></div>');
   });
 });
 
@@ -112,5 +148,17 @@ describe('POST_ID', () => {
     expect(POST_ID.test('XdBQWreoF1mWa7HvPjH9')).toBe(true);
     expect(POST_ID.test('../users')).toBe(false);
     expect(POST_ID.test('')).toBe(false);
+  });
+});
+
+describe('pageTitle mirror', () => {
+  it.each(['მოკლე', 'x'.repeat(41), 'x'.repeat(42), 'დრონების ინჟინერიის ყოველდღიური ტექნიკური დაიჯესტი'])(
+    'matches routeMeta for %s',
+    (title) => expect(pageTitle(title)).toBe(routePageTitle(title)),
+  );
+
+  it('names an untitled post after its body', () => {
+    const html = renderPostShell(template, 'abc123', { title: '', content: 'FPV  დრონის აწყობა' });
+    expect(html).toContain('<title>FPV დრონის აწყობა | DroneHub Georgia</title>');
   });
 });

@@ -16,6 +16,7 @@ const head = {
   canonical: 'https://dronehub.ge/post/abc',
   type: 'article' as const,
   image: null,
+  heading: 'A "quoted" <title>',
 };
 
 describe('renderHead', () => {
@@ -72,5 +73,28 @@ describe('renderNotFound', () => {
     expect(page).not.toContain('content="index, follow"');
     expect(page).not.toMatch(/rel="canonical"/);
     expect(page).toContain('<div id="root">');
+  });
+});
+
+describe('renderHead body', () => {
+  it('puts the heading and description into #root for a static page', () => {
+    const html = renderHead(template, { ...head, type: 'website', post: undefined });
+    expect(html).toMatch(/<div id="root"><main[^>]*><h1[^>]*>A &quot;quoted&quot; &lt;title&gt;<\/h1><p[^>]*>Line &lt;b&gt;one&lt;\/b&gt;<\/p><\/main><\/div>/);
+  });
+
+  it('adds structured data and the post body for a post', () => {
+    const html = renderHead(template, {
+      ...head,
+      post: {
+        id: 'abc',
+        data: {
+          title: 'T', content: 'Body text', image: null, author: 'Dimitri', authorId: 'u1',
+          createdAt: '2026-03-20T20:05:26.078Z', updatedAt: null, commentsCount: 0,
+        },
+      },
+    });
+    expect(html).toContain('"@type":"DiscussionForumPosting"');
+    expect(html).toContain('Dimitri · 2026-03-20');
+    expect(html).toContain('<p>Body text</p>');
   });
 });

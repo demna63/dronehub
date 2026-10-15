@@ -157,9 +157,9 @@ const STLCatalog: React.FC = () => {
             <Box size={32} />
           </div>
           <div>
-            <h2 className="text-2xl font-extrabold text-white">
+            <h1 className="text-2xl font-extrabold text-white">
               {t('stl_title') || '3D Print Catalog'}
-            </h2>
+            </h1>
             <p className="text-sm text-ink-3 font-medium">
               {t('stl_desc') || 'STL files for drone parts'}
             </p>

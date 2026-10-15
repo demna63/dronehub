@@ -34,14 +34,25 @@ async function generateSitemap() {
     const endpoint = 'https://firestore.googleapis.com/v1/projects/dronehubgeorgia-a7bd5/databases/(default)/documents/posts';
     let pageToken = '';
     do {
-      const url = `${endpoint}?pageSize=300&mask.fieldPaths=createdAt${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`;
+      const url = `${endpoint}?pageSize=300&mask.fieldPaths=title&mask.fieldPaths=content&mask.fieldPaths=image${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Firestore ${res.status}`);
       const data = await res.json();
       for (const doc of data.documents ?? []) {
         const id = doc.name.split('/').pop();
-        if (id) {
-          dynamicPages.push({ url: `/post/${id}`, changefreq: 'weekly', priority: 0.6, lastmod: doc.updateTime });
+        // A document with neither title nor content is not a post (e.g. the
+        // rating fields left behind by a deleted one); the app 404s on it.
+        const hasText = Boolean(doc.fields?.title?.stringValue?.trim() || doc.fields?.content?.stringValue?.trim());
+        if (id && hasText) {
+          // <image:image> lets Google Images attribute the post's picture to its page.
+          const image = doc.fields?.image?.stringValue ?? '';
+          dynamicPages.push({
+            url: `/post/${id}`,
+            changefreq: 'weekly',
+            priority: 0.6,
+            lastmod: doc.updateTime,
+            ...(image.startsWith('https://') ? { img: [{ url: image }] } : {}),
+          });
         }
       }
       pageToken = data.nextPageToken ?? '';

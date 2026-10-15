@@ -35,7 +35,7 @@ const HarmonicsCalculator: React.FC = () => {
           <Activity size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-white">{t('harm_title')}</h2>
+          <h1 className="text-2xl font-extrabold text-white">{t('harm_title')}</h1>
           <p className="text-sm text-ink-3 font-medium">{t('harm_subtitle')}</p>
         </div>
       </div>
