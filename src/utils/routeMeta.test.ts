@@ -45,12 +45,20 @@ describe('resolveRouteMeta', () => {
     });
   });
 
-  it('resolves a tool with its own description and one without', () => {
+  it('gives every tool its own description', () => {
     expect(resolveRouteMeta('/tools/fpv-range', t).description).toBe('«meta_desc_range»');
     expect(resolveRouteMeta('/tools/fresnel', t)).toMatchObject({
       title: '«tool_title_fresnel» | DroneHub Georgia',
-      description: '«meta_desc_tools»',
+      description: '«meta_desc_fresnel»',
     });
+    const tools = ['fpv-range', 'stl', 'battery-calc', 'channel-tuner', 'antenna-tuner', 'fresnel', 'unlocker', 'harmonics', 'zone-check', 'converter'];
+    const descriptions = tools.map((tool) => resolveRouteMeta(`/tools/${tool}`, t).description);
+    expect(new Set(descriptions).size).toBe(tools.length);
+    expect(descriptions).not.toContain('«meta_desc_tools»');
+  });
+
+  it('falls back to the tools description for an unknown tool', () => {
+    expect(resolveRouteMeta('/tools/unknown', t).description).toBe('«meta_desc_tools»');
   });
 
   it('uses an override title and summarizes an override description', () => {

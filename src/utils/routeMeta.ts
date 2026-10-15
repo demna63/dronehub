@@ -88,9 +88,18 @@ const ROUTE_DESC_KEYS: Readonly<Record<string, string>> = {
   vlogs: 'meta_desc_vlogs',
 };
 
+/** One description per tool: nine pages sharing meta_desc_tools read as duplicates. */
 const TOOL_DESC_KEYS: Readonly<Record<string, string>> = {
   'fpv-range': 'meta_desc_range',
   stl: 'meta_desc_stl',
+  'battery-calc': 'meta_desc_battery',
+  'channel-tuner': 'meta_desc_channel',
+  'antenna-tuner': 'meta_desc_antenna',
+  fresnel: 'meta_desc_fresnel',
+  unlocker: 'meta_desc_vtx',
+  harmonics: 'meta_desc_harmonics',
+  'zone-check': 'meta_desc_zone',
+  converter: 'meta_desc_rf',
 };
 
 /**
