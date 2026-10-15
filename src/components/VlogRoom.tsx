@@ -140,7 +140,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
         return (match && match[2].length === 11) 
           ? `https://www.youtube.com/embed/${match[2]}?autoplay=1`
           : url;
-    } catch (e) {
+    } catch {
         return url;
     }
   };

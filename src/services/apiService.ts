@@ -211,7 +211,7 @@ try {
       } else if (urlObj.hostname.includes('youtu.be')) {
         videoId = urlObj.pathname.slice(1);
       }
-    } catch (_e) {
+    } catch {
       // Not a URL — treat the input as a raw video ID
     }
     
