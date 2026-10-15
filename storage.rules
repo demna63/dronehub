@@ -19,34 +19,39 @@ service firebase.storage {
       return request.resource.size < maxMb * 1024 * 1024;
     }
 
+    // Shared folders are create-only. `write` also grants update and delete,
+    // and every file name is public in its download URL, so any signed-in
+    // user could overwrite or delete another user's image. Uploads always
+    // use a fresh `${Date.now()}_name` and the client never deletes, so
+    // create is all the app needs.
     match /posts/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && underSize(10);
+      allow create: if isAuthenticated() && isImage() && underSize(10);
     }
 
     match /market/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && underSize(10);
+      allow create: if isAuthenticated() && isImage() && underSize(10);
     }
 
     match /avatars/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && underSize(5);
+      allow create: if isAuthenticated() && isImage() && underSize(5);
     }
 
     match /builds/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && underSize(10);
+      allow create: if isAuthenticated() && isImage() && underSize(10);
     }
 
     match /stl_images/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && isImage() && underSize(10);
+      allow create: if isAuthenticated() && isImage() && underSize(10);
     }
 
     match /stl_files/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && isStl() && underSize(50);
+      allow create: if isAuthenticated() && isStl() && underSize(50);
     }
 
     // One folder per pilot. The map is public, so the read is public; the
