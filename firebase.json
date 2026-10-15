@@ -28,7 +28,7 @@
         }
       },
       {
-        "source": "**",
+        "regex": "^/(?:admin|chat|map|marketplace|regulations|saved|search|market|(?:meet|wiki)(?:/[^/]+)?|(?:vlogs|blogs|tools)(?:/.*)?|(?:c|category|u)/[^/]+|market/category/[^/]+)$",
         "destination": "/app-shell.html"
       }
     ],

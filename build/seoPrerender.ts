@@ -27,6 +27,8 @@ import { translations } from '../src/utils/translations';
 import { SITE_ORIGIN, resolveRouteMeta, type RouteMeta } from '../src/utils/routeMeta';
 
 export const APP_SHELL_FILE = 'app-shell.html';
+/** Hosting serves this, with a 404 status, for any path no rewrite claims. */
+export const NOT_FOUND_FILE = '404.html';
 
 const FIRESTORE_POSTS =
   'https://firestore.googleapis.com/v1/projects/dronehubgeorgia-a7bd5/databases/(default)/documents/posts';
@@ -111,6 +113,20 @@ export const renderHead = (template: string, head: PageHead): string => {
 export const renderAppShell = (template: string): string =>
   replaceOne(template, new RegExp(`\\s*${CANONICAL_TAG.source}`), '', 'canonical link');
 
+/**
+ * The page Hosting returns for paths outside the SPA's route table: the same
+ * shell (so the app boots and renders NotFound), but with a real 404 status
+ * and `noindex` in the raw HTML. Before this, every unknown URL was the app
+ * shell with a 200 and `index, follow` until JavaScript ran — a soft 404.
+ */
+export const renderNotFound = (template: string): string =>
+  replaceOne(
+    renderAppShell(template),
+    metaTag('name', 'robots'),
+    '<meta name="robots" content="noindex, follow" />',
+    'meta robots',
+  );
+
 export const sitemapPaths = (sitemapXml: string): string[] => {
   const paths = new Set<string>();
   for (const [, loc] of sitemapXml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)) {
@@ -190,6 +206,7 @@ export const seoPrerender = (): Plugin => {
       }
 
       await writeFile(join(outDir, APP_SHELL_FILE), renderAppShell(template));
+      await writeFile(join(outDir, NOT_FOUND_FILE), renderNotFound(template));
 
       let written = 0;
       let skipped = 0;

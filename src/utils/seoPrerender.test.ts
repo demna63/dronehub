@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { renderAppShell, renderHead, sitemapPaths } from '../../build/seoPrerender';
+import { renderAppShell, renderHead, renderNotFound, sitemapPaths } from '../../build/seoPrerender';
 
 /**
  * Runs against the real `index.html`: if a head tag the prerender rewrites is
@@ -61,5 +61,16 @@ describe('sitemapPaths', () => {
       '<urlset><url><loc>https://dronehub.ge/</loc></url><url><loc>https://dronehub.ge/post/a</loc></url>' +
       '<url><loc>https://dronehub.ge/post/a</loc></url><url><loc>https://other.example/x</loc></url></urlset>';
     expect(sitemapPaths(xml)).toEqual(['/', '/post/a']);
+  });
+});
+
+describe('renderNotFound', () => {
+  const page = renderNotFound(template);
+
+  it('is the app shell with noindex in the raw HTML', () => {
+    expect(page).toContain('<meta name="robots" content="noindex, follow" />');
+    expect(page).not.toContain('content="index, follow"');
+    expect(page).not.toMatch(/rel="canonical"/);
+    expect(page).toContain('<div id="root">');
   });
 });

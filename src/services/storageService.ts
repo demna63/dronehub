@@ -1,5 +1,4 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { uploadToStorage } from '../lib/firebase/storage';
 import { COVER_HEIGHT, COVER_WIDTH, coverCropRect } from '../utils/coverCrop';
 
 /** Intrinsic pixel dimensions of a raster image. */
@@ -252,9 +251,8 @@ export const uploadProcessedImage = async (
   path: string = 'posts',
 ): Promise<UploadedImage> => {
   assertUploadable(image.file);
-  const storageRef = ref(storage, `${path}/${Date.now()}_${image.file.name}`);
-  await uploadBytes(storageRef, image.file);
-  return { url: await getDownloadURL(storageRef), width: image.width, height: image.height };
+  const url = await uploadToStorage(`${path}/${Date.now()}_${image.file.name}`, image.file);
+  return { url, width: image.width, height: image.height };
 };
 
 /** Compresses and uploads a raw file picked from disk. */

@@ -37,11 +37,11 @@ export default defineConfig(({ mode }) => {
             // folding it into the eager `firebase` chunk shipped it anyway and
             // silently undid that. Letting Rollup split it restores the intent.
             //
-            // NOT firebase/functions: telemetryService imports it statically and
-            // apiService imports telemetryService, so it is in the eager graph.
-            // Excluding it would only move it out of the stable vendor chunk and
-            // into the entry chunk that changes on every deploy — worse caching.
-            if (id.includes('@firebase/performance') || id.includes('firebase/performance')) return;
+            //
+            // Storage and Functions are the same case: src/lib/firebase/storage.ts
+            // and functions.ts import() them on first upload / first callable.
+            // Forcing them into `firebase` would put them back on first paint.
+            if (/[\\/]@?firebase[\\/](performance|storage|functions)[\\/]/.test(id)) return;
             // Firebase — large SDK, changes infrequently
             if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
             // Animation library — large, isolate for better caching

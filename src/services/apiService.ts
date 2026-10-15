@@ -1,6 +1,5 @@
 import { serverTimestamp } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { uploadToStorage } from '../lib/firebase/storage';
 import {
   addCommentToFirestore,
   addDroneBuildToFirestore,
@@ -212,7 +211,7 @@ try {
       } else if (urlObj.hostname.includes('youtu.be')) {
         videoId = urlObj.pathname.slice(1);
       }
-    } catch (_e) {
+    } catch {
       // Not a URL — treat the input as a raw video ID
     }
     
@@ -547,13 +546,8 @@ try {
   // STL ფაილის და სურათის ატვირთვა
   async uploadSTLItem(data: StlFileDraft, imageFile: File, stlFile: File): Promise<void> {
     try {
-      const imageRef = ref(storage, `stl_images/${Date.now()}_${imageFile.name}`);
-      const imageUploadResult = await uploadBytes(imageRef, imageFile);
-      const imageUrl = await getDownloadURL(imageUploadResult.ref);
-
-      const stlRef = ref(storage, `stl_files/${Date.now()}_${stlFile.name}`);
-      const stlUploadResult = await uploadBytes(stlRef, stlFile);
-      const stlUrl = await getDownloadURL(stlUploadResult.ref);
+      const imageUrl = await uploadToStorage(`stl_images/${Date.now()}_${imageFile.name}`, imageFile);
+      const stlUrl = await uploadToStorage(`stl_files/${Date.now()}_${stlFile.name}`, stlFile);
 
       await addSTLItemToFirestore({
         title: data.title,
