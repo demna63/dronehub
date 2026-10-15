@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { serverTimestamp, increment, Timestamp } from 'firebase/firestore';
+
+// Importing the repository initializes the app; without a .env (CI, a fresh
+// clone) getAuth() throws auth/invalid-api-key before any test runs. The
+// sanitizer never touches `db`.
+vi.mock('../lib/firebase', () => ({ db: {} }));
+
 import { sanitizeFirestoreData } from './firestoreRepository';
 
 /**

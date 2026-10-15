@@ -18,7 +18,6 @@
     "lint:strict": "node ./node_modules/eslint/bin/eslint.js . --ext ts,tsx,js --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "@google/genai": "^1.40.0",
     "@vis.gl/react-google-maps": "^1.10.0",
     "date-fns": "^4.1.0",
     "firebase": "^10.14.1",
