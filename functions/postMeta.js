@@ -8,6 +8,11 @@
  * description, image and canonical URL written into <head>. The SPA then
  * boots exactly as before; PageMeta keeps the tags in sync client-side.
  *
+ * Posts that existed at build time never reach this function: build/seoPrerender.ts
+ * writes them as static post/<id>/index.html, and Hosting serves a static file
+ * before any rewrite. This covers posts created since the last deploy and
+ * unknown ids, which get a real 404 instead of the app shell's 200.
+ *
  * Pure string functions only — the request handler lives in index.js — so
  * this can be unit-tested without the Functions runtime.
  */
@@ -41,10 +46,11 @@ const templateHost = (forwardedHost) => {
   return ALLOWED_HOST.test(host) ? host : 'dronehub.ge';
 };
 
+/** Same rule as `summarize` in src/utils/routeMeta.ts, counted in code points. */
 const summarize = (content) => {
-  const flat = String(content || '').replace(/\s+/g, ' ').trim();
-  if (flat.length <= DESCRIPTION_MAX) return flat;
-  return `${flat.slice(0, DESCRIPTION_MAX - 1).trimEnd()}…`;
+  const chars = Array.from(String(content || '').replace(/\s+/g, ' ').trim());
+  if (chars.length <= DESCRIPTION_MAX) return chars.join('');
+  return `${chars.slice(0, DESCRIPTION_MAX - 1).join('').trimEnd()}…`;
 };
 
 /** Only absolute https images: crawlers resolve nothing else reliably. */
@@ -78,7 +84,9 @@ const renderPostShell = (template, postId, post) => {
 
   if (!post) {
     // Real 404 status is set by the caller; noindex matches what NotFound sets
-    // client-side, so crawlers get the same answer with or without JS.
+    // client-side. The template is the prerendered homepage, so its canonical
+    // is dropped too — the same as app-shell.html, which claims none.
+    html = html.replace(/\s*<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, '');
     return setMeta(html, 'robots', 'noindex, follow');
   }
 
@@ -90,8 +98,9 @@ const renderPostShell = (template, postId, post) => {
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(fullTitle)}</title>`);
   html = html.replace(/(<link\s+rel="canonical"\s+href=")[^"]*(")/, `$1${escapeHtml(url)}$2`);
 
-  html = setMeta(html, 'og:title', title);
-  html = setMeta(html, 'twitter:title', title);
+  // Full title everywhere, matching build/seoPrerender.ts for prerendered posts.
+  html = setMeta(html, 'og:title', fullTitle);
+  html = setMeta(html, 'twitter:title', fullTitle);
   html = setMeta(html, 'og:type', 'article');
   html = setMeta(html, 'og:url', url);
   if (description) {

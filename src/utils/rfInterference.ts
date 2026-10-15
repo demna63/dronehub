@@ -242,3 +242,28 @@ export const formatTerms = (terms: Term[], names: Record<EmitterId, string>): st
       return `${t.m < 0 ? '−' : '+'} ${body}`;
     })
     .join(' ');
+
+export interface SpectrumDomain {
+  /** Frequency window (MHz) centred on the victim's channel. */
+  x0: number;
+  x1: number;
+  /** Level window (dBm), rounded to 10 dB. */
+  yMin: number;
+  yMax: number;
+  noiseDbm: number;
+}
+
+/** Axis ranges for one victim's spectrum plot: wide enough for every product, never degenerate. */
+export const spectrumDomain = (victim: Victim, findings: Finding[]): SpectrumDomain => {
+  const noiseDbm = noiseFloorDbm(victim.noiseBw ?? victim.bw, victim.nfDb);
+  const reach = findings.reduce((m, f) => Math.max(m, Math.abs(f.freq - victim.freq) + f.bw / 2), victim.bw / 2);
+  const half = Math.max(reach * 1.15, 15);
+  const levels = findings.map((f) => f.levelDbm);
+  return {
+    x0: victim.freq - half,
+    x1: victim.freq + half,
+    yMin: Math.floor((Math.min(noiseDbm, ...levels) - 10) / 10) * 10,
+    yMax: Math.ceil((Math.max(noiseDbm, ...levels) + 5) / 10) * 10,
+    noiseDbm,
+  };
+};

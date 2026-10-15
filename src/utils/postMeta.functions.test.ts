@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 // CommonJS module from the Cloud Functions source; tested here because the
 // functions package has no test runner of its own.
 import postMeta from '../../functions/postMeta.js';
+import { summarize as routeSummarize } from './routeMeta';
 
 const { POST_ID, renderPostShell, templateHost, summarize } = postMeta as {
   POST_ID: RegExp;
@@ -33,8 +34,8 @@ describe('renderPostShell', () => {
     const html = renderPostShell(template, 'abc123', post);
 
     expect(html).toContain('<title>ჩემი 5&quot; freestyle build | DroneHub Georgia</title>');
-    expect(meta(html, 'og:title')).toBe('ჩემი 5&quot; freestyle build');
-    expect(meta(html, 'twitter:title')).toBe('ჩემი 5&quot; freestyle build');
+    expect(meta(html, 'og:title')).toBe('ჩემი 5&quot; freestyle build | DroneHub Georgia');
+    expect(meta(html, 'twitter:title')).toBe('ჩემი 5&quot; freestyle build | DroneHub Georgia');
     expect(meta(html, 'og:type')).toBe('article');
     expect(meta(html, 'og:url')).toBe('https://dronehub.ge/post/abc123');
     expect(html).toContain('<link rel="canonical" href="https://dronehub.ge/post/abc123"');
@@ -48,7 +49,7 @@ describe('renderPostShell', () => {
       content: 'x',
     });
     expect(html).not.toContain('<script>alert(1)</script>');
-    expect(meta(html, 'og:title')).toBe('&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(meta(html, 'og:title')).toBe('&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt; | DroneHub Georgia');
   });
 
   it('keeps the default card image for a post without an https image', () => {
@@ -63,9 +64,10 @@ describe('renderPostShell', () => {
     expect(meta(html, 'og:image:height')).toBeNull();
   });
 
-  it('marks a missing post noindex and leaves the rest of the shell alone', () => {
+  it('marks a missing post noindex, drops the canonical, leaves the rest alone', () => {
     const html = renderPostShell(template, 'gone', null);
     expect(meta(html, 'robots')).toBe('noindex, follow');
+    expect(html).not.toContain('rel="canonical"');
     expect(meta(html, 'og:title')).toBe(meta(template, 'og:title'));
   });
 
@@ -77,6 +79,11 @@ describe('renderPostShell', () => {
 });
 
 describe('summarize', () => {
+  it('agrees with routeMeta.summarize, so prerendered and function-served posts match', () => {
+    const text = 'ქართული ტექსტი '.repeat(30);
+    expect(summarize(text)).toBe(routeSummarize(text));
+  });
+
   it('flattens whitespace and caps at 160 characters', () => {
     expect(summarize('a\n\n  b')).toBe('a b');
     const long = summarize('x'.repeat(400));
