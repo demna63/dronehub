@@ -30,14 +30,12 @@ import {
   arrayUnion,
   increment,
 } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 import { getFirebaseConfig } from './config';
 
 export const app = initializeApp(getFirebaseConfig());
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 /**
  * Firebase Performance Monitoring beacons to firebaselogging-pa.googleapis.com.
  * Initializing it eagerly put that request on the LCP critical path (it dominated

@@ -1,5 +1,4 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../lib/firebase';
+import { getCallable as getFunctionsCallable } from '../lib/firebase/functions';
 
 type GeminiAction = 'analyzePost' | 'checkZoneWithAI' | 'translateText' | 'checkRestrictedZone';
 
@@ -12,17 +11,10 @@ type GeminiResponse = {
   result: unknown;
 };
 
-let functionsInstance: ReturnType<typeof getFunctions> | null = null;
-
-const getCallable = () => {
-  if (!functionsInstance) {
-    functionsInstance = getFunctions(app, import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || 'us-central1');
-  }
-  return httpsCallable<GeminiRequest, GeminiResponse>(functionsInstance, 'geminiProxy');
-};
+const getCallable = () => getFunctionsCallable<GeminiRequest, GeminiResponse>('geminiProxy');
 
 const callGeminiProxy = async (action: GeminiAction, payload: Record<string, unknown>) => {
-  const callable = getCallable();
+  const callable = await getCallable();
   const response = await callable({ action, payload });
   return response.data.result;
 };

@@ -8,8 +8,8 @@
  * transaction. This module is the only way in from the browser.
  */
 
-import { FunctionsError, getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../lib/firebase';
+import type { FunctionsError } from 'firebase/functions';
+import { getCallable } from '../lib/firebase/functions';
 import { clampRating } from '../utils/telemetry';
 import type { PostRatings, PostTelemetryVote } from '../types';
 
@@ -26,17 +26,7 @@ type RatePostResponse = { telemetry: PostRatings; telemetryScore: number };
  */
 const RATE_POST_FUNCTION = 'ratePostV2';
 
-let functionsInstance: ReturnType<typeof getFunctions> | null = null;
-
-const getRatePostCallable = () => {
-  if (!functionsInstance) {
-    functionsInstance = getFunctions(
-      app,
-      import.meta.env.VITE_FIREBASE_FUNCTIONS_REGION || 'us-central1',
-    );
-  }
-  return httpsCallable<RatePostRequest, RatePostResponse>(functionsInstance, RATE_POST_FUNCTION);
-};
+const getRatePostCallable = () => getCallable<RatePostRequest, RatePostResponse>(RATE_POST_FUNCTION);
 
 /**
  * Submit (or replace) the caller's rating of a post.
@@ -81,8 +71,9 @@ export const ratePost = async (
   postId: string,
   ratings: PostTelemetryVote,
 ): Promise<RatePostResponse> => {
-  const callable = getRatePostCallable();
   try {
+    // Inside the try: a failed SDK chunk load is a failed rating like any other.
+    const callable = await getRatePostCallable();
     const response = await callable({
       postId,
       utility: clampRating(ratings.utility),
