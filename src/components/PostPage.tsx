@@ -72,7 +72,7 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
 
   return (
     <>
-      <PageMeta title={post.title} description={post.content ? post.content.slice(0, 160) : undefined} />
+      <PageMeta title={post.title} description={post.content || undefined} />
       <SinglePostPage
         post={post}
         currentUser={currentUser}
