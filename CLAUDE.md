@@ -43,10 +43,8 @@ PID/VTX/Betaflight presets აღარ არის main-ში — external re
 - Secrets არ უნდა მოხვდეს client bundle-ში (Gemini → Functions proxy prod-ში)
 
 ## Lint ratchet
-`npm run lint` allows **25** warnings — the count at the time of the 2026-09 quality
-pass, all `@typescript-eslint/no-explicit-any` plus two `react-refresh/only-export-components`
-on the context files. The number is a ratchet: it must only ever go DOWN. Any new
-warning fails the build. `npm run lint:strict` is the zero-warning target.
+The ratchet reached zero: `npm run lint` now runs with `--max-warnings 0`, the same
+as `lint:strict`. Any new warning fails the build. CI runs `lint` and `test` on every PR.
 
 ## Invariants worth knowing before editing
 - **Ratings**: `telemetry`, `telemetryScore` and `posts/{id}/votes/*` are written ONLY by
