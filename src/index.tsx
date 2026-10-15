@@ -21,12 +21,8 @@ root.render(
     */}
     <LanguageProvider>
       <ToastProvider>
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
+        {/* v7_startTransition and v7_relativeSplatPath are the v7 defaults now. */}
+        <BrowserRouter>
           <App />
         </BrowserRouter>
       </ToastProvider>
