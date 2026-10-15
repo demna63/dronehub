@@ -1,10 +1,29 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/useLanguage';
 
+/**
+ * Firebase Hosting serves index.html with a 200 for every path, so a missing
+ * page cannot answer with a real 404. `noindex` while this view is mounted is
+ * what keeps Google from reporting it as a soft 404 (or, before, following a
+ * client redirect to `/` and reporting "Page with redirect").
+ */
+const useNoIndex = () => {
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="robots"]');
+    if (!meta) return;
+    const previous = meta.getAttribute('content');
+    meta.setAttribute('content', 'noindex, follow');
+    return () => {
+      if (previous !== null) meta.setAttribute('content', previous);
+    };
+  }, []);
+};
+
 const NotFound: React.FC = () => {
   const { t } = useLanguage();
+  useNoIndex();
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-6 space-y-8 duration-700">

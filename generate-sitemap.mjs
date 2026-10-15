@@ -8,7 +8,6 @@ const BASE_URL = 'https://dronehub.ge';
 const staticPages = [
   { url: '/', changefreq: 'daily', priority: 1.0 },
   { url: '/market', changefreq: 'daily', priority: 0.9 },
-  { url: '/blogs', changefreq: 'daily', priority: 0.8 },
   { url: '/vlogs', changefreq: 'daily', priority: 0.8 },
   { url: '/tools', changefreq: 'weekly', priority: 0.8 },
   { url: '/tools/fpv-range', changefreq: 'monthly', priority: 0.8 },
@@ -29,19 +28,23 @@ async function generateSitemap() {
   const dynamicPages = [];
 
   // დინამიკური პოსტების წამოღება (თუ ქსელი ხელმისაწვდომია)
+  // Paged: a single pageSize=100 request silently dropped every post past the
+  // 100th. `mask.fieldPaths=__name__` returns ids only.
+  const POSTS_URL = 'https://firestore.googleapis.com/v1/projects/dronehubgeorgia-a7bd5/databases/(default)/documents/posts?pageSize=300&mask.fieldPaths=__name__';
   try {
-    const res = await fetch('https://firestore.googleapis.com/v1/projects/dronehubgeorgia-a7bd5/databases/(default)/documents/posts?pageSize=100');
-    if (res.ok) {
+    let pageToken = '';
+    do {
+      const res = await fetch(pageToken ? `${POSTS_URL}&pageToken=${encodeURIComponent(pageToken)}` : POSTS_URL);
+      if (!res.ok) break;
       const data = await res.json();
-      if (data.documents) {
-        for (const doc of data.documents) {
-          const id = doc.name.split('/').pop();
-          if (id) {
-            dynamicPages.push({ url: `/post/${id}`, changefreq: 'weekly', priority: 0.6 });
-          }
+      for (const doc of data.documents ?? []) {
+        const id = doc.name.split('/').pop();
+        if (id) {
+          dynamicPages.push({ url: `/post/${id}`, changefreq: 'weekly', priority: 0.6 });
         }
       }
-    }
+      pageToken = data.nextPageToken ?? '';
+    } while (pageToken);
   } catch (_err) {
     // მშვიდი fallback ოფლაინ ბილდის დროს
   }
