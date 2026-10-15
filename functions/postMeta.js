@@ -17,7 +17,15 @@
  * this can be unit-tested without the Functions runtime.
  */
 
+const { postJsonLd, jsonLdScript, bodyHtml, fillRoot, addToHead } = require('./postSeo');
+
 const SITE = 'https://dronehub.ge';
+
+/** `2026-03-20` from a Date, Timestamp-converted Date or ISO string; '' if none. */
+const isoDate = (value) => {
+  const date = value instanceof Date ? value : value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : '';
+};
 const BASE_TITLE = 'DroneHub Georgia';
 const DESCRIPTION_MAX = 160;
 const TITLE_MAX = 60;
@@ -95,6 +103,8 @@ const renderPostShell = (template, postId, post) => {
     // client-side. The template is the prerendered homepage, so its canonical
     // is dropped too — the same as app-shell.html, which claims none.
     html = html.replace(/\s*<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, '');
+    // Nor may it keep the home page's prerendered body.
+    html = fillRoot(html, '');
     return setMeta(html, 'robots', 'noindex, follow');
   }
 
@@ -133,6 +143,13 @@ const renderPostShell = (template, postId, post) => {
       html = removeMeta(html, 'og:image:height');
     }
   }
+
+  // Structured data and crawler-readable body, shared with the prerender.
+  html = addToHead(html, jsonLdScript(postJsonLd(post, postId, title)));
+  html = fillRoot(
+    html,
+    bodyHtml({ heading: title, lead: [post.author, isoDate(post.createdAt)].filter(Boolean).join(' · '), body: post.content }),
+  );
 
   return html;
 };

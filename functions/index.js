@@ -389,11 +389,20 @@ exports.postMeta = onRequest({ region: FIRESTORE_REGION, maxInstances: 10 }, asy
     return;
   }
 
-  if (!snapshot.exists) {
+  // A document with neither title nor content is not a post: rating fields
+  // left behind by a deleted one. The app shows NotFound for it too.
+  const stored = snapshot.exists ? snapshot.data() : null;
+  if (!stored || !(String(stored.title || '').trim() || String(stored.content || '').trim())) {
     res.status(404).send(renderPostShell(template, postId, null));
     return;
   }
-  res.status(200).send(renderPostShell(template, postId, snapshot.data()));
+  const data = snapshot.data();
+  res.status(200).send(renderPostShell(template, postId, {
+    ...data,
+    // Timestamps -> Dates for the structured data; updateTime is the document's.
+    createdAt: typeof data.createdAt?.toDate === 'function' ? data.createdAt.toDate() : data.createdAt,
+    updatedAt: snapshot.updateTime?.toDate?.(),
+  }));
 });
 
 // =============================================================================

@@ -24,7 +24,12 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Plugin, ResolvedConfig } from 'vite';
 import { translations } from '../src/utils/translations';
-import { SITE_ORIGIN, resolveRouteMeta, type RouteMeta } from '../src/utils/routeMeta';
+import { BASE_TITLE, SITE_ORIGIN, resolveRouteMeta, type RouteMeta } from '../src/utils/routeMeta';
+// CommonJS, shared with the postMeta Cloud Function so a post's raw HTML is
+// identical whether the prerender or the function served it.
+import postSeo from '../functions/postSeo.js';
+
+const { postJsonLd, jsonLdScript, bodyHtml, fillRoot, addToHead } = postSeo;
 
 export const APP_SHELL_FILE = 'app-shell.html';
 /** Hosting serves this, with a 404 status, for any path no rewrite claims. */
@@ -38,14 +43,21 @@ interface PostSeo {
   title: string;
   content: string;
   image: string | null;
+  author: string;
+  authorId: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  commentsCount: number | undefined;
 }
 
-interface FirestoreString {
+interface FirestoreValue {
   stringValue?: string;
+  integerValue?: string;
+  timestampValue?: string;
 }
 
 interface FirestoreListResponse {
-  documents?: Array<{ name: string; fields?: Record<string, FirestoreString | undefined> }>;
+  documents?: Array<{ name: string; updateTime?: string; fields?: Record<string, FirestoreValue | undefined> }>;
   nextPageToken?: string;
 }
 
@@ -81,6 +93,10 @@ const CANONICAL_TAG = /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/;
 interface PageHead extends RouteMeta {
   type: 'website' | 'article';
   image: string | null;
+  /** Visible heading for the crawler-readable body. */
+  heading: string;
+  /** Present on post pages only. */
+  post?: { id: string; data: PostSeo };
 }
 
 export const renderHead = (template: string, head: PageHead): string => {
@@ -106,7 +122,13 @@ export const renderHead = (template: string, head: PageHead): string => {
     html = html.replace(/\s*<meta\s+property="og:image:(?:width|height)"\s+content="[^"]*"\s*\/?>/g, '');
   }
 
-  return html;
+  if (head.post) {
+    const { id, data } = head.post;
+    html = addToHead(html, jsonLdScript(postJsonLd(data, id, head.heading)));
+    const lead = [data.author, data.createdAt?.slice(0, 10)].filter(Boolean).join(' · ');
+    return fillRoot(html, bodyHtml({ heading: head.heading, lead, body: data.content }));
+  }
+  return fillRoot(html, bodyHtml({ heading: head.heading, lead: head.description }));
 };
 
 /** The rewrite target for every non-prerendered path: no canonical claim at all. */
@@ -141,7 +163,9 @@ const fetchPosts = async (): Promise<Map<string, PostSeo>> => {
   let pageToken = '';
   do {
     const params = new URLSearchParams({ pageSize: '300' });
-    for (const field of ['title', 'content', 'image']) params.append('mask.fieldPaths', field);
+    for (const field of ['title', 'content', 'image', 'author', 'authorId', 'createdAt', 'commentsCount']) {
+      params.append('mask.fieldPaths', field);
+    }
     if (pageToken) params.set('pageToken', pageToken);
 
     const res = await fetch(`${FIRESTORE_POSTS}?${params}`, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
@@ -151,11 +175,18 @@ const fetchPosts = async (): Promise<Map<string, PostSeo>> => {
     for (const doc of data.documents ?? []) {
       const id = doc.name.split('/').pop();
       if (!id) continue;
-      const image = doc.fields?.image?.stringValue ?? '';
+      const f = doc.fields ?? {};
+      const image = f.image?.stringValue ?? '';
+      const comments = Number(f.commentsCount?.integerValue);
       posts.set(id, {
-        title: doc.fields?.title?.stringValue?.trim() ?? '',
-        content: doc.fields?.content?.stringValue ?? '',
+        title: f.title?.stringValue?.trim() ?? '',
+        content: f.content?.stringValue ?? '',
         image: image.startsWith('https://') ? image : null,
+        author: f.author?.stringValue ?? '',
+        authorId: f.authorId?.stringValue ?? '',
+        createdAt: f.createdAt?.timestampValue ?? null,
+        updatedAt: doc.updateTime ?? null,
+        commentsCount: Number.isFinite(comments) ? comments : undefined,
       });
     }
     pageToken = data.nextPageToken ?? '';
@@ -166,15 +197,22 @@ const fetchPosts = async (): Promise<Map<string, PostSeo>> => {
 const headFor = (path: string, posts: Map<string, PostSeo> | null): PageHead | null => {
   const postMatch = /^\/post\/([^/]+)$/.exec(path);
   if (!postMatch) {
-    return { ...resolveRouteMeta(path, t), type: 'website', image: null };
+    const meta = resolveRouteMeta(path, t);
+    // The home title is a tagline ("DroneHub Georgia | …"); its heading is the feed's.
+    const heading = path === '/' ? t('feed_home_title') : meta.title.replace(` | ${BASE_TITLE}`, '');
+    return { ...meta, type: 'website', image: null, heading };
   }
   const post = posts?.get(postMatch[1]);
-  // Unknown post: leave it to the app shell rather than guess its metadata.
-  if (!post) return null;
+  // Unknown post, or an empty document that is not a real post: leave it to
+  // postMeta, which answers it with a 404.
+  if (!post || !(post.title || post.content.trim())) return null;
+  const meta = resolveRouteMeta(path, t, { title: post.title || undefined, description: post.content || undefined });
   return {
-    ...resolveRouteMeta(path, t, { title: post.title || undefined, description: post.content || undefined }),
+    ...meta,
     type: 'article',
     image: post.image,
+    heading: post.title || meta.title.replace(` | ${BASE_TITLE}`, ''),
+    post: { id: postMatch[1], data: post },
   };
 };
 

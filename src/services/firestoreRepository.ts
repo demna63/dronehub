@@ -240,7 +240,11 @@ export const getPostByIdFromFirestore = async (postId: string): Promise<Post | n
   if (!isValidId(postId)) return null;
   const snapshot = await getDoc(doc(db, 'posts', postId));
   if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() } as Post;
+  const data = snapshot.data();
+  // Neither title nor content: not a post but fields left behind by a deleted
+  // one (ratings). Treat it as missing, as the sitemap and postMeta do.
+  if (!String(data.title ?? '').trim() && !String(data.content ?? '').trim()) return null;
+  return { id: snapshot.id, ...data } as Post;
 };
 
 export const getCommentsFromFirestore = async (postId: string): Promise<Comment[]> => {
