@@ -19,7 +19,7 @@ npm install
 npm run dev          # port 4173
 npm run build
 npm run deploy:hosting
-firebase deploy --only firestore:rules,storage:rules,functions  # rules/functions
+firebase deploy --only firestore:rules,storage,functions  # rules/functions (Storage target is `storage`)
 ```
 **Deploy order: functions before hosting.** `firebase.json` rewrites `/post/**` to the
 `postMeta` function; Hosting refuses a release whose rewrite names a function that

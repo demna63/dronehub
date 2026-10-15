@@ -2,7 +2,7 @@
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentCreated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { POST_ID, renderPostShell, templateHost } = require('./postMeta');
@@ -12,9 +12,30 @@ const db = getFirestore();
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
-const getModel = (apiKey) => {
-  const client = new GoogleGenerativeAI(apiKey);
-  return client.getGenerativeModel({ model: 'gemini-3.6-flash' });
+const GEMINI_MODEL = 'gemini-3.6-flash';
+
+/**
+ * One client per warm instance. The secret is only readable inside a request,
+ * so the client is built on first use rather than at module load.
+ */
+let geminiClient = null;
+const getGemini = (apiKey) => {
+  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey });
+  return geminiClient;
+};
+
+/**
+ * @google/genai replaced the deprecated @google/generative-ai. `text` is
+ * undefined (not '') for an empty or blocked candidate, so callers' `||` /
+ * parseJson fallbacks still apply.
+ */
+const generateText = async (ai, prompt, { json = false } = {}) => {
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: prompt,
+    ...(json ? { config: { responseMimeType: 'application/json' } } : {}),
+  });
+  return response.text;
 };
 
 const parseJson = (text, fallback) => {
@@ -112,46 +133,33 @@ exports.geminiProxy = onCall(
 
     await assertGeminiQuota(request.auth.uid);
 
-    const model = getModel(geminiApiKey.value());
+    const ai = getGemini(geminiApiKey.value());
 
     switch (action) {
       case 'analyzePost': {
         const title = capText(payload.title, GEMINI_LIMITS.title);
         const content = capText(payload.content, GEMINI_LIMITS.content);
         const prompt = `Analyze this drone community post.\nTitle: "${title}"\nContent: "${content}"\nReturn JSON with suggestedCategory, suggestedSubCategory, tags (max 5), summary in Georgian (max 100 chars).`;
-        const response = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        });
-        return { result: parseJson(response.response.text(), { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' }) };
+        return { result: parseJson(await generateText(ai, prompt, { json: true }), { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' }) };
       }
 
       case 'checkZoneWithAI': {
         const lat = assertCoordinate(payload.lat, 'lat');
         const lng = assertCoordinate(payload.lng, 'lng');
         const prompt = `I am a drone pilot in Georgia. Coordinates: ${lat}, ${lng}. Return JSON: {"status":"RESTRICTED"|"CAUTION"|"CLEAR","message":"Georgian max 20 words"}`;
-        const response = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        });
-        return { result: parseJson(response.response.text(), { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' }) };
+        return { result: parseJson(await generateText(ai, prompt, { json: true }), { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' }) };
       }
 
       case 'translateText': {
         const text = capText(payload.text, GEMINI_LIMITS.text);
         const prompt = `Translate to English (if Georgian) or Georgian (if English), drone pilot slang ok: "${text}"`;
-        const response = await model.generateContent(prompt);
-        return { result: response.response.text() || text };
+        return { result: (await generateText(ai, prompt)) || text };
       }
 
       case 'checkRestrictedZone': {
         const query = capText(payload.query, GEMINI_LIMITS.query);
         const prompt = `Drone pilot in Georgia asks about: "${query}". Return JSON status RESTRICTED|CAUTION|CLEAR and Georgian message max 20 words.`;
-        const response = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        });
-        return { result: parseJson(response.response.text(), { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' }) };
+        return { result: parseJson(await generateText(ai, prompt, { json: true }), { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' }) };
       }
 
       default:
