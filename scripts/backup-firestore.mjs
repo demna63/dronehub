@@ -64,7 +64,9 @@ const PUBLIC_COLLECTIONS = [
 
 /** Subcollections to pull under each parent doc */
 const SUBCOLLECTIONS = {
-  posts: ['comments', 'votes'],
+  // `votes` is readable only by its owner (firestore.rules), so an anonymous
+  // client export would fail the whole `posts` collection on it.
+  posts: ['comments'],
 };
 
 const serialize = (value) => {
