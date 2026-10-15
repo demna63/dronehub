@@ -1,9 +1,10 @@
 // runtime: Node.js 22
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentCreated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const admin = require('firebase-admin');
+const { POST_ID, renderPostShell, templateHost } = require('./postMeta');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -324,6 +325,67 @@ exports.onCommentCreated = onDocumentCreated(commentCountOptions, (event) =>
 
 exports.onCommentDeleted = onDocumentDeleted(commentCountOptions, (event) =>
   adjustCommentCount(event.params.postId, -1));
+
+// =============================================================================
+// POST LINK PREVIEWS — Hosting rewrites /post/** here (see postMeta.js)
+// =============================================================================
+
+const fetchShell = async (host) => {
+  const res = await fetch(`https://${host}/index.html`, { headers: { 'cache-control': 'no-cache' } });
+  if (!res.ok) throw new Error(`shell ${host} ${res.status}`);
+  return res.text();
+};
+
+exports.postMeta = onRequest({ region: FIRESTORE_REGION, maxInstances: 10 }, async (req, res) => {
+  const host = templateHost(req.get('x-forwarded-host'));
+  // /post/<id>[/...]; a malformed %-escape is simply not a post id.
+  let postId = '';
+  try {
+    postId = decodeURIComponent(String(req.path || '').split('/')[2] || '');
+  } catch {
+    postId = '';
+  }
+
+  let template;
+  try {
+    template = await fetchShell(host);
+  } catch (error) {
+    console.error('postMeta: shell fetch failed', error);
+    try {
+      template = await fetchShell('dronehub.ge');
+    } catch {
+      res.status(503).set('Retry-After', '30').send('Service temporarily unavailable');
+      return;
+    }
+  }
+
+  // index.html is served no-cache so a deploy reaches deep links at once; a
+  // short shared cache keeps that promise while absorbing crawler bursts.
+  res.set('Cache-Control', 'public, max-age=0, s-maxage=60');
+  res.type('html');
+
+  if (!POST_ID.test(postId)) {
+    res.status(404).send(renderPostShell(template, postId, null));
+    return;
+  }
+
+  let snapshot;
+  try {
+    snapshot = await db.doc(`posts/${postId}`).get();
+  } catch (error) {
+    // A failed read is not evidence the post is gone: serve the plain shell
+    // and let the SPA try, rather than tell crawlers to drop the URL.
+    console.error(`postMeta: read failed for ${postId}`, error);
+    res.set('Cache-Control', 'no-store').status(200).send(template);
+    return;
+  }
+
+  if (!snapshot.exists) {
+    res.status(404).send(renderPostShell(template, postId, null));
+    return;
+  }
+  res.status(200).send(renderPostShell(template, postId, snapshot.data()));
+});
 
 // =============================================================================
 // BACKFILL — one-off maintenance, admin only
