@@ -3,11 +3,12 @@ const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https')
 const { onDocumentCreated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const admin = require('firebase-admin');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { POST_ID, renderPostShell, templateHost } = require('./postMeta');
 
-admin.initializeApp();
-const db = admin.firestore();
+initializeApp();
+const db = getFirestore();
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
@@ -78,7 +79,7 @@ const assertGeminiQuota = async (uid) => {
         calls: used + 1,
         day,
         uid,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
     });
   } catch (error) {
@@ -255,13 +256,13 @@ exports.ratePostV2 = onCall({ region: 'us-central1', cors: true }, async (reques
     // guaranteed to have createdAt, so fall back rather than passing it through.
     const createdAt = (previous && previous.createdAt)
       ? previous.createdAt
-      : admin.firestore.FieldValue.serverTimestamp();
+      : FieldValue.serverTimestamp();
 
     tx.set(voteRef, {
       userId: uid,
       ...next,
       createdAt,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     tx.update(postRef, {
@@ -308,7 +309,7 @@ const adjustCommentCount = async (postId, delta) => {
   if (!postId) return;
   try {
     await db.doc(`posts/${postId}`).update({
-      commentsCount: admin.firestore.FieldValue.increment(delta),
+      commentsCount: FieldValue.increment(delta),
     });
   } catch (error) {
     // A deleted post takes its comment subcollection with it, so the delete
