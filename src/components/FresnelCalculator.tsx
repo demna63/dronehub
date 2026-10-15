@@ -32,9 +32,9 @@ const FresnelCalculator: React.FC = () => {
           <Wifi size={32} />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold text-white">
+          <h1 className="text-2xl font-extrabold text-white">
             {t('fresnel_title') || 'Fresnel Zone Calculator'}
-          </h2>
+          </h1>
           <p className="text-sm text-ink-3 font-medium">
             {t('fresnel_desc') || 'Calculate Line of Sight (LoS) clearance requirements'}
           </p>

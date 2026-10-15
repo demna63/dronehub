@@ -49,7 +49,8 @@ export const UnitConverter: React.FC = () => {
            <RefreshCw size={24} />
         </div>
         <h1 className="text-3xl font-extrabold text-white">
-           UNIT <span className="text-accent">CONVERTER</span>
+          <span className="sr-only">{t('tool_title_rf')}</span>
+          <span aria-hidden="true">UNIT <span className="text-accent">CONVERTER</span></span>
         </h1>
         <p className="text-ink-3 text-xs max-w-xl mx-auto">
            {t('rf_convert_desc')}

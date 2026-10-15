@@ -125,7 +125,8 @@ const AntennaTuner: React.FC = () => {
            <Ruler size={24} />
         </div>
         <h1 className="text-3xl font-extrabold text-white">
-           ANTENNA <span className="text-accent">BUILDER</span>
+          <span className="sr-only">{t('tool_title_antenna')}</span>
+          <span aria-hidden="true">ANTENNA <span className="text-accent">BUILDER</span></span>
         </h1>
         <p className="text-ink-3 text-xs max-w-xl mx-auto">
            {t('antenna_subtitle')}

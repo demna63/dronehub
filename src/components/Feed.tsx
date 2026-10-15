@@ -80,7 +80,9 @@ const Feed: React.FC<FeedProps> = ({
     onLoadMore: () => onLoadMore?.(),
   });
 
-  const title = categoryId ? (postCategoryLabel({ category: categoryId }, t) ?? t('route_home')) : t('route_home');
+  // The feed's h1 is the home page's h1, so it names what the site is rather
+  // than the nav label ("Home") — that is the heading search engines weigh.
+  const title = categoryId ? (postCategoryLabel({ category: categoryId }, t) ?? t('route_home')) : t('feed_home_title');
   const subtitle = categoryId ? t('feed_category_subtitle') : t('feed_subtitle');
 
   const sortControl = onChangeSort && (
