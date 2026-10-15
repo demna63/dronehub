@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+# Signed-in or per-user pages: nothing to index, and /search?q= is an
+# unbounded URL space that only spends crawl budget.
+Disallow: /admin
+Disallow: /chat
+Disallow: /saved
+Disallow: /search
 
 Sitemap: https://dronehub.ge/sitemap.xml
