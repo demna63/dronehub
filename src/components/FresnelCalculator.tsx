@@ -33,10 +33,10 @@ const FresnelCalculator: React.FC = () => {
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-white">
-            {t('fresnel_title') || 'Fresnel Zone Calculator'}
+            {t('fresnel_title')}
           </h1>
           <p className="text-sm text-ink-3 font-medium">
-            {t('fresnel_desc') || 'Calculate Line of Sight (LoS) clearance requirements'}
+            {t('fresnel_desc')}
           </p>
         </div>
       </div>
@@ -47,13 +47,13 @@ const FresnelCalculator: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-bg/50 border border-white/10 rounded-2xl p-5 space-y-5">
             <h3 className="text-xs font-extrabold text-ink-3 mb-4 flex items-center gap-2">
-              <Settings size={14} /> {t('link_params') || 'Link Parameters'}
+              <Settings size={14} /> {t('link_params')}
             </h3>
 
             {/* Frequency Input */}
             <div className="space-y-2">
               <label htmlFor="fresnel-frequency" className="text-xs text-ink-3 font-bold ml-1">
-                {t('frequency') || 'Frequency (MHz)'}
+                {t('frequency')}
               </label>
               <div className="relative group">
                 <input 
@@ -62,19 +62,19 @@ const FresnelCalculator: React.FC = () => {
                   value={frequency}
                   onChange={(e) => setFrequency(Number(e.target.value))}
                   className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono transition-colors group-hover:bg-surface-2"
-                  placeholder={t('freq_placeholder') || 'e.g. 2400'}
+                  placeholder={t('freq_placeholder')}
                 />
                 <Activity className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" size={16} />
               </div>
               <p className="text-xs text-ink-3 ml-1">
-                {t('freq_hint') || '915MHz, 2400MHz, 5800MHz...'}
+                {t('freq_hint')}
               </p>
             </div>
 
             {/* Distance Input */}
             <div className="space-y-2">
               <label htmlFor="fresnel-distance" className="text-xs text-ink-3 font-bold ml-1">
-                {t('distance') || 'Distance (Km)'}
+                {t('distance')}
               </label>
               <div className="relative group">
                 <input 
@@ -83,7 +83,7 @@ const FresnelCalculator: React.FC = () => {
                   value={distance}
                   onChange={(e) => setDistance(Number(e.target.value))}
                   className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono transition-colors group-hover:bg-surface-2"
-                  placeholder={t('dist_placeholder') || 'e.g. 1.5'}
+                  placeholder={t('dist_placeholder')}
                 />
                 <Mountain className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" size={16} />
               </div>
@@ -96,9 +96,9 @@ const FresnelCalculator: React.FC = () => {
               <Info className="text-accent flex-shrink-0 mt-0.5" size={16} />
               <p className="text-xs text-accent leading-relaxed">
                 <strong className="text-accent block mb-1">
-                  {t('why_important') || 'Why is this important?'}
+                  {t('why_important')}
                 </strong>
-                {t('why_important_desc') || 'The Fresnel zone is an elliptical area between antennas. Even with visual line of sight, if this zone is obstructed, signal strength will drop drastically.'}
+                {t('why_important_desc')}
               </p>
             </div>
           </div>
@@ -112,13 +112,13 @@ const FresnelCalculator: React.FC = () => {
             <div className="bg-bg/50 border border-white/10 rounded-2xl p-5 flex flex-col items-center text-center relative overflow-hidden group">
               <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors"></div>
               <h4 className="text-xs font-extrabold text-ink-3 mb-2 z-10">
-                {t('zone_1') || '1st Zone (100%)'}
+                {t('zone_1')}
               </h4>
               <div className="text-3xl font-extrabold text-white font-mono z-10">
                 {results.zone1.toFixed(1)} <span className="text-sm text-ink-3">m</span>
               </div>
               <p className="text-xs text-ink-3 mt-2 z-10">
-                {t('total_radius') || 'Total Radius'}
+                {t('total_radius')}
               </p>
             </div>
 
@@ -126,13 +126,13 @@ const FresnelCalculator: React.FC = () => {
             <div className="bg-bg/50 border border-emerald-500/20 rounded-2xl p-5 flex flex-col items-center text-center relative overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.1)]">
               <div className="absolute inset-0 bg-emerald-500/10"></div>
               <h4 className="text-xs font-extrabold text-emerald-400 mb-2 z-10">
-                {t('zone_80') || '80% Zone'}
+                {t('zone_80')}
               </h4>
               <div className="text-3xl font-extrabold text-white font-mono z-10">
                 {results.zone80.toFixed(1)} <span className="text-sm text-ink-3">m</span>
               </div>
               <p className="text-xs text-emerald-400/70 mt-2 z-10">
-                {t('optimal_clearance') || 'Optimal Clearance'}
+                {t('optimal_clearance')}
               </p>
             </div>
 
@@ -140,13 +140,13 @@ const FresnelCalculator: React.FC = () => {
             <div className="bg-bg/50 border border-rose-500/20 rounded-2xl p-5 flex flex-col items-center text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-rose-500/5 group-hover:bg-rose-500/10 transition-colors"></div>
               <h4 className="text-xs font-extrabold text-rose-400 mb-2 z-10">
-                {t('zone_60') || '60% Zone'}
+                {t('zone_60')}
               </h4>
               <div className="text-3xl font-extrabold text-white font-mono z-10">
                 {results.zone60.toFixed(1)} <span className="text-sm text-ink-3">m</span>
               </div>
               <p className="text-xs text-rose-400/70 mt-2 z-10">
-                {t('critical_min') || 'Critical Minimum'}
+                {t('critical_min')}
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ const FresnelCalculator: React.FC = () => {
 
              <div className="mt-8 text-center max-w-md">
                 <p className="text-sm text-ink-2 leading-relaxed">
-                   {t('explanation_text') || 'To ensure a stable connection, obstacles must be at least'} <span className="text-rose-400 font-bold">{results.zone60.toFixed(1)}m</span> {t('explanation_text_2') || 'below the line of sight. Ideally, keep'} <span className="text-emerald-400 font-bold">{results.zone80.toFixed(1)}m</span> {t('explanation_text_3') || 'clear.'}
+                   {t('explanation_text')} <span className="text-rose-400 font-bold">{results.zone60.toFixed(1)}m</span> {t('explanation_text_2')} <span className="text-emerald-400 font-bold">{results.zone80.toFixed(1)}m</span> {t('explanation_text_3')}
                 </p>
              </div>
           </div>

@@ -17,7 +17,7 @@ interface ChatRoomProps {
 }
 
 const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId, channelName }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { showToast } = useToast();
   const [messages, setMessages] = useState<VlogChatMessage[]>([]);
   const [listenerError, setListenerError] = useState<string | null>(null);
@@ -98,7 +98,7 @@ const ChatRoom: React.FC<ChatRoomProps> = ({ user, onLoginClick, channelId, chan
         ) : (
           messages.map((msg) => {
             const isMine = msg.authorId === user?.id;
-            const timeString = formatClockTime(msg.createdAt ?? msg.timestamp) || '';
+            const timeString = formatClockTime(msg.createdAt ?? msg.timestamp, language) || '';
 
             return (
               <div key={msg.id} className={`flex items-start gap-3 ${isMine ? 'flex-row-reverse' : ''}`}>

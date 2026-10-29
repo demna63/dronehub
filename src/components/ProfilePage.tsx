@@ -373,7 +373,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
               <div className="flex gap-6">
                 <div className="w-32 h-32 shrink-0 bg-bg border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer hover:border-emerald-500/50 transition-colors">
                   {imagePreview ? (
-                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={imagePreview} alt={t('post_image_preview_alt')} className="w-full h-full object-cover" />
                   ) : (
                     <>
                       <Camera className="text-ink-3 mb-2 group-hover:text-emerald-500 transition-colors" />
@@ -384,34 +384,34 @@ const ProfilePage: React.FC<ProfilePageProps> = ({
                 </div>
 
                 <div className="flex-1 space-y-4">
-                  <input id="drone-name" aria-label="დრონის სახელი" required placeholder="Drone Name (e.g. Apex 5)" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white font-bold focus:border-emerald-500 focus:outline-none" />
+                  <input id="drone-name" aria-label={t('hangar_drone_name_label')} required placeholder={t('hangar_drone_name_placeholder')} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white font-bold focus:border-emerald-500 focus:outline-none" />
                   
-                  <select id="drone-status" aria-label="დრონის სტატუსი" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as 'flying' | 'broken' | 'wip'})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer">
-                    <option value="flying">🟢 Ready to Fly</option>
-                    <option value="wip">🟡 Work in Progress</option>
-                    <option value="broken">🔴 Broken / Repairing</option>
+                  <select id="drone-status" aria-label={t('hangar_drone_status_label')} value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value as 'flying' | 'broken' | 'wip'})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer">
+                    <option value="flying">{t('hangar_status_ready_option')}</option>
+                    <option value="wip">{t('hangar_status_wip_option')}</option>
+                    <option value="broken">{t('hangar_status_broken_option')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="bg-bg/50 p-5 rounded-2xl border border-white/5 space-y-4">
-                <h3 className="text-xs font-extrabold text-ink-3">ნაწილები (სურვილისამებრ)</h3>
+                <h3 className="text-xs font-extrabold text-ink-3">{t('hangar_parts_optional')}</h3>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="Frame" value={formData.frame} onChange={(e) => setFormData({...formData, frame: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
-                    <input type="text" placeholder="Motors" value={formData.motors} onChange={(e) => setFormData({...formData, motors: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder={t('hangar_part_frame')} value={formData.frame} onChange={(e) => setFormData({...formData, frame: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder={t('hangar_part_motors')} value={formData.motors} onChange={(e) => setFormData({...formData, motors: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
                   </div>
-                  <input type="text" placeholder="FC & ESC" value={formData.fc_esc} onChange={(e) => setFormData({...formData, fc_esc: e.target.value})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                  <input type="text" placeholder={t('hangar_part_fc_esc')} value={formData.fc_esc} onChange={(e) => setFormData({...formData, fc_esc: e.target.value})} className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none" />
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="VTX" value={formData.vtx} onChange={(e) => setFormData({...formData, vtx: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
-                    <input type="text" placeholder="Camera" value={formData.camera} onChange={(e) => setFormData({...formData, camera: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder={t('hangar_part_vtx')} value={formData.vtx} onChange={(e) => setFormData({...formData, vtx: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="text" placeholder={t('hangar_part_camera')} value={formData.camera} onChange={(e) => setFormData({...formData, camera: e.target.value})} className="bg-bg border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none" />
                   </div>
                 </div>
               </div>
 
               <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50">
                 {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                {isSubmitting ? 'ინახება...' : 'შენახვა'}
+                {isSubmitting ? t('action_saving') : t('action_save')}
               </button>
             </form>
       </Modal>

@@ -20,7 +20,7 @@ interface VlogRoomProps {
 }
 
 const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { vlogId } = useParams();
   const navigate = useNavigate();
   
@@ -89,7 +89,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
           authorName: data.authorName,
           avatar: data.avatar,
           text: data.text,
-          timestamp: formatClockTime(data.createdAt),
+          timestamp: formatClockTime(data.createdAt, language),
           createdAt: data.createdAt
         } as VlogChatMessage;
       });
@@ -105,7 +105,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
     });
 
     return () => unsubscribe();
-  }, [vlogId, t]);
+  }, [vlogId, t, language]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,7 +187,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
                <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg">
                  <UserIcon size={12} /> {activeVlog.author || activeVlog.authorName}
                </div>
-               <span>{activeVlog.views || 0} ნახვა</span>
+               <span>{t('views_count', { count: activeVlog.views || 0 })}</span>
             </div>
          </div>
       </div>
@@ -195,7 +195,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
       {/* CHAT SECTION */}
       <div className="w-full lg:w-96 bg-surface border border-white/5 rounded-2xl flex flex-col overflow-hidden">
         <div className="p-4 border-b border-white/5 bg-bg/30">
-          <h2 className="font-bold text-white text-sm">Live Chat</h2>
+          <h2 className="font-bold text-white text-sm">{t('vlog_live_chat')}</h2>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
@@ -207,7 +207,7 @@ const VlogRoom: React.FC<VlogRoomProps> = ({ vlogs, currentUser, onLoginClick })
             messages.map((msg) => (
               <div key={msg.id} className="flex gap-2">
                 <div className="w-6 h-6 rounded-full bg-surface-2 overflow-hidden shrink-0 mt-1">
-                  {msg.avatar ? <img src={msg.avatar} className="w-full h-full object-cover" alt="av"/> : null}
+                  {msg.avatar ? <img src={msg.avatar} className="w-full h-full object-cover" alt="" /> : null}
                 </div>
                 <div>
                   <div className="flex items-baseline gap-2">

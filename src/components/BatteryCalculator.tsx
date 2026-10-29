@@ -35,7 +35,7 @@ const BatteryCalculator: React.FC = () => {
 
     const currentSoc = parseFloat(soc) || 0;
 
-    if (capAh <= 0 || currA <= 0 || efficiency <= 0) return "0h 0m";
+    if (capAh <= 0 || currA <= 0 || efficiency <= 0) return t('battery_time_hm', { hours: 0, minutes: 0 });
 
     const neededCapacityAh = capAh * (1 - currentSoc / 100);
     const realTimeHours    = (neededCapacityAh / currA) / efficiency;
@@ -46,8 +46,8 @@ const BatteryCalculator: React.FC = () => {
     // FIX: floating-point can push minutes to 60
     if (minutes === 60) { hours += 1; minutes = 0; }
 
-    return `${hours}h ${minutes}m`;
-  }, [capacity, capacityUnit, current, currentUnit, soc, efficiency]);
+    return t('battery_time_hm', { hours, minutes });
+  }, [capacity, capacityUnit, current, currentUnit, soc, efficiency, t]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 duration-500">
@@ -59,7 +59,7 @@ const BatteryCalculator: React.FC = () => {
            <BatteryCharging size={24} />
         </div>
         <div>
-           <h2 className="text-xl font-extrabold text-white">Battery Charge Time</h2>
+           <h2 className="text-xl font-extrabold text-white">{t('battery_title')}</h2>
            <p className="text-xs text-ink-3 mt-1">{t('battery_subtitle')}</p>
         </div>
       </div>
@@ -74,7 +74,7 @@ const BatteryCalculator: React.FC = () => {
                 {/* Capacity */}
                 <div>
                     <label htmlFor="battery-capacity" className="flex items-center gap-2 text-xs font-bold text-ink-3 mb-2">
-                        <BatteryCharging size={14} /> Capacity
+                        <BatteryCharging size={14} /> {t('battery_capacity')}
                     </label>
                     <div className="flex bg-bg border border-white/10 rounded-[10px] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
                         <input 
@@ -100,7 +100,7 @@ const BatteryCalculator: React.FC = () => {
                 {/* Current */}
                 <div>
                     <label htmlFor="battery-current" className="flex items-center gap-2 text-xs font-bold text-ink-3 mb-2">
-                        <Zap size={14} /> Charge Rate
+                        <Zap size={14} /> {t('battery_charge_rate')}
                     </label>
                     <div className="flex bg-bg border border-white/10 rounded-[10px] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
                         <input 
@@ -129,7 +129,7 @@ const BatteryCalculator: React.FC = () => {
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label htmlFor="battery-soc" className="flex items-center gap-2 text-xs font-bold text-ink-3">
-                            <Gauge size={14} /> Current Charge
+                            <Gauge size={14} /> {t('battery_current_charge')}
                         </label>
                         <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">{soc}%</span>
                     </div>
@@ -147,7 +147,7 @@ const BatteryCalculator: React.FC = () => {
                 {/* Efficiency / Type */}
                 <div>
                     <label htmlFor="battery-type" className="flex items-center gap-2 text-xs font-bold text-ink-3 mb-2">
-                        <Settings size={14} /> Battery Type
+                        <Settings size={14} /> {t('battery_type_label')}
                     </label>
                     <select 
                         id="battery-type"
@@ -169,13 +169,13 @@ const BatteryCalculator: React.FC = () => {
                 <Clock size={100} />
             </div>
             <div className="relative z-10 text-center">
-                <p className="text-xs font-extrabold text-emerald-400/70 mb-2">Estimated Time</p>
+                <p className="text-xs font-extrabold text-emerald-400/70 mb-2">{t('battery_estimated_time')}</p>
                 <div className="text-4xl sm:text-5xl font-extrabold text-white font-mono">
                     {chargeTime.split(' ')[0]} <span className="text-xl text-ink-3"> {chargeTime.split(' ')[1]}</span>
                 </div>
                 <div className="mt-4 pt-4 border-t border-emerald-500/20 flex items-center justify-center gap-2 text-xs text-ink-3">
                     <Zap size={12} className="text-emerald-500" />
-                    <span>Calculated at {(efficiency * 100).toFixed(0)}% eff.</span>
+                    <span>{t('battery_calculated_eff', { eff: (efficiency * 100).toFixed(0) })}</span>
                 </div>
             </div>
         </div>
@@ -202,7 +202,7 @@ const BatteryCalculator: React.FC = () => {
                     {t('battery_formula')}
                  </h3>
                  <div className="font-mono text-xs bg-surface p-3 rounded-lg border border-white/5 text-emerald-400/80 break-all">
-                    Time (h) = (Capacity_Ah * (1 - SoC)) / Charge_Current_A / Efficiency
+                    {'Time (h) = (Capacity_Ah * (1 - SoC)) / Charge_Current_A / Efficiency'}
                  </div>
                  <p className="mt-3 text-xs">{t('battery_cccv_1')} <strong>CC/CV</strong> {t('battery_cccv_2')}</p>
               </div>

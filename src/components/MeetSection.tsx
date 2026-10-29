@@ -23,12 +23,12 @@ const MeetSection: React.FC<MeetSectionProps> = ({ rooms, user, onOpenRoom, onLo
                 <img src="https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-96dp/logo_meet_2020q4_color_2x_web_96dp.png" alt="Google Meet" className="w-9 h-9" />
              </div>
              <div>
-                <p className="text-xs font-extrabold text-accent tracking-[0.5em] mb-1">Live Conference</p>
-                <h2 className="text-4xl lg:text-6xl font-extrabold text-white leading-none">Google Meet</h2>
+                <p className="text-xs font-extrabold text-accent tracking-[0.5em] mb-1">{t('meet_badge')}</p>
+                <h2 className="text-4xl lg:text-6xl font-extrabold text-white leading-none">{t('nav_meet')}</h2>
              </div>
           </div>
           <p className="text-ink-3 text-sm font-medium max-w-lg">
-            Join the community hangouts. Real-time video/audio conversations for pilots powered by Google Meet.
+            {t('meet_subtitle')}
           </p>
         </div>
       </header>
@@ -66,7 +66,7 @@ const MeetSection: React.FC<MeetSectionProps> = ({ rooms, user, onOpenRoom, onLo
                      </div>
                      <div className="flex items-center gap-2 bg-emerald-500/20 px-3 py-1.5 rounded-full border border-emerald-500/30">
                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                        <span className="text-xs font-extrabold text-emerald-400">{room.activeUsers} Active</span>
+                        <span className="text-xs font-extrabold text-emerald-400">{t('meet_active_users', { count: room.activeUsers })}</span>
                      </div>
                   </div>
                   

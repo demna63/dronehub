@@ -5,7 +5,7 @@ import { useToast } from '../contexts/useToast';
 import { useLanguage } from '../contexts/useLanguage';
 
 const ZoneChecker = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { showToast } = useToast();
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
@@ -36,7 +36,7 @@ const ZoneChecker = () => {
     if (!lat || !lng) return;
     setLoading(true);
     try {
-      const data = await geminiService.checkZoneWithAI(parseFloat(lat), parseFloat(lng));
+      const data = await geminiService.checkZoneWithAI(parseFloat(lat), parseFloat(lng), language);
       setResult(data);
     } catch (e) {
       console.error(e);
@@ -53,7 +53,7 @@ const ZoneChecker = () => {
         </div>
         <h1 className="text-2xl font-extrabold text-white">
           <span className="sr-only">{t('tool_title_zone')}</span>
-          <span aria-hidden="true">ZONE <span className="text-accent">CHECKER</span></span>
+          <span aria-hidden="true">{t('zone_checker_heading')}</span>
         </h1>
         <p className="text-ink-3 text-sm">{t('zone_subtitle')}</p>
         <p className="text-xs text-amber-300/80 max-w-md mx-auto">
@@ -67,7 +67,7 @@ const ZoneChecker = () => {
           className="w-full py-3 bg-surface-2 hover:bg-surface-2 text-accent font-bold rounded-[10px] flex items-center justify-center gap-2 transition-colors border border-white/5"
         >
           {loading ? <Loader2 className="animate-spin" /> : <Navigation size={18} />}
-          ჩემი ლოკაციის გამოყენება
+          {t('zone_use_my_location')}
         </button>
 
         <div className="flex items-center gap-4">
@@ -77,8 +77,8 @@ const ZoneChecker = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <input type="number" placeholder="Latitude" value={lat} onChange={e => setLat(e.target.value)} className="bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none text-center font-mono" />
-          <input type="number" placeholder="Longitude" value={lng} onChange={e => setLng(e.target.value)} className="bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none text-center font-mono" />
+          <input type="number" placeholder={t('zone_lat_placeholder')} value={lat} onChange={e => setLat(e.target.value)} className="bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none text-center font-mono" />
+          <input type="number" placeholder={t('zone_lng_placeholder')} value={lng} onChange={e => setLng(e.target.value)} className="bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-white focus:border-accent/50 outline-none text-center font-mono" />
         </div>
 
         <button 
@@ -106,8 +106,14 @@ const ZoneChecker = () => {
              <CheckCircle size={24} />}
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-1">{result.status}</h3>
-            <p className="text-sm opacity-60">{result.message}</p>
+            <h3 className="font-bold text-lg mb-1">
+              {result.status === 'RESTRICTED' ? t('zone_status_restricted') :
+               result.status === 'CAUTION' ? t('zone_status_caution') :
+               t('zone_status_clear')}
+            </h3>
+            <p className="text-sm opacity-60">
+              {result.message.startsWith('ai_') ? t(result.message) : result.message}
+            </p>
           </div>
         </div>
       )}

@@ -40,7 +40,9 @@ const walk = (dir: string): string[] =>
 
 /** Strip block and line comments so documentation prose is not flagged. */
 const stripComments = (source: string): string =>
-  source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:\\])\/\/.*$/gm, '$1');
 
 /**
  * Text between a closing `>` and the next `<` or `{`. The lookbehind skips
@@ -61,10 +63,10 @@ const findGeorgian = (source: string): string[] => {
     const value = match[1] ?? match[2] ?? '';
     if (GEORGIAN.test(value)) hits.push(value);
   }
-  // JSX text nodes, including text that runs up to an expression
-  // (`ბრიგვა: {value}` slipped through a `>…<`-only match) and text that
-  // spans lines.
-  for (const text of jsxText(code)) {
+  // JSX text nodes, including text that runs up to an expression, text with
+  // parentheses, and text that follows an inline expression (`{count} ნახვა`).
+  for (const match of code.matchAll(/(?:(?<![=-])>|\})([^<>{};=&|?`'"]+?)(?=[<{])/g)) {
+    const text = match[1].trim();
     if (GEORGIAN.test(text)) hits.push(text);
   }
   // Template literals.
@@ -97,33 +99,40 @@ describe('no hardcoded Georgian outside the translation tables', () => {
  * reader sees "All Spots", "Login to transmit". These components were
  * rewritten in the 2026-09 design pass and are held to it (F8).
  */
-const ENGLISH_CHECKED = [
-  'components/Sidebar.tsx',
-  'components/SidebarNavSection.tsx',
-  'components/EcosystemLinksNav.tsx',
-  'components/SpotMap.tsx',
-  'components/GlobalChat.tsx',
-  'components/ChatRoom.tsx',
-  'components/ToolsHub.tsx',
-  'components/RightSidebar.tsx',
-  'components/RightSidebarSection.tsx',
-  'components/RightSidebarWeatherCard.tsx',
-  'components/Navbar.tsx',
-  'components/NavbarLinks.tsx',
-  'components/Feed.tsx',
-  'components/PostRow.tsx',
-  'components/PageHeader.tsx',
-  'components/FlightStatusStrip.tsx',
-  'components/MarketplaceList.tsx',
-  'components/MarketplaceCard.tsx',
-  'components/MarketplaceFilters.tsx',
-];
+const ENGLISH_CHECKED = walk(join(SRC, 'components'))
+  .map((file) => relative(SRC, file).split('\\').join('/'))
+  .filter((file) => !isTest(file));
 
 /** Names, codes and identifiers that are the same in every language. */
 const LANGUAGE_NEUTRAL = new Set([
   'GE / EN',
   'VITE_GOOGLE_MAPS_API_KEY',
   'VITE_GOOGLE_MAPS_ID',
+  'DroneHub Georgia',
+  'hello@example.com',
+  'https://youtube.com/watch?v=...',
+  '5XX XX XX XX',
+  'YouTube',
+  'Google Meet',
+  'mW',
+  'dBm',
+  'dBi',
+  'dB',
+  'MHz',
+  'GHz',
+  'cm',
+  'mm',
+  'km',
+  'mAh',
+  'Ah',
+  'mA',
+  'CC/CV',
+  'IM',
+  'TX',
+  'RX',
+  'VTX',
+  'VRX',
+  'STL',
 ]);
 
 describe('no hardcoded English in the redesigned components', () => {
@@ -133,7 +142,7 @@ describe('no hardcoded English in the redesigned components', () => {
       const hits = jsxText(code).filter((text) => /[A-Za-z]{2}/.test(text) && !LANGUAGE_NEUTRAL.has(text));
       // Visible attribute text: placeholder, aria-label, title, alt.
       for (const match of code.matchAll(/\b(?:placeholder|aria-label|title|alt)="([^"]*[A-Za-z]{2}[^"]*)"/g)) {
-        hits.push(match[1]);
+        if (!LANGUAGE_NEUTRAL.has(match[1])) hits.push(match[1]);
       }
       expect(hits, `move these into translations.ts and use t():\n  ${hits.join('\n  ')}`).toEqual([]);
     });

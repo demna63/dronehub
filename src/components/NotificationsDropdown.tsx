@@ -1,9 +1,12 @@
 import React from 'react';
 import { Notification } from '../types';
-import { formatDistanceToNow } from 'date-fns';
-import { ka } from 'date-fns/locale';
+import { formatDistanceToNow, type Locale } from 'date-fns';
+import { enUS, ka } from 'date-fns/locale';
 import { toDate } from '../utils/dates';
 import { useLanguage } from '../contexts/useLanguage';
+import type { Language } from '../utils/translations';
+
+const LOCALE: Record<Language, Locale> = { ka, en: enUS };
 
 interface NotificationsDropdownProps {
   notifications: Notification[];
@@ -18,7 +21,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   onMarkAllAsRead,
   onClose 
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   /**
    * date-fns throws a RangeError on an Invalid Date, and this dropdown renders
    * outside the route ErrorBoundary — so one notification whose `createdAt` was
@@ -28,14 +31,14 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const formatTime = (value: unknown): string => {
     const date = toDate(value as Parameters<typeof toDate>[0]);
     if (!date) return '';
-    return formatDistanceToNow(date, { addSuffix: true, locale: ka });
+    return formatDistanceToNow(date, { addSuffix: true, locale: LOCALE[language] });
   };
 
   return (
     <div className="absolute top-full right-0 mt-2 w-80 bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 duration-200">
       <div className="px-4 py-3 border-b border-white/10 bg-surface/50 flex justify-between items-center">
         <h3 className="text-sm font-bold text-white">{t('notifications_title')}</h3>
-        <button onClick={onClose} className="text-ink-3 hover:text-white transition-colors">
+        <button onClick={onClose} aria-label={t('action_close')} className="text-ink-3 hover:text-white transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>

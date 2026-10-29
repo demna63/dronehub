@@ -134,20 +134,21 @@ exports.geminiProxy = onCall(
     await assertGeminiQuota(request.auth.uid);
 
     const ai = getGemini(geminiApiKey.value());
+    const langLabel = payload.language === 'en' ? 'English' : 'Georgian';
 
     switch (action) {
       case 'analyzePost': {
         const title = capText(payload.title, GEMINI_LIMITS.title);
         const content = capText(payload.content, GEMINI_LIMITS.content);
-        const prompt = `Analyze this drone community post.\nTitle: "${title}"\nContent: "${content}"\nReturn JSON with suggestedCategory, suggestedSubCategory, tags (max 5), summary in Georgian (max 100 chars).`;
+        const prompt = `Analyze this drone community post.\nTitle: "${title}"\nContent: "${content}"\nReturn JSON with suggestedCategory, suggestedSubCategory, tags (max 5), summary in ${langLabel} (max 100 chars).`;
         return { result: parseJson(await generateText(ai, prompt, { json: true }), { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' }) };
       }
 
       case 'checkZoneWithAI': {
         const lat = assertCoordinate(payload.lat, 'lat');
         const lng = assertCoordinate(payload.lng, 'lng');
-        const prompt = `I am a drone pilot in Georgia. Coordinates: ${lat}, ${lng}. Return JSON: {"status":"RESTRICTED"|"CAUTION"|"CLEAR","message":"Georgian max 20 words"}`;
-        return { result: parseJson(await generateText(ai, prompt, { json: true }), { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' }) };
+        const prompt = `I am a drone pilot in Georgia. Coordinates: ${lat}, ${lng}. Return JSON: {"status":"RESTRICTED"|"CAUTION"|"CLEAR","message":"${langLabel} max 20 words"}`;
+        return { result: parseJson(await generateText(ai, prompt, { json: true }), { status: 'CAUTION', message: 'ai_check_failed' }) };
       }
 
       case 'translateText': {
@@ -158,8 +159,8 @@ exports.geminiProxy = onCall(
 
       case 'checkRestrictedZone': {
         const query = capText(payload.query, GEMINI_LIMITS.query);
-        const prompt = `Drone pilot in Georgia asks about: "${query}". Return JSON status RESTRICTED|CAUTION|CLEAR and Georgian message max 20 words.`;
-        return { result: parseJson(await generateText(ai, prompt, { json: true }), { status: 'CAUTION', message: 'ვერ მოხერხდა შემოწმება.' }) };
+        const prompt = `Drone pilot in Georgia asks about: "${query}". Return JSON status RESTRICTED|CAUTION|CLEAR and ${langLabel} message max 20 words.`;
+        return { result: parseJson(await generateText(ai, prompt, { json: true }), { status: 'CAUTION', message: 'ai_check_failed' }) };
       }
 
       default:

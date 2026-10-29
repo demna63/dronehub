@@ -1,4 +1,5 @@
 import { getCallable as getFunctionsCallable } from '../lib/firebase/functions';
+import type { Language } from '../utils/translations';
 
 type GeminiAction = 'analyzePost' | 'checkZoneWithAI' | 'translateText' | 'checkRestrictedZone';
 
@@ -75,34 +76,36 @@ export const geminiService = {
     return isGeminiAvailable();
   },
 
-  async analyzePost(title: string, content: string) {
+  async analyzePost(title: string, content: string, language: Language = 'ka') {
     const fallback = { suggestedCategory: 'general', suggestedSubCategory: '', tags: [], summary: '' };
+    const langLabel = language === 'en' ? 'English' : 'Georgian';
 
     try {
       if (import.meta.env.DEV && getDevGeminiApiKey()) {
-        const prompt = `Analyze this drone community post.\nTitle: "${title}"\nContent: "${content}"\nReturn JSON with suggestedCategory, suggestedSubCategory, tags (max 5), summary in Georgian (max 100 chars).`;
+        const prompt = `Analyze this drone community post.\nTitle: "${title}"\nContent: "${content}"\nReturn JSON with suggestedCategory, suggestedSubCategory, tags (max 5), summary in ${langLabel} (max 100 chars).`;
         const jsonStr = await callGeminiDirect(prompt, true);
         return JSON.parse(jsonStr || '{}');
       }
 
-      return await callGeminiProxy('analyzePost', { title, content });
+      return await callGeminiProxy('analyzePost', { title, content, language }) as typeof fallback;
     } catch (error) {
       console.error('[Gemini] Analysis error:', error);
       return fallback;
     }
   },
 
-  async checkZoneWithAI(lat: number, lng: number) {
+  async checkZoneWithAI(lat: number, lng: number, language: Language = 'ka') {
     const fallback = { status: 'CAUTION', message: 'ai_not_configured' };
+    const langLabel = language === 'en' ? 'English' : 'Georgian';
 
     try {
       if (import.meta.env.DEV && getDevGeminiApiKey()) {
-        const prompt = `I am a drone pilot in Georgia. Coordinates: ${lat}, ${lng}. Return JSON: {"status":"RESTRICTED"|"CAUTION"|"CLEAR","message":"Georgian max 20 words"}`;
+        const prompt = `I am a drone pilot in Georgia. Coordinates: ${lat}, ${lng}. Return JSON: {"status":"RESTRICTED"|"CAUTION"|"CLEAR","message":"${langLabel} max 20 words"}`;
         const jsonStr = await callGeminiDirect(prompt, true);
         return JSON.parse(jsonStr || '{}');
       }
 
-      return await callGeminiProxy('checkZoneWithAI', { lat, lng });
+      return await callGeminiProxy('checkZoneWithAI', { lat, lng, language }) as typeof fallback;
     } catch (error) {
       console.error('[Gemini] Zone check error:', error);
       const reason = describeGeminiError(error);
@@ -117,28 +120,29 @@ export const geminiService = {
         return await callGeminiDirect(prompt);
       }
 
-      return await callGeminiProxy('translateText', { text });
+      return await callGeminiProxy('translateText', { text }) as string;
     } catch (error) {
       console.error('Translation failed', error);
       return text;
     }
   },
 
-  async checkRestrictedZone(query: string) {
-    const fallback = { status: 'CAUTION', message: 'ai_check_failed' };
+  async checkRestrictedZone(query: string, language: Language = 'ka') {
+    const fallback = { status: 'CAUTION' as const, message: 'ai_check_failed' };
+    const langLabel = language === 'en' ? 'English' : 'Georgian';
 
     try {
       if (import.meta.env.DEV && getDevGeminiApiKey()) {
-        const prompt = `Drone pilot in Georgia asks about: "${query}". Return JSON status RESTRICTED|CAUTION|CLEAR and Georgian message max 20 words.`;
+        const prompt = `Drone pilot in Georgia asks about: "${query}". Return JSON status RESTRICTED|CAUTION|CLEAR and ${langLabel} message max 20 words.`;
         const jsonStr = await callGeminiDirect(prompt, true);
         return JSON.parse(jsonStr || '{}');
       }
 
-      return await callGeminiProxy('checkRestrictedZone', { query });
+      return await callGeminiProxy('checkRestrictedZone', { query, language }) as { status: 'CLEAR' | 'RESTRICTED' | 'CAUTION'; message: string };
     } catch (error) {
       console.error('[Gemini] Restricted-zone check error:', error);
       const reason = describeGeminiError(error);
-      return reason ? { status: 'CAUTION', message: reason } : fallback;
+      return reason ? { status: 'CAUTION' as const, message: reason } : fallback;
     }
   },
 };

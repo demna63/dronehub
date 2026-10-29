@@ -1,3 +1,5 @@
+import type { Language } from './translations';
+
 /**
  * dates.ts — one place that turns "whatever a timestamp field happens to hold"
  * into a real Date.
@@ -20,6 +22,8 @@ export type TimestampLike =
   | undefined;
 
 const isValid = (date: Date): boolean => !Number.isNaN(date.getTime());
+
+const localeFor = (language: Language): string => (language === 'en' ? 'en-US' : 'ka-GE');
 
 /** Coerce a stored timestamp to a Date, or null when it cannot be read. */
 export const toDate = (value: TimestampLike): Date | null => {
@@ -52,25 +56,26 @@ export const toDate = (value: TimestampLike): Date | null => {
 export const toYear = (value: TimestampLike): number | null => toDate(value)?.getFullYear() ?? null;
 
 /**
- * Month and year in Georgian, e.g. "სექტემბერი 2026". Returns null rather than
- * a placeholder so the caller decides what to render when the date is missing.
+ * Month and year in the active language, e.g. "სექტემბერი 2026" / "September 2026".
+ * Returns null rather than a placeholder so the caller decides what to render
+ * when the date is missing.
  */
-export const formatMonthYear = (value: TimestampLike): string | null => {
+export const formatMonthYear = (value: TimestampLike, language: Language = 'ka'): string | null => {
   const date = toDate(value);
   if (!date) return null;
-  return new Intl.DateTimeFormat('ka-GE', { month: 'long', year: 'numeric' }).format(date);
+  return new Intl.DateTimeFormat(localeFor(language), { month: 'long', year: 'numeric' }).format(date);
 };
 
-/** Hour:minute in Georgian locale, or '' when the timestamp is unreadable. */
-export const formatClockTime = (value: TimestampLike): string => {
+/** Hour:minute in the active locale, or '' when the timestamp is unreadable. */
+export const formatClockTime = (value: TimestampLike, language: Language = 'ka'): string => {
   const date = toDate(value);
   if (!date) return '';
-  return date.toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(localeFor(language), { hour: '2-digit', minute: '2-digit' });
 };
 
-/** Short date in Georgian locale, or '' when the timestamp is unreadable. */
-export const formatShortDate = (value: TimestampLike): string => {
+/** Short date in the active locale, or '' when the timestamp is unreadable. */
+export const formatShortDate = (value: TimestampLike, language: Language = 'ka'): string => {
   const date = toDate(value);
   if (!date) return '';
-  return date.toLocaleDateString('ka-GE');
+  return date.toLocaleDateString(localeFor(language));
 };

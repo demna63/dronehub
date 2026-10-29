@@ -59,10 +59,10 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-white">
-            {t('ant_title') || 'The closest channel by frequency'}
+            {t('ant_title')}
           </h1>
           <p className="text-sm text-ink-3 font-medium">
-            {t('ant_desc') || 'Find the most productive video channel for a particular antenna'}
+            {t('ant_desc')}
           </p>
         </div>
       </div>
@@ -73,13 +73,13 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-bg/50 border border-white/10 rounded-2xl p-5 space-y-5">
             <h3 className="text-xs font-extrabold text-ink-3 mb-4 flex items-center gap-2">
-              <Settings size={14} /> Configuration
+              <Settings size={14} /> {t('channel_configuration')}
             </h3>
 
             {/* Start Freq */}
             <div className="space-y-2">
               <label htmlFor="channel-start-freq" className="text-xs text-ink-3 font-bold ml-1">
-                {t('ant_start_freq') || 'Start (MHz)'}
+                {t('ant_start_freq')}
               </label>
               <div className="relative group">
                 <input 
@@ -95,7 +95,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
             {/* End Freq */}
             <div className="space-y-2">
               <label htmlFor="channel-end-freq" className="text-xs text-ink-3 font-bold ml-1">
-                {t('ant_end_freq') || 'End (MHz)'}
+                {t('ant_end_freq')}
               </label>
               <div className="relative group">
                 <input 
@@ -111,7 +111,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
             {/* Count Select */}
             <div className="space-y-2">
               <label htmlFor="channel-num-results" className="text-xs text-ink-3 font-bold ml-1">
-                {t('ant_num_channels') || 'Number of channels'}
+                {t('ant_num_channels')}
               </label>
               <select 
                 id="channel-num-results"
@@ -139,7 +139,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
                   onChange={(e) => setIncludeDigital(e.target.checked)} 
                 />
                 <span className="text-sm font-bold text-ink-2 group-hover:text-white transition-colors">
-                  {t('ant_include_digital') || 'Include digital bands'}
+                  {t('ant_include_digital')}
                 </span>
               </label>
             </div>
@@ -149,7 +149,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
           {/* Info Block - Center Freq */}
           <div className="bg-accent-tint border border-accent/30 rounded-2xl p-5 text-center">
              <div className="text-xs font-extrabold text-accent mb-1">
-               {t('ant_center_freq') || 'Ideal Center Frequency'}
+               {t('ant_center_freq')}
              </div>
              <div className="text-3xl font-extrabold text-white font-mono">
                {centerFreq.toFixed(1)} <span className="text-sm text-ink-3">MHz</span>
@@ -162,7 +162,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
            <div className="flex items-center gap-2 mb-4 px-2">
              <ListFilter className="text-accent" size={18} />
              <h3 className="text-sm font-extrabold text-white">
-               {t('ant_results') || 'Calculated Channels'}
+               {t('ant_results')}
              </h3>
            </div>
 
@@ -172,9 +172,9 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
                  <table className="w-full text-left">
                    <thead className="bg-white/[0.02] text-xs font-extrabold text-ink-3">
                      <tr>
-                       <th className="p-4 pl-6">Channel Name</th>
-                       <th className="p-4">Frequency</th>
-                       <th className="p-4 text-right pr-6">Deviation</th>
+                       <th className="p-4 pl-6">{t('channel_col_name')}</th>
+                       <th className="p-4">{t('channel_col_freq')}</th>
+                       <th className="p-4 text-right pr-6">{t('channel_col_deviation')}</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-white/5 text-sm font-mono text-ink-2">
@@ -195,7 +195,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
                            </td>
                            <td className="p-4 text-right pr-6">
                              <span className={`text-xs ${diff === 0 ? 'text-emerald-500' : 'text-ink-3'}`}>
-                               {diff === 0 ? 'PERFECT' : `±${diff.toFixed(1)} MHz`}
+                               {diff === 0 ? t('channel_perfect') : `±${diff.toFixed(1)} MHz`}
                              </span>
                            </td>
                          </tr>
@@ -207,7 +207,7 @@ const { t } = useLanguage(); // <--- ეს ხაზი აკლია, და
              ) : (
                <div className="flex flex-col items-center justify-center h-64 text-ink-3 gap-2">
                  <Signal className="w-8 h-8 opacity-20" />
-                 <p className="text-xs">No channels found in range</p>
+                 <p className="text-xs">{t('channel_none_found')}</p>
                </div>
              )}
            </div>

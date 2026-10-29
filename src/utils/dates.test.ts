@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMonthYear, toDate, toYear } from './dates';
+import { formatClockTime, formatMonthYear, formatShortDate, toDate, toYear } from './dates';
 
 const JAN_2024 = new Date('2024-01-15T10:00:00Z');
 
@@ -41,5 +41,14 @@ describe('toYear / formatMonthYear', () => {
     expect(toYear(undefined)).toBeNull();
     expect(formatMonthYear(undefined)).toBeNull();
     expect(formatMonthYear({ seconds: 1705312800 })).toContain('2024');
+  });
+
+  it('formats dates in the requested language', () => {
+    const kaMonth = formatMonthYear(JAN_2024, 'ka');
+    const enMonth = formatMonthYear(JAN_2024, 'en');
+    expect(enMonth).toBe('January 2024');
+    expect(kaMonth).not.toBe(enMonth);
+    expect(formatClockTime(JAN_2024, 'en')).toBeTruthy();
+    expect(formatShortDate(JAN_2024, 'en')).toContain('2024');
   });
 });

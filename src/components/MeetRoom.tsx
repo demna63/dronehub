@@ -15,7 +15,7 @@ interface MeetRoomProps {
 }
 
 const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isMicOn, setIsMicOn] = useState(false);
   const [listenerError, setListenerError] = useState<string | null>(null);
   const [isVideoOn, setIsVideoOn] = useState(false);
@@ -47,7 +47,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
           avatar: data.avatar,
           text: data.text,
           authorReputation: data.reputation || 0, // შესწორება: Fallback
-          timestamp: formatClockTime(data.createdAt) || '...'
+          timestamp: formatClockTime(data.createdAt, language) || '...'
         } as ChatMessage;
       });
       setMessages(msgs);
@@ -59,7 +59,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
     });
     
     return () => unsubscribe();
-  }, [room.id, t]);
+  }, [room.id, t, language]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,7 +102,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
              <h2 className="text-white font-bold">{room.name}</h2>
              <div className="flex items-center gap-2 text-xs text-emerald-400">
                <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-               Live Connection
+               {t('meet_live_connection')}
              </div>
            </div>
         </div>
@@ -124,7 +124,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                   <div className="w-24 h-24 rounded-full bg-surface-2 flex items-center justify-center">
                     {user ? <img src={user.avatar} alt="" className="w-full h-full rounded-full object-cover opacity-50" /> : <VideoOff className="w-10 h-10 text-ink-3" />}
                   </div>
-                  <p className="text-ink-3 font-mono text-sm">Camera is off</p>
+                  <p className="text-ink-3 font-mono text-sm">{t('meet_camera_off')}</p>
                 </div>
               )}
               {/* Controls Overlay */}
@@ -138,7 +138,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                  <div className="w-px h-8 bg-white/10 mx-2"></div>
                  <button onClick={onLeave} className="px-6 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-[10px] font-bold flex items-center gap-2 transition-colors">
                    <PhoneOff className="w-5 h-5" />
-                   <span>Leave</span>
+                   <span>{t('meet_leave')}</span>
                  </button>
               </div>
            </div>
@@ -151,7 +151,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
           className="bg-surface border-l border-white/10 flex flex-col"
         >
            <div className="p-4 border-b border-white/5">
-             <h3 className="text-white font-bold text-sm">Room Chat</h3>
+             <h3 className="text-white font-bold text-sm">{t('meet_room_chat')}</h3>
            </div>
            
            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
@@ -184,7 +184,7 @@ const MeetRoom: React.FC<MeetRoomProps> = ({ room, user, onLeave, onLoginRequest
                onChange={(e) => setChatInput(e.target.value)}
                aria-label={t('message_label')}
                maxLength={MESSAGE_MAX_LENGTH}
-               placeholder={user ? "Send a message..." : "Login to chat"}
+               placeholder={user ? t('meet_chat_placeholder') : t('meet_login_to_chat')}
                disabled={!user}
                className="w-full bg-bg border border-white/10 rounded-[10px] px-4 py-3 text-sm text-white focus:border-accent/50 focus:outline-none"
              />

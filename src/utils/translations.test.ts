@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { interpolate, translations } from './translations';
+import { SCAT_STL_CATALOG, localizeStlItem } from '../constants/stlCatalogData';
 
 describe('interpolate', () => {
   it('substitutes named placeholders', () => {
@@ -48,6 +49,23 @@ describe('translation tables', () => {
       // A placeholder present in one language and missing in the other renders
       // as a literal `{count}` for half the users.
       expect(slots(enTable[key] ?? ''), `placeholders differ for "${key}"`).toEqual(slots(value));
+    }
+  });
+
+  it('localizes every STL catalog item cleanly into both Georgian and English', () => {
+    const georgian = /[\u10A0-\u10FF]/;
+    for (const item of SCAT_STL_CATALOG) {
+      const enItem = localizeStlItem(item, 'en');
+      expect(georgian.test(enItem.title), `en title for ${item.id}: ${enItem.title}`).toBe(false);
+      expect(georgian.test(enItem.type), `en type for ${item.id}: ${enItem.type}`).toBe(false);
+      expect(georgian.test(enItem.frame), `en frame for ${item.id}: ${enItem.frame}`).toBe(false);
+      expect(georgian.test(enItem.description), `en description for ${item.id}: ${enItem.description}`).toBe(false);
+      expect(georgian.test(enItem.supports ?? ''), `en supports for ${item.id}: ${enItem.supports}`).toBe(false);
+
+      const kaItem = localizeStlItem(item, 'ka');
+      expect(kaItem.title.length, `ka title for ${item.id}`).toBeGreaterThan(0);
+      expect(georgian.test(kaItem.type), `ka type for ${item.id}: ${kaItem.type}`).toBe(true);
+      expect(georgian.test(kaItem.description), `ka description for ${item.id}: ${kaItem.description}`).toBe(true);
     }
   });
 });

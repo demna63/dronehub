@@ -38,12 +38,16 @@ const HangarCard: React.FC<HangarCardProps> = ({ build, isOwner, onEdit, onDelet
       {isOwner && (
         <div className="absolute top-3 right-3 z-10 flex gap-2">
           <button 
+            type="button"
+            aria-label={t('action_edit')}
             onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
             className="p-2 bg-bg/80 border border-white/10 rounded-lg text-ink-2 hover:text-white hover:bg-accent-tint hover:border-accent/30 transition-all"
           >
             <Edit2 size={14} />
           </button>
           <button 
+            type="button"
+            aria-label={t('action_delete')}
             onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
             className="p-2 bg-bg/80 border border-white/10 rounded-lg text-ink-2 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/50 transition-all"
           >

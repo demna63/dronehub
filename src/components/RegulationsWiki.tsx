@@ -75,7 +75,7 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: 
     setZoneResult({ status: 'IDLE', message: t('processing') });
 
     try {
-      const result = await geminiService.checkRestrictedZone(zoneQuery);
+      const result = await geminiService.checkRestrictedZone(zoneQuery, language);
       setZoneResult(result);
     } catch {
       setZoneResult({ status: 'IDLE', message: t('wiki_lookup_failed') });
@@ -84,8 +84,8 @@ const RegulationsWiki: React.FC<RegulationsWikiProps> = ({ onBack, currentUser: 
     }
   };
 
-  const zoneMessage = zoneResult.message === 'ai_check_failed'
-    ? t('ai_check_failed')
+  const zoneMessage = zoneResult.message.startsWith('ai_')
+    ? t(zoneResult.message)
     : (zoneResult.message || t('waiting_input'));
 
   return (

@@ -82,7 +82,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
             {/* Image Overlay Stats */}
             <div className="absolute bottom-4 left-4 flex gap-2">
                <span className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                 <Eye size={14} className="text-accent" /> {item.views || 0} ნახვა
+                 <Eye size={14} className="text-accent" /> {t('views_count', { count: item.views || 0 })}
                </span>
                <span className="bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5">
                  <Calendar size={14} className="text-accent" aria-hidden="true" />
@@ -180,7 +180,7 @@ const MarketItemView: React.FC<MarketItemViewProps> = ({
           <div className="bg-surface border border-white/5 rounded-2xl p-5 flex items-center gap-4">
              <div className="w-12 h-12 rounded-full bg-surface-2 overflow-hidden border border-white/10 shrink-0">
                {item.authorAvatar ? (
-                 <img src={item.authorAvatar} alt="Seller" className="w-full h-full object-cover" />
+                 <img src={item.authorAvatar} alt={item.author} className="w-full h-full object-cover" />
                ) : (
                  <div className="w-full h-full flex items-center justify-center text-ink-3"><UserIcon size={20}/></div>
                )}

@@ -2,14 +2,19 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Box, Download, Search, User, Cuboid, Loader2, Info, Layers } from 'lucide-react';
 import { useLanguage } from '../contexts/useLanguage';
 import { STL_AUTHORS } from '../constants/toolsData';
-import { SCAT_STL_CATALOG } from '../constants/stlCatalogData';
+import {
+  SCAT_STL_CATALOG,
+  localizeStlFrame,
+  localizeStlItem,
+  localizeStlType,
+} from '../constants/stlCatalogData';
 import { apiService } from '../services/apiService';
 import { formatShortDate } from '../utils/dates';
 import Modal from './Modal';
 import type { StlFile } from '../types';
 
 const STLCatalog: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // --- STATE ---
   const [items, setItems] = useState<StlFile[]>([]);
@@ -64,19 +69,22 @@ const STLCatalog: React.FC = () => {
     return () => { cancelled = true; };
   }, [reloadToken, t]);
 
-  // Options come from the loaded items. Seeding them from STL_TYPES / STL_FRAMES
-  // offered English labels that match nothing in the Georgian catalog.
+  // Options come from the loaded items.
   const availableTypes = useMemo(() => {
     const set = new Set<string>();
     items.forEach(item => { if (item.type) set.add(item.type); });
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'ka'));
-  }, [items]);
+    return Array.from(set).sort((a, b) =>
+      localizeStlType(a, language).localeCompare(localizeStlType(b, language), language),
+    );
+  }, [items, language]);
 
   const availableFrames = useMemo(() => {
     const set = new Set<string>();
     items.forEach(item => { if (item.frame) set.add(item.frame); });
-    return Array.from(set).sort((a, b) => a.localeCompare(b, 'ka'));
-  }, [items]);
+    return Array.from(set).sort((a, b) =>
+      localizeStlFrame(a, language).localeCompare(localizeStlFrame(b, language), language),
+    );
+  }, [items, language]);
 
   const availableAuthors = useMemo(() => {
     const set = new Set<string>(STL_AUTHORS);
@@ -87,22 +95,35 @@ const STLCatalog: React.FC = () => {
   // --- FILTERING ---
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return items.filter(item => {
-      const matchType = filterType === 'All' || item.type === filterType;
-      const matchFrame = filterFrame === 'All' || item.frame === filterFrame;
-      const matchAuthor = filterAuthor === 'All' || item.author === filterAuthor;
-      
-      const matchSearch = !q ||
-        item.title?.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
-        item.frame?.toLowerCase().includes(q) ||
-        item.author?.toLowerCase().includes(q) ||
-        item.type?.toLowerCase().includes(q) ||
-        item.material?.toLowerCase().includes(q);
-      
-      return matchType && matchFrame && matchAuthor && matchSearch;
-    });
-  }, [items, filterType, filterFrame, filterAuthor, searchQuery]);
+    return items
+      .filter(item => {
+        const matchType = filterType === 'All' || item.type === filterType;
+        const matchFrame = filterFrame === 'All' || item.frame === filterFrame;
+        const matchAuthor = filterAuthor === 'All' || item.author === filterAuthor;
+        if (!matchType || !matchFrame || !matchAuthor) return false;
+        if (!q) return true;
+
+        const enItem = localizeStlItem(item, 'en');
+        return (
+          item.title?.toLowerCase().includes(q) ||
+          item.description?.toLowerCase().includes(q) ||
+          item.frame?.toLowerCase().includes(q) ||
+          item.author?.toLowerCase().includes(q) ||
+          item.type?.toLowerCase().includes(q) ||
+          item.material?.toLowerCase().includes(q) ||
+          enItem.title?.toLowerCase().includes(q) ||
+          enItem.description?.toLowerCase().includes(q) ||
+          enItem.frame?.toLowerCase().includes(q) ||
+          enItem.type?.toLowerCase().includes(q)
+        );
+      })
+      .map(item => localizeStlItem(item, language));
+  }, [items, filterType, filterFrame, filterAuthor, searchQuery, language]);
+
+  const modalItem = useMemo(
+    () => (selectedItem ? localizeStlItem(selectedItem, language) : null),
+    [selectedItem, language],
+  );
 
   // --- SAFE DOWNLOAD FUNCTION ---
   const handleDownload = async (e: React.MouseEvent, url: string, filename: string, itemId: string) => {
@@ -158,15 +179,15 @@ const STLCatalog: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-white">
-              {t('stl_title') || '3D Print Catalog'}
+              {t('stl_title')}
             </h1>
             <p className="text-sm text-ink-3 font-medium">
-              {t('stl_desc') || 'STL files for drone parts'}
+              {t('stl_desc')}
             </p>
           </div>
         </div>
         <p className="text-xs font-bold text-ink-3">
-          {filteredItems.length} / {items.length} {t('stl_total') || 'items'}
+          {filteredItems.length} / {items.length} {t('stl_total')}
         </p>
       </div>
 
@@ -178,7 +199,7 @@ const STLCatalog: React.FC = () => {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('search_placeholder') || 'Search...'}
+            placeholder={t('search_placeholder')}
             className="w-full pl-10 pr-4 py-2.5 rounded-[10px] bg-bg border border-white/10 text-sm text-white placeholder:text-ink-3 focus:outline-none focus:border-accent/50"
           />
         </div>
@@ -186,31 +207,31 @@ const STLCatalog: React.FC = () => {
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
           className="px-3 py-2.5 rounded-[10px] bg-bg border border-white/10 text-sm text-white focus:outline-none focus:border-accent/50"
-          aria-label={t('stl_type') || 'Part type'}
+          aria-label={t('stl_type')}
         >
-          <option value="All">{t('stl_all_options') || 'All'} — {t('stl_type') || 'Type'}</option>
+          <option value="All">{t('stl_all_options')} — {t('stl_type')}</option>
           {availableTypes.map((type) => (
-            <option key={type} value={type}>{type}</option>
+            <option key={type} value={type}>{localizeStlType(type, language)}</option>
           ))}
         </select>
         <select
           value={filterFrame}
           onChange={(e) => setFilterFrame(e.target.value)}
           className="px-3 py-2.5 rounded-[10px] bg-bg border border-white/10 text-sm text-white focus:outline-none focus:border-accent/50"
-          aria-label={t('stl_frame') || 'Frame'}
+          aria-label={t('stl_frame')}
         >
-          <option value="All">{t('stl_all_options') || 'All'} — {t('stl_frame') || 'Frame'}</option>
+          <option value="All">{t('stl_all_options')} — {t('stl_frame')}</option>
           {availableFrames.map((frame) => (
-            <option key={frame} value={frame}>{frame}</option>
+            <option key={frame} value={frame}>{localizeStlFrame(frame, language)}</option>
           ))}
         </select>
         <select
           value={filterAuthor}
           onChange={(e) => setFilterAuthor(e.target.value)}
           className="px-3 py-2.5 rounded-[10px] bg-bg border border-white/10 text-sm text-white focus:outline-none focus:border-accent/50 md:col-span-2 lg:col-span-1"
-          aria-label={t('stl_author') || 'Author'}
+          aria-label={t('stl_author')}
         >
-          <option value="All">{t('stl_all_options') || 'All'} — {t('stl_author') || 'Author'}</option>
+          <option value="All">{t('stl_all_options')} — {t('stl_author')}</option>
           {availableAuthors.map((author) => (
             <option key={author} value={author}>{author}</option>
           ))}
@@ -306,7 +327,7 @@ const STLCatalog: React.FC = () => {
                       className="inline-flex items-center gap-1 text-xs text-ink-3 hover:text-white transition-colors"
                     >
                       <Info size={14} />
-                      <span>{t('stl_details') || 'Details'}</span>
+                      <span>{t('stl_details')}</span>
                     </button>
                     
                     <button 
@@ -315,7 +336,7 @@ const STLCatalog: React.FC = () => {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-fill hover:bg-accent-fill-hover disabled:bg-accent-tint text-white text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Download size={14} className={downloadingId === item.id ? "animate-bounce text-accent" : ""} />
-                      {downloadingId === item.id ? t('action_downloading') : (t('stl_download') || 'Download')}
+                      {downloadingId === item.id ? t('action_downloading') : t('stl_download')}
                     </button>
                   </div>
                 </div>
@@ -324,42 +345,42 @@ const STLCatalog: React.FC = () => {
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-ink-3 gap-4">
               <Box size={48} className="opacity-20" />
-              <p className="text-sm font-medium">{t('stl_no_results') || 'No STL files found matching your filters'}</p>
+              <p className="text-sm font-medium">{t('stl_no_results')}</p>
             </div>
           )}
         </div>
       )}
 
       {/* Item Details Modal */}
-      {selectedItem && (
+      {modalItem && (
         <Modal
-          isOpen={Boolean(selectedItem)}
+          isOpen={Boolean(modalItem)}
           onClose={() => setSelectedItem(null)}
-          title={selectedItem.title}
+          title={modalItem.title}
           size="max-w-2xl"
           footer={
             <div className="flex items-center justify-between w-full">
               <span className="text-xs text-ink-3">
-                {formatShortDate(selectedItem.createdAt) || selectedItem.date}
+                {formatShortDate(modalItem.createdAt, language) || modalItem.date}
               </span>
               <button
                 type="button"
-                onClick={(e) => handleDownload(e, selectedItem.downloadUrl, selectedItem.title, selectedItem.id)}
+                onClick={(e) => handleDownload(e, modalItem.downloadUrl, modalItem.title, modalItem.id)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-bg hover:opacity-90 font-bold text-sm transition-opacity cursor-pointer"
               >
                 <Download size={16} />
-                <span>{t('stl_download') || 'Download STL'}</span>
+                <span>{t('stl_download')}</span>
               </button>
             </div>
           }
         >
           <div className="space-y-6">
             {/* Image Preview */}
-            {selectedItem.image && (
+            {modalItem.image && (
               <div className="aspect-video w-full rounded-xl overflow-hidden bg-bg border border-white/10 flex items-center justify-center">
                 <img
-                  src={selectedItem.image}
-                  alt={selectedItem.title}
+                  src={modalItem.image}
+                  alt={modalItem.title}
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -368,26 +389,26 @@ const STLCatalog: React.FC = () => {
             {/* Quick Badges */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded-lg bg-accent-tint text-accent border border-accent/20 text-xs font-bold">
-                {selectedItem.type}
+                {modalItem.type}
               </span>
-              {selectedItem.frame && (
+              {modalItem.frame && (
                 <span className="px-2.5 py-1 rounded-lg bg-white/5 text-white border border-white/10 text-xs font-bold">
-                  {t('stl_compatible_frame') || 'Frame'}: {selectedItem.frame}
+                  {t('stl_compatible_frame')}: {modalItem.frame}
                 </span>
               )}
               <span className="px-2.5 py-1 rounded-lg bg-white/5 text-ink-2 border border-white/10 text-xs">
-                {t('stl_author') || 'Author'}: <strong className="text-white">{selectedItem.author}</strong>
+                {t('stl_author')}: <strong className="text-white">{modalItem.author}</strong>
               </span>
             </div>
 
-            {/* Full Georgian Description */}
-            {selectedItem.description && (
+            {/* Full Description */}
+            {modalItem.description && (
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-ink-3 uppercase tracking-wider">
-                  {t('stl_desc') || 'Description'}
+                  {t('stl_desc')}
                 </h4>
                 <div className="bg-bg/60 border border-white/5 rounded-xl p-4 text-sm text-ink-2 leading-relaxed whitespace-pre-line">
-                  {selectedItem.description}
+                  {modalItem.description}
                 </div>
               </div>
             )}
@@ -396,38 +417,38 @@ const STLCatalog: React.FC = () => {
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-ink-3 uppercase tracking-wider flex items-center gap-1.5">
                 <Layers size={14} className="text-accent" />
-                {t('stl_specs') || '3D Print Specifications'}
+                {t('stl_specs')}
               </h4>
               
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {selectedItem.material && (
+                {modalItem.material && (
                   <div className="bg-bg/50 border border-white/5 rounded-xl p-3">
-                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_material') || 'Material'}</span>
-                    <span className="text-sm font-bold text-accent font-mono">{selectedItem.material}</span>
+                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_material')}</span>
+                    <span className="text-sm font-bold text-accent font-mono">{modalItem.material}</span>
                   </div>
                 )}
-                {selectedItem.infill && (
+                {modalItem.infill && (
                   <div className="bg-bg/50 border border-white/5 rounded-xl p-3">
-                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_infill') || 'Infill'}</span>
-                    <span className="text-sm font-bold text-white font-mono">{selectedItem.infill}</span>
+                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_infill')}</span>
+                    <span className="text-sm font-bold text-white font-mono">{modalItem.infill}</span>
                   </div>
                 )}
-                {selectedItem.walls !== undefined && (
+                {modalItem.walls !== undefined && (
                   <div className="bg-bg/50 border border-white/5 rounded-xl p-3">
-                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_walls') || 'Walls'}</span>
-                    <span className="text-sm font-bold text-white font-mono">{selectedItem.walls}</span>
+                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_walls')}</span>
+                    <span className="text-sm font-bold text-white font-mono">{modalItem.walls}</span>
                   </div>
                 )}
-                {selectedItem.supports && (
+                {modalItem.supports && (
                   <div className="bg-bg/50 border border-white/5 rounded-xl p-3">
-                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_supports') || 'Supports'}</span>
-                    <span className="text-sm font-bold text-white font-mono">{selectedItem.supports}</span>
+                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_supports')}</span>
+                    <span className="text-sm font-bold text-white font-mono">{modalItem.supports}</span>
                   </div>
                 )}
-                {selectedItem.vtxMount && (
+                {modalItem.vtxMount && (
                   <div className="bg-bg/50 border border-white/5 rounded-xl p-3 col-span-2">
-                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_vtx_mount') || 'Mount'}</span>
-                    <span className="text-sm font-bold text-white font-mono">{selectedItem.vtxMount}</span>
+                    <span className="text-[11px] text-ink-3 block font-semibold">{t('stl_vtx_mount')}</span>
+                    <span className="text-sm font-bold text-white font-mono">{modalItem.vtxMount}</span>
                   </div>
                 )}
               </div>

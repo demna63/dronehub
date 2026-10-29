@@ -27,9 +27,9 @@ const POST_TYPES = [
 
 // FPV ქვეკატეგორიები
 const FPV_SUBCATEGORIES = [
-  { id: 'freestyle', label: 'Freestyle', icon: Zap },
-  { id: 'racing', label: 'Racing', icon: Flag },
-  { id: 'longrange', label: 'Long Range', icon: Mountain },
+  { id: 'freestyle', labelKey: 'side_cat_freestyle', icon: Zap },
+  { id: 'racing', labelKey: 'side_cat_racing', icon: Flag },
+  { id: 'longrange', labelKey: 'side_cat_longrange', icon: Mountain },
 ];
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreated, currentUser }) => {
@@ -149,7 +149,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                     }`}
                   >
                     <sub.icon size={16} />
-                    {sub.label}
+                    {t(sub.labelKey)}
                   </button>
                 ))}
               </div>
@@ -210,12 +210,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                     <div className="relative w-full h-full p-2">
                       <img 
                         src={imagePreview} 
-                        alt="Preview" 
+                        alt={t('post_image_preview_alt')} 
                         className="w-full h-full object-contain rounded-[10px]"
                       />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-[10px]">
                         <span className="text-white text-sm font-bold flex items-center gap-2">
-                          <ImageIcon size={16} /> შეცვლა
+                          <ImageIcon size={16} /> {t('post_image_change')}
                         </span>
                       </div>
                     </div>
@@ -224,8 +224,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ onClose, onPostCreate
                       <div className="p-3 bg-surface rounded-full mb-2 transition-transform">
                         <Upload size={20} />
                       </div>
-                      <span className="text-sm font-bold text-ink-3">ატვირთე სურათი</span>
-                      <span className="text-xs text-ink-3 mt-1">PNG, JPG, GIF up to 5MB</span>
+                      <span className="text-sm font-bold text-ink-3">{t('post_image_upload_title')}</span>
+                      <span className="text-xs text-ink-3 mt-1">{t('post_image_upload_formats')}</span>
                     </div>
                   )}
                 </label>

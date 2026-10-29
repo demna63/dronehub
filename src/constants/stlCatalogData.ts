@@ -1,5 +1,34 @@
 // src/constants/stlCatalogData.ts
-// Auto-generated full STL catalog imported from SCAT (vtx.in.ua/scat) with full Georgian descriptions.
+// Auto-generated full STL catalog imported from SCAT (vtx.in.ua/scat) with full Georgian and English descriptions.
+
+import type { Language } from '../utils/translations';
+
+export const STL_TYPES = [
+  'VTX დამჭერი',
+  'VTX ანტენის სამაგრი',
+  'RX ანტენის სამაგრი',
+  'კამერის სამაგრი',
+  'კამერის მბრუნავი სამაგრი',
+  'GPS სამაგრი',
+  'სადესანტო ფეხები',
+  'FPV დეტექტორის სამაგრი',
+  'სხვა აქსესუარი',
+] as const;
+
+export const STL_FRAMES = [
+  'უნივერსალური',
+  'VT40',
+  'Mark4',
+  'Mark4 V2',
+  'Mark4 / Mark4 V2',
+  'XL10 v6',
+  'Apex HD',
+  'F7',
+  'F10',
+  'Mavic 3',
+  'Matrice 4T',
+  'Autel Evo 4T',
+] as const;
 
 export interface ScatStlItem {
   id: string;
@@ -1724,3 +1753,333 @@ export const SCAT_STL_CATALOG: ScatStlItem[] = [
     "supports": "არა"
   }
 ];
+
+const STL_TYPE_EN: Record<string, string> = {
+  'VTX დამჭერი': 'VTX Mount',
+  'VTX ანტენის სამაგრი': 'VTX Antenna Mount',
+  'RX ანტენის სამაგრი': 'RX Antenna Mount',
+  'კამერის სამაგრი': 'Camera Mount',
+  'კამერის მბრუნავი სამაგრი': 'Pan/Tilt Camera Mount',
+  'GPS სამაგრი': 'GPS Mount',
+  'სადესანტო ფეხები': 'Landing Legs',
+  'FPV დეტექტორის სამაგრი': 'FPV Detector Mount',
+  'სხვა აქსესუარი': 'Other Accessory',
+};
+
+const STL_TYPE_KA: Record<string, string> = {
+  'Camera Mount': 'კამერის სამაგრი',
+  'Legs / Landing Gear': 'სადესანტო ფეხები',
+  'Landing Legs': 'სადესანტო ფეხები',
+  'Adjustable Camera Mount': 'კამერის მბრუნავი სამაგრი',
+  'Pan/Tilt Camera Mount': 'კამერის მბრუნავი სამაგრი',
+  'RX Antenna Holder': 'RX ანტენის სამაგრი',
+  'RX Antenna Mount': 'RX ანტენის სამაგრი',
+  'VTX Antenna Holder': 'VTX ანტენის სამაგრი',
+  'VTX Antenna Mount': 'VTX ანტენის სამაგრი',
+  'GPS Holder': 'GPS სამაგრი',
+  'GPS Mount': 'GPS სამაგრი',
+  'VTX Holder': 'VTX დამჭერი',
+  'VTX Mount': 'VTX დამჭერი',
+  'FPV Detector Mount': 'FPV დეტექტორის სამაგრი',
+  'Other': 'სხვა აქსესუარი',
+  'Other Accessory': 'სხვა აქსესუარი',
+};
+
+const STL_FRAME_EN: Record<string, string> = {
+  'უნივერსალური': 'Universal',
+  'Other / Universal': 'Universal',
+};
+
+const STL_FRAME_KA: Record<string, string> = {
+  'Universal': 'უნივერსალური',
+  'Other / Universal': 'უნივერსალური',
+};
+
+const STL_SUPPORTS_EN: Record<string, string> = {
+  'არა': 'No',
+  'კი': 'Yes',
+};
+
+const STL_TITLE_EN: Record<string, string> = {
+  'scat-1': 'Universal VTX Mount (25x35x6 mm)',
+  'scat-2': 'VTX Mount Mark4 V2 (19x35x6 mm)',
+  'scat-3': 'VTX Mount Mark4 (19x25x6 mm)',
+  'scat-4': 'VTX Mount Apex HD (32x20x6 mm)',
+  'scat-5': 'VTX Mount XL10 v6 (25x29x5 mm)',
+  'scat-6': 'VTX Mount Mark4 V2 / Thor T67 (19x35x6 mm)',
+  'scat-7': 'VTX Mount VT40 (22x30x5 mm)',
+  'scat-8': 'VTX Mount VT40 (24.5x24.5x5 mm)',
+  'scat-9': 'VTX Mount 30.5x30.5 + SMA (VT40)',
+  'scat-10': 'VTX Mount Rush Max Solo + SMA (VT40)',
+  'scat-11': 'Tail VTX Mount Peak / KaraFPV (F10)',
+  'scat-12': 'Tail VTX Mount MAXSOLO (Mark4)',
+  'scat-13': 'VTX Antenna Mount Rush Max Solo (VT40)',
+  'scat-14': 'VTX Antenna Mount Rush Tank Solo (VT40)',
+  'scat-15': 'SMA VTX Antenna Mount (Mark4)',
+  'scat-16': 'Caddx Vista VTX Antenna Mount (Apex HD)',
+  'scat-17': 'VTX Antenna Mount (F10)',
+  'scat-18': 'Universal Rear Standoff VTX Antenna Mount (19-32 mm)',
+  'scat-19': 'Combined VTX & RX Antenna Mount (HGLRC Nblade)',
+  'scat-20': 'Landing Legs 5 cm (Mark4 / V2)',
+  'scat-21': 'Landing Legs 10 cm (Mark4 / V2)',
+  'scat-22': 'Landing Legs 12 cm (Mark4 / V2)',
+  'scat-23': 'Landing Legs 15 cm (Mark4 / V2)',
+  'scat-24': 'Damper Landing Legs 5 cm',
+  'scat-25': 'Landing Legs Mavic 3',
+  'scat-26': 'Landing Legs Autel EVO Max 4T',
+  'scat-27': 'GPS Mount 18x18 mm (Apex HD)',
+  'scat-28': 'GPS Mount 18x18 mm (Mark4)',
+  'scat-29': 'Landing Legs VT40',
+  'scat-30': 'Under-Motor RX Antenna Mount (19x19 mm)',
+  'scat-31': 'Universal Rear Standoff RX Antenna Mount (19-32 mm)',
+  'scat-32': 'Arm RX Antenna Mount',
+  'scat-33': 'RX Antenna Mount — Vertical Polarization (ELRS)',
+  'scat-34': 'Under-Motor RX Antenna Mount (19x19 mm)',
+  'scat-35': 'Body RX Antenna Mount v1',
+  'scat-36': 'Body RX Antenna Mount v2',
+  'scat-37': 'Vertical RX Antenna Mast',
+  'scat-38': 'Camera Mount 19 mm (VT40)',
+  'scat-39': 'Camera Mount 19 mm (VT40 / Kemp)',
+  'scat-40': 'Camera Mount 20 mm (VT40)',
+  'scat-41': 'Camera Mount 19 mm (VT40)',
+  'scat-42': 'Camera Mount 22 mm (VT40)',
+  'scat-43': 'Camera Mount 26 mm (VT40)',
+  'scat-44': 'Caddx 384 Thermal Camera Arm Mount (XL10 v6)',
+  'scat-45': 'Camera Mount 19 mm (Mark4)',
+  'scat-46': 'Camera Mount 22 mm (Mark4)',
+  'scat-47': 'Camera Mount 19 mm (Mark4 V2)',
+  'scat-48': 'Camera Mount 22 mm (Mark4 V2)',
+  'scat-49': 'Camera Mount 19 mm (XL10 v6)',
+  'scat-50': 'Camera Mount 22 mm (XL10 v6)',
+  'scat-51': 'Camera Mount 19 mm (Apex HD)',
+  'scat-52': 'Extended Camera Mount 19 mm (Apex HD)',
+  'scat-53': 'Camera Mount 22 mm (Apex HD)',
+  'scat-54': 'Extended Camera Mount 22 mm (Apex HD)',
+  'scat-55': 'Arm Camera Mount (Mark4 V2)',
+  'scat-56': 'Extended Camera Mount 22 mm (Mark4)',
+  'scat-57': 'Camera Mount 19 mm (24x35x6 mm)',
+  'scat-58': 'Camera Mount (F7)',
+  'scat-59': 'Camera Mount (F10)',
+  'scat-60': 'Pan/Tilt Camera Mount 19 mm (VT40)',
+  'scat-61': 'Extended VTX Antenna Mount (Mark4 V2)',
+  'scat-62': 'FPV Detector Mount — Chuika 3',
+  'scat-63': 'FPV Detector Mount — Chuika 3 (V2)',
+  'scat-64': 'FPV Detector Mount — Chuika 3 (Alternative)',
+  'scat-65': 'FPV Detector Antenna Retainer — Chuika 3',
+  'scat-66': 'FPV Detector Mount — WHOOVER 3.3',
+  'scat-67': 'FPV Detector Mount — HUNTER-3',
+  'scat-68': 'FPV Detector Mount — HUNTER-3 (Compact)',
+  'scat-69': 'FPV Detector Mount — Dzyga',
+  'scat-70': 'FPV Detector Mount — Teneta SkyLink',
+  'scat-71': 'FPV Detector Mount — Prorok',
+  'scat-72': 'FPV Detector Antenna Retainer — Prorok',
+  'scat-73': 'Car FPV Detector Mount — Franek 3.0',
+  'scat-74': 'Car FPV Detector Monitor Mount — Franek 3.0',
+  'scat-75': 'FPV Detector Antenna Retainer — HUNTER-3',
+  'scat-76': 'Motor Bell Extractor Tool',
+  'scat-77': '19 mm Camera Mount for Eachine Cobra X VRX Bay',
+  'scat-78': '22 mm Camera Mount for Eachine Cobra X VRX Bay',
+  'scat-79': 'Camera Mount for Skyzone 04X Fan Bay',
+  'scat-80': 'Thermal Camera Housing for SkyZone Goggles',
+  'scat-81': 'Walksnail Avatar VRX Mount for Skyzone 04X',
+  'scat-82': 'FPV Monitor Stand (Eachine 7")',
+  'scat-83': 'Remote Ground Station TX Module Housing',
+  'scat-84': 'Caddx Eclipse 004SL (256) Protective Camera Case',
+  'scat-85': 'Bunker Surveillance Camera Mount',
+  'scat-86': 'Braided Sleeve Wire Pusher Tool (Snake Skin)',
+  'scat-87': 'RX as TX JR-Bay Modification Adapter (Geprc)',
+  'scat-88': 'The Eye of Bosch — Dual-Camera Remote Observation Unit',
+  'scat-89': 'The Eye of Bosch 2.0 — Pan/Tilt Remote Camera Unit',
+  'scat-90': 'The Eye of Bosch 2.0 — Dual-Camera Modification Kit',
+  'scat-91': 'Stack Isolation Spacer (0.8 mm)',
+  'scat-92': 'Landing Leg Mount for Matrice 4T',
+  'scat-93': '20x20 mm to 25x25 mm Mounting Adapter',
+  'scat-94': 'USB Type-C Port Dust Cover',
+  'scat-95': '4-Module VRX Test Bench Enclosure',
+  'scat-96': 'Soldering Jig for XT90 to 2x XT60 Adapter',
+  'scat-97': 'Protective Case for XT90 to 2x XT60 Adapter',
+  'scat-98': 'RadioMaster Boxer Battery Bay Cover',
+  'scat-99': 'Auxiliary Battery Mount (Mavic 3)',
+  'scat-100': 'RTK Module Protective Cover (Matrice 4T)',
+  'scat-101': 'Front Arm Brace (Matrice 4T)',
+  'scat-102': 'Front Arm Brace (Mavic 3 Pro)',
+  'scat-103': 'Rear Arm Brace (Mavic 3 Pro)',
+  'scat-104': 'Arm Brace (Autel EVO 4T)',
+  'scat-105': 'Propeller Guards 10" (inch)',
+  'scat-106': 'Propeller Guards 7" (inch)',
+  'scat-107': 'Mavic 3 Battery Protective Case',
+  'scat-108': 'Landing Legs DJI Matrice 4T / 4E',
+  'scat-109': 'Yagi Antenna (12x12 mm) Mast Clamp ("Crab")',
+  'scat-110': 'F10 Frame Arm Protective Bumpers',
+  'scat-111': 'Accessory Expansion Platform (Matrice 4T)',
+  'scat-112': 'Auxiliary Battery Holder (Mavic 3)',
+  'scat-113': 'Air3f T-Bone Antenna Mast Clamp Adapter',
+};
+
+const STL_DESCRIPTION_BODY_EN: Record<string, string> = {
+  'შექმნილია Dec1 (Spot) SMA ვერსიისთვის, თუმცა იდეალურად ერგება ყველა VTX-ს 30.5x30.5 ან 20x20 მმ სამაგრებით. RX მიმღების დამჭერი მოყვება ცალკე ფაილად + გადამყვანები მის გარეშე მონტაჟისთვის.':
+    'Designed for the Dec1 (Spot) SMA version, and fits any VTX with 30.5x30.5 or 20x20 mm mounting holes. Includes a separate RX receiver holder file plus adapters for mounting without it.',
+  'მოდელირებულია Thor T67-ისთვის, თუმცა თავსებადია ნებისმიერ VTX-თან 41.5x30.5 ან 20x20 მმ სამაგრის სტანდარტით. RX დამჭერი მოყვება ცალკე ფაილად.':
+    'Modeled for the Thor T67, and compatible with any VTX using a 41.5x30.5 or 20x20 mm mounting pattern. RX holder included as a separate file.',
+  'მოდელირებულია AKK TX3000AC ვიდეოგადამცემისთვის, თუმცა ერგება მსგავსი გაბარიტებისა და 30.5x30.5 სამაგრის მქონე VTX-ებს.':
+    'Modeled for the AKK TX3000AC video transmitter, and fits VTX units of similar dimensions with a 30.5x30.5 mm mount.',
+  'შექმნილია Rush Max Solo-სთვის, მაგრამ ერგება სხვა მსგავსი ზომის მძლავრ VTX-ებს. ანტენის სამაგრი უნივერსალურია და გათვლილია Aeronetix 1700-2700 ანტენაზე.':
+    'Designed for the Rush Max Solo, and fits other high-power VTX units of similar size. Features a universal antenna mount sized for the Aeronetix 1700-2700 antenna.',
+  'მოდელი შედგება 2 ნაწილისგან: VTX-ის დამჭერი და ანტენის დამჭერი, რათა ვიბრაციების დროს ანტენამ კონექტორი არ დააზიანოს. ანტენა ფიქსირდება პლასტმასის მომჭერებით (ხამუთებით / Zip-ties). შემუშავებულია F10 ჩარჩოსთვის (სვეტებს შორის მანძილი 14 მმ), თუმცა საჭიროების შემთხვევაში მარტივად ერგება სხვა ჩარჩოებსაც.':
+    'Two-piece design (VTX holder + antenna mount) that prevents vibration from damaging the antenna connector. The antenna is secured with zip ties. Designed for the F10 frame (14 mm standoff spacing) and easily adapts to other frames.',
+  'ზოგავს დიდ ადგილს ჩარჩოს შიგნით და ანტენას მაღლა სწევს უკეთესი რადიოკავშირისა და დაფარვის მისაღწევად.':
+    'Saves substantial space inside the frame and elevates the antenna for cleaner RF line-of-sight and coverage.',
+  'ქვედა ფენა 2 შრე. გარე ბრიმი (Brim) 5 მმ. RX მიმღების დამჭერი მოყვება ცალკე ფაილად + გადამყვანები მის გარეშე მონტაჟისთვის.':
+    '2 bottom layers, 5 mm outer brim. Includes a separate RX receiver holder file plus adapters for mounting without it.',
+  'მოდელირებულია PETG პლასტიკისთვის. მაგრდება უშუალოდ ჩარჩოს ზედა ფირფიტაზე.':
+    'Modeled for PETG filament. Mounts directly onto the frame top plate.',
+  'ბეჭდვა შესაძლებელია ნებისმიერი პლასტიკით, თუმცა საუკეთესო შედეგს იძლევა მოქნილი TPU 95A ან Elastan.':
+    'Printable in any filament, though flexible TPU 95A or Elastan gives the best durability.',
+  'სპეციალურად შექმნილია HGLRC Nblade ჩარჩოსთვის. აერთიანებს VTX და RX ანტენების საიმედო ფიქსაციას.':
+    'Specifically designed for the HGLRC Nblade frame. Combines secure VTX and RX antenna retention.',
+  'Mark4 და Mark4 V2 ჩარჩოების სადესანტო ფეხები (5 სმ). შესაძლებელია გამოყენება სხვა ჩარჩოებზეც მსგავსი სხივებით.':
+    '5 cm landing legs for Mark4 and Mark4 V2 frames. Also compatible with other frames of similar arm geometry.',
+  'Mark4 და Mark4 V2 ჩარჩოების სადესანტო ფეხები (10 სმ). შესაძლებელია გამოყენება სხვა ჩარჩოებზეც მსგავსი სხივებით.':
+    '10 cm landing legs for Mark4 and Mark4 V2 frames. Also compatible with other frames of similar arm geometry.',
+  'Mark4 და Mark4 V2 ჩარჩოების სადესანტო ფეხები (12 სმ). შესაძლებელია გამოყენება სხვა ჩარჩოებზეც მსგავსი სხივებით.':
+    '12 cm landing legs for Mark4 and Mark4 V2 frames. Also compatible with other frames of similar arm geometry.',
+  'Mark4 და Mark4 V2 ჩარჩოების სადესანტო ფეხები (15 სმ). შესაძლებელია გამოყენება სხვა ჩარჩოებზეც მსგავსი სხივებით.':
+    '15 cm landing legs for Mark4 and Mark4 V2 frames. Also compatible with other frames of similar arm geometry.',
+  'ზედა და ქვედა მთლიანი ფენები 1 მმ სისქით. რეკომენდებულია ბეჭდვა ჰორიზონტალურ მდგომარეობაში (მწოლიარე).':
+    '1 mm solid top and bottom layers. Recommended to print flat (horizontally) on the build plate.',
+  'პრაქტიკაში გამოცდილი, გამძლე 3D მოდელი.':
+    'Field-tested, durable 3D-printable model.',
+  'გათვლილია 18x18 მმ ზომის GPS მოდულის (მაგ. BN-180 / BN-220) საიმედო მონტაჟისთვის ჩარჩოს ზედა ფირფიტაზე ხრახნებით.':
+    'Designed for screw-mounting an 18x18 mm GPS module (e.g. BN-180 / BN-220) onto the frame top plate.',
+  'მაგრდება ძრავის 19x19 მმ სამაგრ ხვრელებზე. მონტაჟდება გამამაგრებელი წიბოებით ქვემოთ.':
+    'Mounts to 19x19 mm motor mounting holes with the reinforcing ribs facing downward.',
+  'ავტორის მიერ შექმნილი ღია მოდელი FPV პილოტების საზოგადოებისთვის.':
+    'Open community 3D model created for FPV pilots.',
+  'კამერის სამაგრი 19 მმ ზომისთვის. სიმაღლე 30 მმ, სვეტებს შორის მანძილი 27 მმ.':
+    'Mount for a 19 mm camera. Height: 30 mm, standoff spacing: 27 mm.',
+  'დაპროექტებულია XL10 v6 / v7 ჩარჩოსთვის, თუმცა ერგება სხვა ჩარჩოებსაც სხივის მსგავსი სიგანით. არქივში მოცემულია რამდენიმე ცალკეული დეტალი.':
+    'Designed for the XL10 v6 / v7 frame and fits other frames with similar arm width. Archive contains multiple individual parts.',
+  'მონიშვნა "M" მიმართულია ძრავისკენ, "S" — სტეკისკენ. კამერის ფიქსაციისთვის დამატებით საჭიროა სამაგრი რკალი და ორი ხრახნი.':
+    'The "M" marking faces the motor and "S" faces the stack. Requires a camera bracket and two screws for fixation.',
+  'კამერის დასამაგრებლად საჭიროა დაბეჭდოთ ორი ცალი (მარცხენა და მარჯვენა იდენტური და სიმეტრიულია).':
+    'Print two pieces to mount the camera (left and right sides are identical and symmetrical).',
+  'არქივში მოცემულია ფაილები 3D ბეჭდვისთვის; რეკომენდებულია TPU პლასტიკით დაბეჭდვა მაქსიმალური დარტყმაგამძლეობისთვის.':
+    'Archive contains 3D print files; printing in TPU is recommended for maximum impact resistance.',
+  "არქივში მოთავსებულია ფაილები სახელწოდებაში 'TPU' პრეფიქსით — ეს არის ბეჭდვისთვის რეკომენდებული დრეკადი მასალა.":
+    "Archive includes files prefixed with 'TPU', indicating the recommended flexible filament.",
+  'არქივში მოცემულია მბრუნავი მექანიზმის რამდენიმე ცალკეული დეტალი მარტივი აწყობისთვის.':
+    'Archive includes multiple separate parts for the pan/tilt mechanism for easy assembly.',
+  'სტანდარტული ბეჭდვის პარამეტრები, საყრდენების (supports) გარეშე, 3 კედელი, შევსება 15%-დან 100%-მდე.':
+    'Standard print settings: no supports required, 3 walls, 15% to 100% infill.',
+  'ასაწყობად საჭიროა HOCO CA76 სამაგრი, ორი ხრახნიანი თერმო-ჩანართი M3 D4.2 h3 და ორი M3x20 ხრახნი.':
+    'Assembly requires a HOCO CA76 mount, two M3 D4.2 h3 brass heat-set inserts, and two M3x20 screws.',
+  'დეტექტორის კორპუსის სამაგრი და სპეციალური კრონშტეინი ავტომობილში დასამონტაჟებლად.':
+    'Detector body holder and dedicated mounting bracket for vehicle installation.',
+  'Franek 3.0 დეტექტორის მონიტორის სამაგრი და სამონტაჟო კრონშტეინი ავტომობილის სალონისთვის.':
+    'Monitor holder and interior vehicle mounting bracket for the Franek 3.0 detector.',
+  'მონტაჟამდე მოხსენით გამჭვირვალე სილიკონის დამცავი ანტენების სამაგრიდან.':
+    'Remove the clear silicone cover from the antenna mount before installation.',
+  'ასაწყობად საჭიროა: ჭანჭიკი M5x60, ქანჩი M5x8 (2 ცალი), ხრახნი M3x20 (4 ცალი), ქანჩი M3 (8 ცალი). M5 ქანჩები უნდა ჩაეპრესოს შემთბარ პლასტიკში (თერმოფენი იდეალურია).':
+    'Required hardware: 1x M5x60 bolt, 2x M5x8 nuts, 4x M3x20 screws, 8x M3 nuts. Press-fit the M5 nuts into warmed plastic (a heat gun works best).',
+  'მარტივი და ეფექტური გზა FPV მუზარადისგან/სათვალიდან და თერმოკამერისგან ღამის ხედვის სისტემის ასაწყობად.':
+    'A simple and effective way to build a night-vision rig from FPV goggles and a thermal camera.',
+  'თერმოვიზიული კამერის FPV სათვალეზე დასაკავშირებლად. არქივშია სამაგრები 19, 22 და 27 მმ კამერებისთვის. ასაწყობად საჭიროა M3x16 ხრახნი და ქანჩი.':
+    'Mounts a thermal camera onto FPV goggles. Archive includes brackets for 19, 22, and 27 mm cameras. Requires an M3x16 screw and nut.',
+  'თერმოვიზიული კამერის კორპუსი SkyZone FPV სათვალეზე დასამაგრებლად. დეტალური ინსტრუქცია მოცემულია არქივში.':
+    'Thermal camera housing for mounting onto SkyZone FPV goggles. Detailed instructions are included in the archive.',
+  "სადგამი Eachine 7'' და მსგავსი FPV მონიტორებისთვის სამუშაო მაგიდაზე ან საველე პირობებში გამოსაყენებლად.":
+    'Stand for Eachine 7" and similar FPV monitors for bench or field use.',
+  'სახმელეთო მართვის კომპლექსის გამონატანი მოდული. არქივში მოცემულია რამდენიმე ცალკეული კომპონენტი.':
+    'Remote transmitter unit for a ground control station. Archive contains multiple individual components.',
+  'კომპლექტში დამატებით შედის ობიექტივის დამცავი ხუფი.':
+    'Includes a protective lens cap.',
+  'ტესტირებულია Foxeer VRX მოდულთან; უზრუნველყოფს სამეთვალყურეო ვიდეოგამოსახულების საიმედო მიღებას.':
+    'Tested with the Foxeer VRX module for reliable surveillance video reception.',
+  'საყრდენების გარეშე ბეჭდვისთვის რეკომენდებულია ხაზების პარალელური განლაგება (OrcaSlicer-ში Z ღერძზე 135 გრადუსიანი მობრუნება).':
+    'For support-free printing, align infill lines parallel to the part (rotate 135° on the Z axis in OrcaSlicer).',
+  'Geprc-ის ოფიციალური მოდელი. არქივში შედის რამდენიმე ფაილი, მათ შორის PCB პლატის ნახაზები.':
+    'Official Geprc model. Archive includes multiple files along with PCB layout drawings.',
+  'სამეთვალყურეო პუნქტის გატანა ორ ანალოგურ კამერაზე (ან თერმოვიზორზე) 100+ მეტრზე ჩვეულებრივი CAT5 ქსელის კაბელით.':
+    'Extends a dual analog or thermal camera observation post over 100+ meters using standard CAT5 network cable.',
+  'სამეთვალყურეო პუნქტის გატანა მბრუნავი ანალოგური კამერით 100+ მეტრზე ჩვეულებრივი CAT5 ქსელის კაბელით.':
+    'Extends a pan/tilt analog camera observation post over 100+ meters using standard CAT5 network cable.',
+  'ბეჭდვის ფაილები The Eye of Bosch სისტემის 2 კამერაზე მოდიფიკაციის პაკეტისთვის.':
+    '3D print files for the dual-camera modification kit of The Eye of Bosch system.',
+  'თხელი საიზოლაციო შუასადები სტეკისთვის (0.8 მმ). იცავს ელექტრონიკას მექანიკური შეხებისგან და ვიბრაციისგან.':
+    'Thin 0.8 mm stack isolation spacer. Protects electronics from mechanical contact and vibration.',
+  'შაბლონი XT90 - 2x XT60 დენის გადამყვანის უსაფრთხო და ზუსტი შედუღებისთვის.':
+    'Soldering jig for safe and accurate assembly of an XT90 to 2x XT60 power adapter.',
+  'დამცავი საიზოლაციო კორპუსი XT90 - 2x XT60 დენის გადამყვანის კვანძისთვის.':
+    'Protective insulating enclosure for an XT90 to 2x XT60 power splitter.',
+  "ერგება 12 მმ პროფილის Yagi ანტენას. იძლევა ანტენის პოლარიზაციის შეცვლის საშუალებას. ანძაზე დასამაგრებლად გამოიყენება 'კრაბის' ტიპის მომჭერი 3/8'' ხრახნით.":
+    'Fits a 12 mm boom Yagi antenna and allows switching antenna polarization. Mounts to a mast using a crab clamp with a 3/8" thread.',
+  'სრული შევსებით (100% Infill) ბეჭდვა TPU-ით. არქივშია 2 ვერსია: ერთი ზუსტი მორგებით, მეორე 0.5 მმ ღრიჭოთი.':
+    'Print in TPU with 100% infill. Archive includes 2 versions: one snug fit and one with 0.5 mm clearance.',
+  'სპეციალური შუასადები-სამაგრი Air3f T-Bone გამონატანი ანტენის მოდულის ანძაზე დასაფიქსირებლად.':
+    'Dedicated spacer-mount for securing an Air3f T-Bone remote antenna unit onto a mast.',
+};
+
+const translateStlDescription = (description: string): string => {
+  const parts = description.split('\n\n');
+  return parts
+    .map((part) => {
+      const trimmed = part.trim();
+      if (STL_DESCRIPTION_BODY_EN[trimmed]) {
+        return STL_DESCRIPTION_BODY_EN[trimmed];
+      }
+      if (trimmed.startsWith('⚙️ რეკომენდებული პარამეტრები:')) {
+        return trimmed
+          .replace('⚙️ რეკომენდებული პარამეტრები:', '⚙️ Recommended settings:')
+          .replace('მასალა:', 'Material:')
+          .replace('შევსება:', 'Infill:')
+          .replace('კედლები:', 'Walls:')
+          .replace('საყრდენები (Supports): არა', 'Supports: No')
+          .replace('საყრდენები (Supports): კი', 'Supports: Yes')
+          .replace('სამაგრი ხვრელები:', 'Mounting holes:');
+      }
+      return part;
+    })
+    .join('\n\n');
+};
+
+export const localizeStlType = (type: string, language: Language): string =>
+  language === 'en' ? (STL_TYPE_EN[type] ?? type) : (STL_TYPE_KA[type] ?? type);
+
+export const localizeStlFrame = (frame: string, language: Language): string =>
+  language === 'en' ? (STL_FRAME_EN[frame] ?? frame) : (STL_FRAME_KA[frame] ?? frame);
+
+export const localizeStlSupports = (supports: string | undefined, language: Language): string | undefined => {
+  if (!supports) return supports;
+  return language === 'en' ? (STL_SUPPORTS_EN[supports] ?? supports) : supports;
+};
+
+export const localizeStlItem = <
+  T extends {
+    id: string;
+    title: string;
+    type: string;
+    frame: string;
+    description?: string;
+    supports?: string;
+  },
+>(
+  item: T,
+  language: Language,
+): T => {
+  if (language !== 'en') {
+    return {
+      ...item,
+      type: localizeStlType(item.type, 'ka'),
+      frame: localizeStlFrame(item.frame, 'ka'),
+    };
+  }
+  return {
+    ...item,
+    title: STL_TITLE_EN[item.id] ?? item.title,
+    type: localizeStlType(item.type, 'en'),
+    frame: localizeStlFrame(item.frame, 'en'),
+    description: item.description ? translateStlDescription(item.description) : item.description,
+    supports: localizeStlSupports(item.supports, 'en'),
+  };
+};
+

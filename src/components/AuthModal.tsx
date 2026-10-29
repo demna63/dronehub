@@ -66,7 +66,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleDemoLogin = async () => {
     if (!isDemoAuthEnabled()) {
-      setError('Demo mode is disabled in production.');
+      setError(t('auth_demo_disabled'));
       return;
     }
     try {
@@ -101,7 +101,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   ) : (
                     <Chrome className="w-5 h-5" />
                   )}
-                  Google-ით შესვლა
+                  {t('auth_google')}
                 </button>
                 {isDemoAuthEnabled() && (
                 <button

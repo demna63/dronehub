@@ -41,10 +41,10 @@ const NotFound: React.FC<NotFoundProps> = ({ noindex = true }) => {
 
       <div className="space-y-4 max-w-md z-10">
         <h1 className="text-3xl font-extrabold text-white typography-mtavruli">
-          {t('not_found_title') || 'Signal Lost'}
+          {t('not_found_title')}
         </h1>
         <p className="text-ink-3 font-medium leading-relaxed">
-          {t('not_found_desc') || 'The requested page could not be found.'}
+          {t('not_found_desc')}
         </p>
       </div>
 
@@ -52,7 +52,7 @@ const NotFound: React.FC<NotFoundProps> = ({ noindex = true }) => {
         to="/" 
         className="px-10 py-4 bg-accent-fill hover:bg-accent-fill-hover text-white font-extrabold rounded-2xl text-xs tracking-[0.2em] shadow-lg transition-all z-10"
       >
-        {t('not_found_btn') || 'Return to Home'}
+        {t('not_found_btn')}
       </Link>
     </div>
   );

@@ -18,10 +18,10 @@ const FrequencyUnlocker: React.FC = () => {
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-white">
-            {t('unlock_title') || 'Unlock BF Frequency Limit'}
+            {t('unlock_title')}
           </h1>
           <p className="text-sm text-ink-3 font-medium">
-            {t('unlock_desc') || 'Remove the maximum frequency limit for VTX tables'}
+            {t('unlock_desc')}
           </p>
         </div>
       </div>
@@ -37,7 +37,7 @@ const FrequencyUnlocker: React.FC = () => {
             <div className="absolute inset-0 bg-accent-tint group-hover:bg-accent-tint transition-colors"></div>
             
             <h3 className="text-xs font-extrabold text-accent tracking-[0.2em]">
-              {t('unlock_drag_me') || '⬇ Drag this button to bookmarks bar ⬇'}
+              {t('unlock_drag_me')}
             </h3>
 
             {/* The Magic Button */}
@@ -45,15 +45,15 @@ const FrequencyUnlocker: React.FC = () => {
               href={bookmarkletCode}
               className="relative z-10 px-8 py-4 bg-accent-fill hover:bg-accent-fill-hover text-white font-extrabold rounded-2xl shadow-[0_0_30px_rgba(234,88,12,0.3)] hover:shadow-[0_0_50px_rgba(234,88,12,0.5)] transition-all duration-300 flex items-center gap-3 text-sm cursor-grab active:cursor-grabbing"
               onClick={(e) => e.preventDefault()} // Prevent clicking, force dragging
-              title="Drag me to bookmarks!"
+              title={t('unlocker_drag_title')}
             >
               <Unlock size={18} />
-              {t('unlock_btn_text') || 'Unlock VTX Table'}
+              {t('unlock_btn_text')}
             </a>
 
             <div className="flex items-center gap-2 text-xs text-ink-3">
               <Move size={12} />
-              <span>Drag & Drop enabled</span>
+              <span>{t('unlocker_drag_enabled')}</span>
             </div>
 
           </div>
@@ -62,9 +62,9 @@ const FrequencyUnlocker: React.FC = () => {
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 flex gap-4">
             <Info className="text-amber-500 flex-shrink-0 mt-1" size={20} />
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-amber-200">Important Note</h4>
+              <h4 className="text-xs font-bold text-amber-200">{t('unlocker_important_note')}</h4>
               <p className="text-xs text-amber-200/70 leading-relaxed">
-                This tool only works on the <strong>Web Version</strong> of Betaflight Configurator (app.betaflight.com) or Chrome Apps. It modifies the HTML constraints temporarily to allow saving frequencies above 5999MHz.
+                {t('unlocker_web_only_prefix')}<strong>{t('unlocker_web_only_highlight')}</strong>{t('unlocker_web_only_suffix')}
               </p>
             </div>
           </div>
@@ -76,7 +76,7 @@ const FrequencyUnlocker: React.FC = () => {
           <div className="bg-[#0d1117] border border-white/10 rounded-2xl overflow-hidden">
             <div className="p-4 border-b border-white/5 bg-white/[0.02]">
               <h3 className="text-xs font-extrabold text-ink-2 flex items-center gap-2">
-                <CheckCircle2 size={14} className="text-emerald-500" /> Instructions
+                <CheckCircle2 size={14} className="text-emerald-500" /> {t('unlocker_instructions')}
               </h3>
             </div>
             
@@ -86,7 +86,7 @@ const FrequencyUnlocker: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-sm font-bold text-ink-3 flex-shrink-0">1</div>
                 <div>
                   <p className="text-sm text-ink-2 leading-relaxed">
-                    {t('unlock_instruction_1') || 'Drag the button to your browser bookmarks bar.'}
+                    {t('unlock_instruction_1')}
                   </p>
                 </div>
               </div>
@@ -96,7 +96,7 @@ const FrequencyUnlocker: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-sm font-bold text-ink-3 flex-shrink-0">2</div>
                 <div>
                   <p className="text-sm text-ink-2 leading-relaxed">
-                    {t('unlock_instruction_2') || 'Open Betaflight Configurator (Web Version).'}
+                    {t('unlock_instruction_2')}
                   </p>
                 </div>
               </div>
@@ -106,7 +106,7 @@ const FrequencyUnlocker: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-sm font-bold text-ink-3 flex-shrink-0">3</div>
                 <div>
                   <p className="text-sm text-ink-2 leading-relaxed">
-                    {t('unlock_instruction_3') || 'Go to the "Video Transmitter" tab.'}
+                    {t('unlock_instruction_3')}
                   </p>
                 </div>
               </div>
@@ -116,10 +116,10 @@ const FrequencyUnlocker: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-accent-tint border border-accent/30 text-accent flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
                 <div>
                   <p className="text-sm text-white font-bold leading-relaxed">
-                    {t('unlock_instruction_4') || 'Click the bookmark to unlock frequencies.'}
+                    {t('unlock_instruction_4')}
                   </p>
                   <div className="mt-2 flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded w-fit">
-                    <MousePointerClick size={12} /> Click only when tab is active
+                    <MousePointerClick size={12} /> {t('unlocker_step4_sub')}
                   </div>
                 </div>
               </div>

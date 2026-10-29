@@ -111,7 +111,9 @@ const AntennaTuner: React.FC = () => {
   };
 
   const copyResult = () => {
-      navigator.clipboard.writeText(`Dipole for ${frequency}MHz: Total ${antLength}cm / Leg ${legLength}cm`);
+      navigator.clipboard.writeText(
+        t('antenna_clipboard_summary', { freq: frequency, leg: legLength, total: antLength }),
+      );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
   };
@@ -126,7 +128,7 @@ const AntennaTuner: React.FC = () => {
         </div>
         <h1 className="text-3xl font-extrabold text-white">
           <span className="sr-only">{t('tool_title_antenna')}</span>
-          <span aria-hidden="true">ANTENNA <span className="text-accent">BUILDER</span></span>
+          <span aria-hidden="true">{t('antenna_builder_heading')}</span>
         </h1>
         <p className="text-ink-3 text-xs max-w-xl mx-auto">
            {t('antenna_subtitle')}
@@ -139,7 +141,7 @@ const AntennaTuner: React.FC = () => {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <div className="bg-accent-tint p-1.5 rounded text-accent"><Ruler size={16}/></div>
-                <h2 className="text-sm font-bold text-white">1. Dipole Calculator</h2>
+                <h2 className="text-sm font-bold text-white">{t('antenna_dipole_calc')}</h2>
             </div>
 
             <div className="bg-surface border border-white/10 rounded-2xl p-5 shadow-lg space-y-5">
@@ -153,7 +155,7 @@ const AntennaTuner: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                    <label htmlFor="antenna-frequency" className="text-xs font-bold text-ink-3">Frequency</label>
+                    <label htmlFor="antenna-frequency" className="text-xs font-bold text-ink-3">{t('antenna_frequency')}</label>
                     <div className="flex gap-2">
                         <input id="antenna-frequency" type="number" value={frequency} onChange={(e) => setFrequency(e.target.value)} className="flex-1 bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-accent/50"/>
                         <select aria-label={t('unit_frequency')} value={freqUnit} onChange={(e) => setFreqUnit(e.target.value)} className="w-20 bg-bg border border-white/10 text-ink-2 text-xs rounded-lg px-2 outline-none">
@@ -178,7 +180,7 @@ const AntennaTuner: React.FC = () => {
                         </div>
                     </div>
                     <div className="mt-4 border-t border-accent/30 w-2/3 flex justify-center pt-1">
-                        <span className="text-xs font-bold text-accent">Total: {antLength} cm</span>
+                        <span className="text-xs font-bold text-accent">{t('antenna_total_cm', { length: antLength })}</span>
                     </div>
                 </div>
             </div>
@@ -188,23 +190,23 @@ const AntennaTuner: React.FC = () => {
         <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
                 <div className="bg-yellow-500/20 p-1.5 rounded text-yellow-400"><Scissors size={16}/></div>
-                <h2 className="text-sm font-bold text-white">2. SWR Trimmer</h2>
+                <h2 className="text-sm font-bold text-white">{t('antenna_swr_trimmer')}</h2>
             </div>
 
             <div className="bg-surface border border-white/10 rounded-2xl p-5 shadow-lg space-y-5 h-full">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <label htmlFor="antenna-target-freq" className="text-xs font-bold text-ink-3">Target (MHz)</label>
+                        <label htmlFor="antenna-target-freq" className="text-xs font-bold text-ink-3">{t('antenna_target_mhz')}</label>
                         <input id="antenna-target-freq" type="number" value={targetFreq} onChange={(e) => setTargetFreq(e.target.value)} className="w-full bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                     </div>
                     <div className="space-y-1">
-                        <label htmlFor="antenna-measured-freq" className="text-xs font-bold text-ink-3">Measured (MHz)</label>
+                        <label htmlFor="antenna-measured-freq" className="text-xs font-bold text-ink-3">{t('antenna_measured_mhz')}</label>
                         <input id="antenna-measured-freq" type="number" value={measuredFreq} onChange={(e) => setMeasuredFreq(e.target.value)} className="w-full bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                     </div>
                 </div>
                 
                 <div className="space-y-1">
-                    <label htmlFor="antenna-current-length" className="text-xs font-bold text-ink-3">Current Length (mm)</label>
+                    <label htmlFor="antenna-current-length" className="text-xs font-bold text-ink-3">{t('antenna_current_length_mm')}</label>
                     <input id="antenna-current-length" type="number" value={currentLength} onChange={(e) => setCurrentLength(e.target.value)} className="w-full bg-bg border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-yellow-500"/>
                 </div>
 
@@ -221,7 +223,7 @@ const AntennaTuner: React.FC = () => {
                                 -{cutAmount ? cutAmount.toFixed(2) : "0.00"} <span className="text-sm text-ink-3">mm</span>
                             </div>
                             <div className="mt-2 text-xs text-ink-3">
-                                New Length: <span className="text-white font-bold">{newLength ? newLength.toFixed(2) : "-"} mm</span>
+                                {t('antenna_new_length')} <span className="text-white font-bold">{newLength ? newLength.toFixed(2) : "-"} mm</span>
                             </div>
                         </>
                     )}

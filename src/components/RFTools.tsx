@@ -50,7 +50,7 @@ export const UnitConverter: React.FC = () => {
         </div>
         <h1 className="text-3xl font-extrabold text-white">
           <span className="sr-only">{t('tool_title_rf')}</span>
-          <span aria-hidden="true">UNIT <span className="text-accent">CONVERTER</span></span>
+          <span aria-hidden="true">{t('rf_unit_converter')}</span>
         </h1>
         <p className="text-ink-3 text-xs max-w-xl mx-auto">
            {t('rf_convert_desc')}
@@ -62,11 +62,11 @@ export const UnitConverter: React.FC = () => {
         <div className="bg-surface border border-white/10 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/5">
                 <Signal className="text-accent" size={20} />
-                <h2 className="text-sm font-bold text-white">RF Power (VTX)</h2>
+                <h2 className="text-sm font-bold text-white">{t('rf_power_vtx')}</h2>
             </div>
             <div className="space-y-6 relative">
                 <div className="space-y-2">
-                    <label htmlFor="rf-milliwatts" className="text-xs font-bold text-ink-3">Milliwatts</label>
+                    <label htmlFor="rf-milliwatts" className="text-xs font-bold text-ink-3">{t('rf_milliwatts')}</label>
                     <div className="relative">
                         <input 
                             id="rf-milliwatts"
@@ -74,7 +74,7 @@ export const UnitConverter: React.FC = () => {
                             value={mw}
                             onChange={(e) => handleMwChange(e.target.value)}
                             className="w-full bg-bg border border-white/10 text-white text-lg font-mono rounded-[10px] px-4 py-3 focus:border-accent/50 outline-none"
-                            placeholder="e.g. 800"
+                            placeholder={t('rf_mw_placeholder')}
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 text-xs font-bold">mW</span>
                     </div>
@@ -85,7 +85,7 @@ export const UnitConverter: React.FC = () => {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label htmlFor="rf-dbm" className="text-xs font-bold text-ink-3">Decibel-milliwatts</label>
+                    <label htmlFor="rf-dbm" className="text-xs font-bold text-ink-3">{t('rf_dbm')}</label>
                     <div className="relative">
                         <input 
                             id="rf-dbm"
@@ -93,7 +93,7 @@ export const UnitConverter: React.FC = () => {
                             value={dbm}
                             onChange={(e) => handleDbmChange(e.target.value)}
                             className="w-full bg-bg border border-white/10 text-accent text-lg font-mono rounded-[10px] px-4 py-3 focus:border-accent/50 outline-none"
-                            placeholder="e.g. 29"
+                            placeholder={t('rf_dbm_placeholder')}
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-3 text-xs font-bold">dBm</span>
                     </div>
@@ -105,11 +105,11 @@ export const UnitConverter: React.FC = () => {
         <div className="bg-surface border border-white/10 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/5">
                 <Battery className="text-emerald-400" size={20} />
-                <h2 className="text-sm font-bold text-white">LiPo Voltage</h2>
+                <h2 className="text-sm font-bold text-white">{t('rf_lipo_voltage')}</h2>
             </div>
             <div className="space-y-4">
                 <div>
-                    <span id="rf-cell-count-label" className="text-xs font-bold text-ink-3 mb-2 block">Cell Count (S)</span>
+                    <span id="rf-cell-count-label" className="text-xs font-bold text-ink-3 mb-2 block">{t('rf_cell_count')}</span>
                     <div className="flex flex-wrap gap-2" role="group" aria-labelledby="rf-cell-count-label">
                         {[1, 2, 3, 4, 6].map((s) => (
                             <button
@@ -128,15 +128,15 @@ export const UnitConverter: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-4">
                     <div className="bg-bg p-3 rounded-[10px] border border-white/5">
-                        <div className="text-xs text-ink-3">Empty (3.5v)</div>
+                        <div className="text-xs text-ink-3">{t('rf_lipo_empty')}</div>
                         <div className="text-xl font-mono text-rose-400">{(cells * 3.5).toFixed(1)}V</div>
                     </div>
                     <div className="bg-bg p-3 rounded-[10px] border border-white/5">
-                        <div className="text-xs text-ink-3">Storage (3.8v)</div>
+                        <div className="text-xs text-ink-3">{t('rf_lipo_storage')}</div>
                         <div className="text-xl font-mono text-accent">{(cells * 3.8).toFixed(1)}V</div>
                     </div>
                     <div className="bg-bg p-3 rounded-[10px] border border-white/5 col-span-2">
-                        <div className="text-xs text-ink-3">Full Charge (4.2v)</div>
+                        <div className="text-xs text-ink-3">{t('rf_lipo_full')}</div>
                         <div className="text-2xl font-mono text-emerald-400">{(cells * 4.2).toFixed(1)}V</div>
                     </div>
                 </div>
@@ -190,7 +190,7 @@ export const AntennaTuner: React.FC = () => {
            <Scissors size={24} />
         </div>
         <h1 className="text-3xl font-extrabold text-white">
-           ANTENNA <span className="text-yellow-400">TUNER</span>
+           {t('rf_antenna_tuner')}
         </h1>
         <p className="text-ink-3 text-xs max-w-xl mx-auto">
            {t('rf_trim_desc')}
@@ -200,7 +200,7 @@ export const AntennaTuner: React.FC = () => {
       <div className="bg-surface border border-white/10 rounded-2xl p-6 shadow-lg">
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
-                <label htmlFor="rf-target-freq" className="text-xs font-bold text-ink-3">Target Freq (MHz)</label>
+                <label htmlFor="rf-target-freq" className="text-xs font-bold text-ink-3">{t('rf_target_freq_mhz')}</label>
                 <div className="relative">
                     <input 
                         id="rf-target-freq"
@@ -213,7 +213,7 @@ export const AntennaTuner: React.FC = () => {
                 </div>
             </div>
             <div className="space-y-1">
-                <label htmlFor="rf-measured-freq" className="text-xs font-bold text-ink-3">Measured Freq</label>
+                <label htmlFor="rf-measured-freq" className="text-xs font-bold text-ink-3">{t('rf_measured_freq')}</label>
                 <input 
                     id="rf-measured-freq"
                     type="number" 
@@ -223,7 +223,7 @@ export const AntennaTuner: React.FC = () => {
                 />
             </div>
             <div className="space-y-1">
-                <label htmlFor="rf-current-length" className="text-xs font-bold text-ink-3">Current Length (mm)</label>
+                <label htmlFor="rf-current-length" className="text-xs font-bold text-ink-3">{t('antenna_current_length_mm')}</label>
                 <input 
                     id="rf-current-length"
                     type="number" 
@@ -248,7 +248,7 @@ export const AntennaTuner: React.FC = () => {
                     </div>
                     <div className="w-px h-8 bg-white/10 my-2"></div>
                     <div className="flex items-center gap-2 text-ink-3 text-xs">
-                        <span>New Length:</span>
+                        <span>{t('antenna_new_length')}</span>
                         <span className="text-white font-mono font-bold">{newLength ? newLength.toFixed(2) : "-"} mm</span>
                     </div>
                 </div>

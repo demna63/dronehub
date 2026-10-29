@@ -45,7 +45,7 @@ const VlogSection: React.FC<VlogSectionProps> = ({
             <div className="flex items-center justify-between mb-6 sticky top-0 bg-bg/95 z-30 py-4 border-b border-white/5">
               <div>
                 <h1 className="text-2xl font-extrabold text-white flex items-center gap-2">
-                  <span className="text-bad">LIVE</span> VLOGS
+                  <span className="text-bad">{t('vlog_live_badge')}</span> {t('vlog_heading_suffix')}
                 </h1>
                 <p className="text-ink-3 text-xs">{t('vlogs_subtitle')}</p>
               </div>
@@ -93,9 +93,9 @@ const VlogSection: React.FC<VlogSectionProps> = ({
                     <div className="flex items-center justify-between text-xs text-ink-3">
                       <div className="flex items-center gap-2">
                          <div className="w-5 h-5 rounded-full bg-accent-fill flex items-center justify-center text-xs text-white font-bold">
-                            {(vlog.authorName || 'U')[0]}
+                            {(vlog.authorName || t('unknown'))[0]}
                          </div>
-                         <span>{vlog.authorName || 'Unknown'}</span>
+                         <span>{vlog.authorName || t('unknown')}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1"><Eye size={12} /> {vlog.views}</span>

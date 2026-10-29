@@ -38,8 +38,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   buildsCount = 0,
   rating = null,
 }) => {
-  const { t } = useLanguage();
-  const joined = formatMonthYear(profileUser.createdAt);
+  const { t, language } = useLanguage();
+  const joined = formatMonthYear(profileUser.createdAt, language);
   const gear = (profileUser.gear ?? []).filter(Boolean);
   const level = profileUser.experienceLevel && isExperienceLevel(profileUser.experienceLevel)
     ? t(experienceLevelKey(profileUser.experienceLevel))

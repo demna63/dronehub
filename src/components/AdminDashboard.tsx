@@ -10,7 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isUserAdmin } from '../utils/authUtils';
-import { STL_TYPES, STL_FRAMES } from '../constants/toolsData';
+import { STL_TYPES, STL_FRAMES, localizeStlFrame, localizeStlType } from '../constants/stlCatalogData';
 import { isMarketItem } from '../constants/market';
 import { useToast } from '../contexts/useToast';
 import { useLanguage } from '../contexts/useLanguage';
@@ -30,7 +30,7 @@ interface AdminDashboardProps {
 const ADMIN_POST_LIMIT = 200;
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: initialPosts }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -39,7 +39,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
   const [stls, setStls] = useState<StlFile[]>([]);
 
   const [isUploadingStl, setIsUploadingStl] = useState(false);
-  const [stlForm, setStlForm] = useState({
+  const [stlForm, setStlForm] = useState<{
+    title: string;
+    type: string;
+    frame: string;
+    author: string;
+  }>({
     title: '',
     type: STL_TYPES[0],
     frame: STL_FRAMES[0],
@@ -229,7 +234,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
           <Shield size={24} />
         </div>
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Admin Panel</h1>
+          <h1 className="text-2xl font-extrabold text-white">{t('admin_panel_title')}</h1>
           <p className="text-sm font-bold text-ink-3">{t('admin_subtitle')}</p>
         </div>
       </div>
@@ -305,7 +310,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                 {marketItems.map(item => (
                   <div key={item.id} className="flex items-center justify-between p-4 bg-surface-2/50 rounded-[10px] border border-white/5 hover:border-white/10 transition-colors">
                     <div className="flex items-center gap-4 min-w-0 mr-4">
-                      {item.image && <img src={item.image} alt="item" className="w-12 h-12 rounded-lg object-cover shrink-0" />}
+                      {item.image && <img src={item.image} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />}
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-white truncate">{item.title || item.content}</p>
                         <p className="text-xs font-bold text-emerald-400">{item.price} ₾</p>
@@ -357,7 +362,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                         onChange={e => setStlForm(prev => ({ ...prev, type: e.target.value }))}
                         className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-accent/50 outline-none transition-colors"
                       >
-                        {STL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        {STL_TYPES.map(tp => <option key={tp} value={tp}>{localizeStlType(tp, language)}</option>)}
                       </select>
                     </div>
                     <div>
@@ -368,7 +373,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                         onChange={e => setStlForm(prev => ({ ...prev, frame: e.target.value }))}
                         className="w-full bg-surface border border-white/10 rounded-[10px] px-4 py-2.5 text-sm text-white focus:border-accent/50 outline-none transition-colors"
                       >
-                        {STL_FRAMES.map(f => <option key={f} value={f}>{f}</option>)}
+                        {STL_FRAMES.map(fr => <option key={fr} value={fr}>{localizeStlFrame(fr, language)}</option>)}
                       </select>
                     </div>
                   </div>
@@ -384,7 +389,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                       />
                     </div>
                     <div>
-                      <label htmlFor="stl-file" className="text-xs font-bold text-ink-3 mb-1 block">3D მოდელი (.STL)</label>
+                      <label htmlFor="stl-file" className="text-xs font-bold text-ink-3 mb-1 block">{t('admin_stl_file_label')}</label>
                       <input
                         id="stl-file"
                         required ref={stlFileInputRef} type="file" accept=".stl"
@@ -399,7 +404,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                     className="w-full py-3.5 bg-accent-fill hover:bg-accent-fill-hover text-white font-bold rounded-[10px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isUploadingStl ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />}
-                    {isUploadingStl ? 'იტვირთება...' : 'STL ფაილის დამატება'}
+                    {isUploadingStl ? t('admin_stl_uploading') : t('admin_stl_add_btn')}
                   </button>
                 </form>
               </div>
@@ -413,7 +418,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, posts: ini
                   <div key={stl.id} className="flex items-center justify-between p-4 bg-surface-2/50 rounded-[10px] border border-white/5 hover:border-white/10 transition-colors">
                     <div>
                       <p className="text-sm font-bold text-white">{stl.title}</p>
-                      <p className="text-xs text-ink-3">{stl.type} • {stl.frame} • {t('admin_author', { name: stl.author })}</p>
+                      <p className="text-xs text-ink-3">{localizeStlType(stl.type, language)} • {localizeStlFrame(stl.frame, language)} • {t('admin_author', { name: stl.author })}</p>
                     </div>
                     <DeleteControl kind="stl" id={stl.id} />
                   </div>

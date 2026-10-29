@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLanguage } from '../contexts/useLanguage';
 
 interface OfflineStatusProps {
   isOffline: boolean;
@@ -6,6 +7,7 @@ interface OfflineStatusProps {
 }
 
 const OfflineStatus: React.FC<OfflineStatusProps> = ({ isOffline, hasCachedData }) => {
+  const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -24,11 +26,9 @@ const OfflineStatus: React.FC<OfflineStatusProps> = ({ isOffline, hasCachedData 
   return (
     <div className="fixed inset-x-4 top-20 z-[60] mx-auto flex max-w-xl items-center justify-between rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 shadow-lg">
       <div>
-        <p className="font-semibold">You’re offline</p>
+        <p className="font-semibold">{t('offline_title')}</p>
         <p className="text-amber-100/80">
-          {hasCachedData
-            ? 'Showing the latest saved content while the connection is unavailable.'
-            : 'The app shell is still available; live updates will resume when connectivity returns.'}
+          {hasCachedData ? t('offline_with_cache') : t('offline_no_cache')}
         </p>
       </div>
     </div>

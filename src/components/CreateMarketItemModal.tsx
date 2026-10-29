@@ -116,7 +116,7 @@ const CreateMarketItemModal: React.FC<CreateMarketItemModalProps> = ({ onClose, 
               }`}
             >
               {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="h-full w-full object-contain rounded-2xl p-2" />
+                <img src={imagePreview} alt={t('post_image_preview_alt')} className="h-full w-full object-contain rounded-2xl p-2" />
               ) : (
                 <div className="flex flex-col items-center gap-2 text-ink-3 group-hover:text-emerald-400 transition-colors">
                   <div className="p-3 bg-surface-2 rounded-full transition-transform">
