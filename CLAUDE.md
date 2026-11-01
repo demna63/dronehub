@@ -54,9 +54,9 @@ PID/VTX/Betaflight presets აღარ არის main-ში — external re
 - Firestore security rules ცვლილებებზე ფრთხილად
 - Secrets არ უნდა მოხვდეს client bundle-ში (Gemini → Functions proxy prod-ში)
 
-## Lint ratchet
-The ratchet reached zero: `npm run lint` now runs with `--max-warnings 0`, the same
-as `lint:strict`. Any new warning fails the build. CI runs `lint` and `test` on every PR.
+## Lint
+`npm run lint` runs with `--max-warnings 0` (same as `lint:strict`); any warning fails
+the build. CI runs `lint` and `test` on every PR.
 
 ## Invariants worth knowing before editing
 - **Ratings**: `telemetry`, `telemetryScore` and `posts/{id}/votes/*` are written ONLY by
