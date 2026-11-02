@@ -8,6 +8,7 @@ import type { FeedProps } from './Feed';
 import PostCardSkeleton from './PostCardSkeleton';
 import NotFound from './NotFound';
 import { useLanguage } from '../contexts/useLanguage';
+import { prerenderedBodyFor } from '../utils/prerenderedBody';
 
 interface PostPageProps {
   posts: Post[];
@@ -54,6 +55,13 @@ const PostPage: React.FC<PostPageProps> = ({ posts, currentUser, feedProps }) =>
 
   if (!postId) {
     return <Navigate to="/" replace />;
+  }
+
+  // Until the post resolves, and if its fetch fails, keep the static body: a
+  // crawler that cannot finish a Firestore read still gets this post's content.
+  const prerendered = prerenderedBodyFor(`/post/${postId}`);
+  if (!post && prerendered && (!resolved || remote?.failed)) {
+    return <div aria-busy={!resolved} dangerouslySetInnerHTML={{ __html: prerendered }} />;
   }
 
   if (!post && !resolved) {

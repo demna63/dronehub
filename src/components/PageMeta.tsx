@@ -23,6 +23,11 @@ const PageMeta: React.FC<PageMetaProps> = ({ title, description }) => {
   useEffect(() => {
     document.documentElement.lang = language === 'en' ? 'en' : 'ka';
 
+    // The route-level instance knows no post's text. Its generic "Post" title
+    // would overwrite the prerendered tags on every post until PostPage's own
+    // instance runs, and permanently when the post never loads.
+    if (!title && !description && /^\/post\/[^/]+/.test(location.pathname)) return;
+
     const meta = resolveRouteMeta(location.pathname, t, { title, description });
     document.title = meta.title;
 

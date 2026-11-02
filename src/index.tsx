@@ -6,8 +6,11 @@ import './index.css';
 import { registerServiceWorker } from './serviceWorker';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { capturePrerenderedBody } from './utils/prerenderedBody';
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
+const container = document.getElementById('root') as HTMLElement;
+capturePrerenderedBody(container);
+const root = ReactDOM.createRoot(container);
 
 registerServiceWorker();
 
